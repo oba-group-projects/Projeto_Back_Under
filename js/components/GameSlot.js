@@ -1,11 +1,12 @@
 /**
  * Componente do Slot de Jogo Individual (Suporte até 4 jogos em paralelo)
- * Integrado ao Motor de Decaimento Minuto a Minuto (Planilha IN LIVE / HTFT)
+ * Integrado ao Motor de Decaimento Minuto a Minuto e Sincronização Automática (Planilha IN LIVE / HTFT)
  */
 import { STRATEGIES, calculateStakeFromRed } from '../core/stakeManager.js';
 import { calculateMinuteCurve, getMinuteMetrics, applyGoalOddShift } from '../core/minuteDecayEngine.js';
 import { moveOddTicks, calculateTicksDistance, formatCurrency, formatPercent, normalizeOdd } from '../core/oddsCalculator.js';
 import { calculateHedge } from '../core/hedgeEngine.js';
+import { findClosestLadder } from '../core/ladderData.js';
 
 export class GameSlot {
   constructor(slotId, containerElement, { getMasterRed, onTradeCompleted, onOpenPendulos }) {
@@ -34,6 +35,10 @@ export class GameSlot {
       lucroMedio: 0,
       redMedio: 0,
       
+      // Velocidade do tempo
+      ticksPorMinuto: 0,
+      pctPorMinuto: 0,
+      
       inTrade: false,
       timerSeconds: 0,
       timerRunning: false,
@@ -61,6 +66,12 @@ export class GameSlot {
       liveCorrections: this.state.liveCorrections
     });
     this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
+
+    // Calcula Ticks por minuto e % por minuto base
+    const ladderItem = findClosestLadder(this.state.initialOdd);
+    const totalMin = 45 + (Number(this.state.addedMinutes) || 0);
+    this.state.ticksPorMinuto = Number((ladderItem.tickIndex / totalMin).toFixed(2));
+    this.state.pctPorMinuto = Number(((Math.pow(1.01 / this.state.initialOdd, 1 / totalMin) - 1) * 100).toFixed(2));
   }
 
   setPeriod(period) {
@@ -69,7 +80,7 @@ export class GameSlot {
     this.state.initialOdd = period === 'HT' ? 3.35 : 5.10;
     this.state.addedMinutes = period === 'HT' ? 2 : 5;
     this.state.liveOddInput = this.state.initialOdd;
-    this.state.timerSeconds = (this.state.currentMinute - (period === 'HT' ? 1 : 46)) * 60;
+    this.state.timerSeconds = 0;
     this.recomputeCurve();
     this.render();
     this.bindEvents();
@@ -87,17 +98,28 @@ export class GameSlot {
     const isHT = this.state.period === 'HT';
     const minStart = isHT ? 1 : 46;
     const maxMin = isHT ? (45 + this.state.addedMinutes) : (90 + this.state.addedMinutes);
-    this.state.currentMinute = Math.max(minStart, Math.min(maxMin, min));
+    this.state.currentMinute = Math.max(minStart, Math.min(maxMin, parseInt(min, 10) || minStart));
     this.state.timerSeconds = (this.state.currentMinute - minStart) * 60;
     this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
+    
+    // Atualiza slider e display de minuto
+    const slider = this.container.querySelector('.slot-minute-slider');
+    if (slider) slider.value = this.state.currentMinute;
+
     this.recalculate();
     this.updateTimerDisplay();
   }
 
   applyGoal(isFavor) {
-    const newOdd = applyGoalOddShift(this.state.liveOddInput || this.state.currentMetrics.oddJusta, isFavor);
+    const currentJusta = this.state.currentMetrics ? this.state.currentMetrics.oddJusta : this.state.initialOdd;
+    const baseOdd = this.state.liveOddInput || currentJusta;
+    const newOdd = applyGoalOddShift(baseOdd, isFavor);
     this.state.liveOddInput = newOdd;
     this.state.liveCorrections[this.state.currentMinute] = newOdd;
+    
+    const liveInput = this.container.querySelector('.slot-live-odd-input');
+    if (liveInput) liveInput.value = newOdd.toFixed(2);
+
     this.recomputeCurve();
     this.recalculate();
   }
@@ -116,7 +138,7 @@ export class GameSlot {
 
     // Recalcula Hedge do minuto
     const oddEntrada = this.state.initialOdd;
-    const oddAtual = this.state.liveOddInput || this.state.currentMetrics.oddJusta;
+    const oddAtual = Number(this.state.liveOddInput) || (this.state.currentMetrics ? this.state.currentMetrics.oddJusta : oddEntrada);
     const hedge = calculateHedge({
       oddEntrada: oddEntrada,
       stakeEntrada: this.state.stakeCalculada,
@@ -138,11 +160,26 @@ export class GameSlot {
     const bloco2Display = this.container.querySelector('.slot-bloco2-display');
     const zoneBadge = this.container.querySelector('.slot-zone-badge');
     const valueDiffBadge = this.container.querySelector('.slot-value-diff-badge');
+    const progressFill = this.container.querySelector('.slot-progress-fill');
+    const speedInfo = this.container.querySelector('.slot-speed-info');
 
     if (minuteBadge) minuteBadge.textContent = `${cm.minute}'`;
     if (oddJustaDisplay) oddJustaDisplay.textContent = cm.oddJusta.toFixed(2);
     if (bloco1Display) bloco1Display.textContent = `T: ${cm.topo1.toFixed(2)} | F: ${cm.fundo1.toFixed(2)}`;
     if (bloco2Display) bloco2Display.textContent = `T: ${cm.topo2.toFixed(2)} | F: ${cm.fundo2.toFixed(2)}`;
+
+    if (speedInfo) {
+      speedInfo.textContent = `⚡ ${this.state.ticksPorMinuto} ticks/min (${this.state.pctPorMinuto}%/min)`;
+    }
+
+    // Barra de Progresso do Tempo
+    if (progressFill) {
+      const isHT = this.state.period === 'HT';
+      const total = 45 + this.state.addedMinutes;
+      const current = isHT ? cm.minute : (cm.minute - 45);
+      const pct = Math.min(100, Math.max(0, (current / total) * 100));
+      progressFill.style.width = `${pct}%`;
+    }
 
     if (zoneBadge) {
       zoneBadge.className = `zone-badge slot-zone-badge ${
@@ -156,7 +193,7 @@ export class GameSlot {
       const live = Number(this.state.liveOddInput) || cm.oddJusta;
       const diff = ((live / cm.oddJusta) - 1) * 100;
       const sign = diff > 0 ? '+' : '';
-      const isGoodForUnder = diff > 0.5; // Odd de mercado está acima da justa (tem valor no Under)
+      const isGoodForUnder = diff > 0.5;
       const isExpensive = diff < -0.5;
 
       valueDiffBadge.className = `badge-valordiff ${isGoodForUnder ? 'val-good' : (isExpensive ? 'val-bad' : 'val-fair')}`;
@@ -215,8 +252,7 @@ export class GameSlot {
       const maxMin = isHT ? (45 + this.state.addedMinutes) : (90 + this.state.addedMinutes);
 
       if (calcMinute !== this.state.currentMinute && calcMinute <= maxMin) {
-        this.state.currentMinute = calcMinute;
-        this.recalculate();
+        this.setMinute(calcMinute);
       }
     }, 1000);
   }
@@ -231,9 +267,7 @@ export class GameSlot {
   resetTimer() {
     this.pauseTimer();
     this.state.timerSeconds = 0;
-    this.state.currentMinute = this.state.period === 'HT' ? 1 : 46;
-    this.updateTimerDisplay();
-    this.recalculate();
+    this.setMinute(this.state.period === 'HT' ? 1 : 46);
   }
 
   updateTimerDisplay() {
@@ -248,7 +282,7 @@ export class GameSlot {
   }
 
   adjustLiveOdd(ticks) {
-    this.state.liveOddInput = moveOddTicks(this.state.liveOddInput, ticks);
+    this.state.liveOddInput = moveOddTicks(this.state.liveOddInput || this.state.initialOdd, ticks);
     const liveOddInput = this.container.querySelector('.slot-live-odd-input');
     if (liveOddInput) liveOddInput.value = this.state.liveOddInput.toFixed(2);
     this.recalculate();
@@ -330,6 +364,14 @@ export class GameSlot {
           this.state.liveOddInput = val;
           this.recalculate();
         }
+      });
+    }
+
+    // Slider de Minuto
+    const minuteSlider = this.container.querySelector('.slot-minute-slider');
+    if (minuteSlider) {
+      minuteSlider.addEventListener('input', (e) => {
+        this.setMinute(parseInt(e.target.value, 10));
       });
     }
 
@@ -434,6 +476,8 @@ export class GameSlot {
 
   render() {
     const isHT = this.state.period === 'HT';
+    const minStart = isHT ? 1 : 46;
+    const maxMin = isHT ? (45 + this.state.addedMinutes) : (90 + this.state.addedMinutes);
 
     this.container.innerHTML = `
       <!-- Cabeçalho do Slot -->
@@ -452,7 +496,7 @@ export class GameSlot {
         <!-- Cronômetro -->
         <div class="game-timer-box">
           <span class="timer-display">${isHT ? '01:00' : '46:00'}'</span>
-          <button class="timer-btn timer-play-pause-btn" title="Iniciar/Pausar">▶️</button>
+          <button class="timer-btn timer-play-pause-btn" title="Iniciar/Pausar cronômetro">▶️</button>
           <button class="timer-btn timer-reset-btn" title="Zerar cronômetro">🔄</button>
         </div>
       </div>
@@ -481,6 +525,23 @@ export class GameSlot {
             <div style="font-size: 0.6rem; color: var(--text-muted); text-align: right; margin-top: 0.25rem;">
               Em branco = usa Red global
             </div>
+          </div>
+        </div>
+
+        <!-- Slider de Navegação Rápida de Minuto -->
+        <div class="minute-slider-wrapper">
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; color: var(--text-secondary); font-weight: 700;">
+            <span>Avançar Minuto na TV:</span>
+            <span class="slot-speed-info" style="color: var(--color-cyan); font-size: 0.65rem;">⚡ ${this.state.ticksPorMinuto} ticks/min</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
+            <span style="font-size: 0.7rem; color: var(--text-muted); font-family: var(--font-mono);">${minStart}'</span>
+            <input type="range" class="slot-minute-slider" min="${minStart}" max="${maxMin}" value="${this.state.currentMinute}" step="1" style="flex: 1; accent-color: var(--color-blue); cursor: pointer;">
+            <span style="font-size: 0.7rem; color: var(--text-muted); font-family: var(--font-mono);">${maxMin}'</span>
+          </div>
+          <!-- Barra de Progresso do Tempo -->
+          <div class="time-progress-bar">
+            <div class="time-progress-fill slot-progress-fill" style="width: 0%;"></div>
           </div>
         </div>
 
