@@ -1,5 +1,5 @@
 /**
- * Componentes de Interface - Projeto Back Under
+ * Componentes de Interface - Projeto Back Under (Com Motor Minuto a Minuto)
  */
 
 /* Header e Barra Superior */
@@ -129,6 +129,7 @@
   transition: all var(--transition-fast);
   white-space: nowrap;
   user-select: none;
+  text-decoration: none;
 }
 
 .btn-primary {
@@ -172,6 +173,17 @@
   background: var(--bg-card-hover);
   color: var(--text-primary);
   border-color: var(--border-active);
+}
+
+.btn-sheets {
+  background: linear-gradient(135deg, #0f9d58 0%, #0b8043 100%);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 10px rgba(15, 157, 88, 0.25);
+}
+.btn-sheets:hover {
+  background: linear-gradient(135deg, #34a853 0%, #0f9d58 100%);
+  box-shadow: 0 0 15px rgba(15, 157, 88, 0.4);
 }
 
 .btn-sm {
@@ -236,7 +248,7 @@
 .game-card-header {
   background: linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.3) 100%);
   border-bottom: 1px solid var(--border-subtle);
-  padding: 0.75rem 1rem;
+  padding: 0.65rem 0.85rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -246,12 +258,13 @@
 .game-slot-badge {
   font-size: 0.7rem;
   font-weight: 800;
-  padding: 0.2rem 0.5rem;
+  padding: 0.2rem 0.45rem;
   border-radius: var(--radius-sm);
   background: rgba(59, 130, 246, 0.15);
   color: var(--color-blue);
   border: 1px solid rgba(59, 130, 246, 0.3);
   letter-spacing: 0.05em;
+  white-space: nowrap;
 }
 
 .game-title-input {
@@ -260,9 +273,9 @@
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   color: var(--text-primary);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 700;
-  padding: 0.25rem 0.5rem;
+  padding: 0.2rem 0.4rem;
   transition: all var(--transition-fast);
 }
 
@@ -276,6 +289,34 @@
   border-color: var(--border-active);
 }
 
+/* Seletor de Período (HT vs FT) */
+.period-toggle-group {
+  display: inline-flex;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.15rem;
+  gap: 0.15rem;
+}
+
+.period-tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.45rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.period-tab-btn.active {
+  background: var(--color-blue);
+  color: #ffffff;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+}
+
 /* Cronômetro e Minuto */
 .game-timer-box {
   display: flex;
@@ -283,8 +324,8 @@
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 0.2rem 0.5rem;
-  gap: 0.4rem;
+  padding: 0.2rem 0.45rem;
+  gap: 0.3rem;
 }
 
 .timer-display {
@@ -292,7 +333,7 @@
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--color-cyan);
-  min-width: 42px;
+  min-width: 48px;
   text-align: center;
 }
 
@@ -302,7 +343,7 @@
   color: var(--text-secondary);
   cursor: pointer;
   font-size: 0.75rem;
-  padding: 0.15rem 0.25rem;
+  padding: 0.15rem 0.2rem;
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
 }
@@ -314,65 +355,28 @@
 
 /* Corpo do Slot */
 .game-card-body {
-  padding: 1rem;
+  padding: 0.85rem;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
   flex: 1;
-}
-
-/* Seletor de Método / Estratégia */
-.strategy-selector-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
-.field-label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.select-control {
-  width: 100%;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-medium);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 0.5rem 0.75rem;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.select-control:focus {
-  outline: none;
-  border-color: var(--border-active);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
 /* GRID DE INPUTS PRINCIPAIS (CAMPOS DESTACADOS EM AMARELO) */
 .primary-inputs-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
+  gap: 0.65rem;
 }
 
 .input-group-yellow {
   background: linear-gradient(180deg, rgba(254, 240, 138, 0.12) 0%, rgba(254, 240, 138, 0.04) 100%);
   border: 1.5px solid rgba(250, 204, 21, 0.4);
   border-radius: var(--radius-md);
-  padding: 0.65rem 0.75rem;
+  padding: 0.5rem 0.65rem;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.2rem;
   transition: all var(--transition-fast);
 }
 
@@ -383,7 +387,7 @@
 }
 
 .input-label-yellow {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 800;
   color: #fef08a;
   text-transform: uppercase;
@@ -400,9 +404,9 @@
   border-radius: var(--radius-sm);
   color: #ffffff;
   font-family: var(--font-mono);
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 800;
-  padding: 0.35rem 0.5rem;
+  padding: 0.3rem 0.45rem;
   text-align: right;
   transition: all var(--transition-fast);
 }
@@ -413,135 +417,84 @@
   background: #000000;
 }
 
-/* Linha de Stepper Rápido (+/- Ticks e Odds) */
-.stepper-row {
+/* ========================================================
+   CARD DO MINUTO ATUAL (DECAIMENTO TEMPORAL)
+   ======================================================== */
+.minute-live-card {
+  background: linear-gradient(135deg, rgba(30, 58, 138, 0.35) 0%, rgba(15, 23, 42, 0.6) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.minute-live-header {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 0.25rem;
-  margin-top: 0.25rem;
+  justify-content: space-between;
 }
 
-.step-btn {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
+.minute-pill {
+  background: var(--color-blue);
+  color: #ffffff;
   font-family: var(--font-mono);
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 0.15rem 0.35rem;
-  cursor: pointer;
-  transition: all var(--transition-fast);
+  font-size: 0.8rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
 }
 
-.step-btn:hover {
-  background: var(--border-medium);
-  color: var(--text-primary);
+.minute-justa-value {
+  font-family: var(--font-mono);
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
 }
 
-/* ========================================================
-   SEÇÃO DE RESULTADOS AUTOMATIZADOS (MOTOR DE CÁLCULO)
-   ======================================================== */
-.auto-results-panel {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-.results-grid-3col {
+.minute-blocos-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
+  gap: 0.35rem;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 0.35rem;
 }
 
-.metric-pill {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  padding: 0.4rem 0.5rem;
+.bloco-item {
   display: flex;
   flex-direction: column;
 }
 
-.metric-pill-title {
-  font-size: 0.65rem;
+.bloco-label {
+  font-size: 0.6rem;
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
 }
 
-.metric-pill-value {
+.bloco-val {
   font-family: var(--font-mono);
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-top: 0.1rem;
-}
-
-/* Cartão Destaque de Pêndulo & Alvo de Saída */
-.pendulo-target-banner {
-  background: linear-gradient(135deg, rgba(30, 58, 138, 0.35) 0%, rgba(15, 23, 42, 0.5) 100%);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: var(--radius-md);
-  padding: 0.65rem 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.pendulo-info-block {
-  display: flex;
-  flex-direction: column;
-}
-
-.pendulo-info-label {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 700;
   color: var(--color-cyan);
-  text-transform: uppercase;
-}
-
-.pendulo-info-values {
-  display: flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  font-family: var(--font-mono);
-}
-
-.pendulo-odd-justa {
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: #ffffff;
-}
-
-.pendulo-arrow {
-  color: var(--text-muted);
-  font-size: 0.8rem;
-}
-
-.pendulo-odd-saida {
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: var(--color-green);
 }
 
 /* Badges de Zona */
 .zone-badge {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 800;
-  padding: 0.2rem 0.5rem;
+  padding: 0.15rem 0.45rem;
   border-radius: var(--radius-full);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  justify-content: center;
+  white-space: nowrap;
 }
 
 .zone-rapida {
@@ -562,36 +515,58 @@
   border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
-/* ========================================================
-   PAINEL DE CASHOUT / LIVE HEDGE DO SLOT
-   ======================================================== */
-.live-hedge-box {
-  background: var(--bg-card);
-  border: 1px solid var(--border-medium);
-  border-radius: var(--radius-md);
-  padding: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.hedge-odd-row {
+/* Indicador de Valor Mercado vs Justa */
+.badge-valordiff {
+  padding: 0.35rem 0.55rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+}
+
+.badge-valordiff.val-good {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--color-green);
+}
+
+.badge-valordiff.val-bad {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: var(--color-red);
+}
+
+.badge-valordiff.val-fair {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+/* ========================================================
+   SEÇÃO DE CASHOUT & HEDGE DO MINUTO
+   ======================================================== */
+.live-hedge-box {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
 }
 
 .hedge-odd-input {
-  width: 95px;
+  width: 85px;
   background: var(--bg-input);
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-family: var(--font-mono);
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
-  padding: 0.25rem 0.45rem;
+  padding: 0.2rem 0.4rem;
   text-align: right;
 }
 
@@ -600,11 +575,35 @@
   border-color: var(--color-cyan);
 }
 
+.stepper-row {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.step-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.35rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.step-btn:hover {
+  background: var(--border-medium);
+  color: var(--text-primary);
+}
+
 .hedge-result-display {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.4rem 0.6rem;
+  padding: 0.35rem 0.55rem;
   border-radius: var(--radius-sm);
   font-family: var(--font-mono);
 }
@@ -627,10 +626,48 @@
   color: var(--text-secondary);
 }
 
+/* Painel de Resultados Automáticos (Stake, Lucro, Red) */
+.auto-results-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.65rem;
+}
+
+.results-grid-3col {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
+}
+
+.metric-pill {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.45rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-pill-title {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.metric-pill-value {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 0.1rem;
+}
+
 /* Botões de Ação do Jogo */
 .game-actions-row {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .game-actions-row .btn {

@@ -1,0 +1,123 @@
+/**
+ * Motor de Decaimento Temporal Minuto a Minuto (Back Under)
+ * Implementação exata das fórmulas da aba 'IN LIVE' e 'HTFT' da planilha Google Docs.
+ */
+
+import { LADDER_DATA, findClosestLadder, getOddByTicks } from './ladderData.js';
+import { lookupBloco1, lookupBloco2 } from './blocosData.js';
+import { findClosestPendulo } from './pendulosData.js';
+import { normalizeOdd } from './oddsCalculator.js';
+
+/**
+ * Calcula a curva completa minuto a minuto para o período selecionado
+ * @param {object} params
+ * @param {'HT' | 'FT'} params.period - 'HT' (1º tempo 1-45') ou 'FT' (2º tempo 46-90')
+ * @param {number} params.initialOdd - Odd inicial no minuto de abertura
+ * @param {number} params.addedMinutes - Minutos de acréscimo previstos (ex: 2 para HT, 5 para FT)
+ * @param {object} params.liveCorrections - Dicionário de correções manuais { [minuto]: oddReal }
+ * @returns {Array<object>} Array com cada minuto e suas métricas calculadas
+ */
+export function calculateMinuteCurve({
+  period = 'HT',
+  initialOdd = 3.35,
+  addedMinutes = 2,
+  liveCorrections = {}
+}) {
+  const isHT = period === 'HT';
+  const startMinute = isHT ? 1 : 46;
+  const nominalMinutes = 45;
+  const totalPeriodMinutes = nominalMinutes + (Number(addedMinutes) || 0);
+  const endMinute = isHT ? totalPeriodMinutes : (45 + totalPeriodMinutes);
+
+  const curve = [];
+  let prevOdd = Number(initialOdd) || 2.00;
+
+  for (let minute = startMinute; minute <= endMinute; minute++) {
+    const elapsed = isHT ? minute : (minute - 45);
+    const rowOffset = elapsed; // Minuto relativo dentro do tempo (1 a 45+acrescimos)
+    const timeRemaining = Math.max(1, totalPeriodMinutes - rowOffset + 1);
+
+    let oddJusta;
+
+    // Se houver correção manual neste minuto
+    if (liveCorrections[minute] !== undefined && liveCorrections[minute] !== null && liveCorrections[minute] > 1.0) {
+      oddJusta = Number(liveCorrections[minute]);
+    } else if (minute === startMinute) {
+      oddJusta = prevOdd;
+    } else {
+      // Fórmula da Planilha:
+      // IF(B_prev >= 2, B_prev * (1 + (POWER(1.01/B_prev, 1/timeRemaining) - 1)), LadderLookup)
+      if (prevOdd >= 2.00) {
+        const decayFactor = Math.pow(1.01 / prevOdd, 1 / timeRemaining) - 1;
+        oddJusta = prevOdd * (1 + decayFactor);
+      } else {
+        const ladderItem = findClosestLadder(prevOdd);
+        const currentTicks = ladderItem.tickIndex;
+        const newTicks = currentTicks - ((currentTicks - 1) / timeRemaining);
+        oddJusta = getOddByTicks(newTicks);
+      }
+    }
+
+    oddJusta = Math.max(1.01, oddJusta);
+    prevOdd = oddJusta;
+
+    // Bloco 1 e Bloco 2
+    const bloco1 = lookupBloco1(oddJusta);
+    const bloco2 = lookupBloco2(oddJusta);
+
+    // Zona de Velocidade
+    const pendulo = findClosestPendulo(oddJusta, 'justa');
+    const zona = pendulo ? pendulo.zona : (oddJusta >= 4.0 ? 'Lenta' : (oddJusta >= 1.8 ? 'Rápida' : 'Média'));
+
+    // Diferença se houver odd de mercado ao vivo informada
+    const liveOdd = liveCorrections[minute] !== undefined ? liveCorrections[minute] : null;
+    let diffPct = null;
+    if (liveOdd && liveOdd > 1.0) {
+      diffPct = Number((((liveOdd / oddJusta) - 1) * 100).toFixed(2));
+    }
+
+    curve.push({
+      minute: minute,
+      elapsed: elapsed,
+      oddJusta: Number(oddJusta.toFixed(3)),
+      oddJustaFormatted: normalizeOdd(oddJusta).toFixed(2),
+      liveOdd: liveOdd ? Number(liveOdd).toFixed(2) : null,
+      diffPct: diffPct,
+      topo1: bloco1.topo,
+      fundo1: bloco1.fundo,
+      topo2: bloco2.topo,
+      fundo2: bloco2.fundo,
+      zona: zona
+    });
+  }
+
+  return curve;
+}
+
+/**
+ * Obtém os dados projetados especificamente para o minuto atual do jogo
+ * @param {Array<object>} curve - Curva gerada por calculateMinuteCurve
+ * @param {number} currentMinute - Minuto atual (ex: 15)
+ * @returns {object}
+ */
+export function getMinuteMetrics(curve, currentMinute) {
+  if (!curve || curve.length === 0) return null;
+  const match = curve.find(c => c.minute === currentMinute);
+  if (match) return match;
+  if (currentMinute < curve[0].minute) return curve[0];
+  return curve[curve.length - 1];
+}
+
+/**
+ * Aplica o salto de odd decorrente de um gol a favor ou contra (Regra x2.5 da planilha)
+ * @param {number} currentOdd 
+ * @param {boolean} isFavor - true = Gol a Favor (Odd sobe x2.5), false = Gol Contra (Odd cai /2.5)
+ * @returns {number}
+ */
+export function applyGoalOddShift(currentOdd, isFavor = true) {
+  const base = Number(currentOdd) || 2.00;
+  let shifted = isFavor ? (base * 2.5) : (base / 2.5);
+  shifted = Math.max(1.01, Math.min(1000.0, shifted));
+  const ladderItem = findClosestLadder(shifted);
+  return ladderItem.odd;
+}
