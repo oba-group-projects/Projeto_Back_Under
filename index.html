@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Projeto Back Under | Terminal de Trading Esportivo Multi-Jogos</title>
+  <meta name="description" content="Aplicação de alta performance para trade esportivo em Back Under. Automação total de stakes, mapa de pêndulos Parede V6 e suporte a até 4 jogos em paralelo.">
+  
+  <!-- Estilos da Aplicação -->
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/grid.css">
+</head>
+<body>
+
+  <!-- Topo da Aplicação (Header Sticky) -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-wrapper">
+        <div class="brand-icon">⚽</div>
+        <div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span class="brand-title">PROJETO BACK UNDER</span>
+            <span class="brand-badge">PRO LIVE</span>
+          </div>
+          <p style="font-size: 0.7rem; color: var(--text-muted);">Terminal Multi-Jogos & Motor de Pêndulos Parede V6</p>
+        </div>
+      </div>
+
+      <!-- Controles Globais do Header -->
+      <div class="header-controls">
+        <!-- Input Mestre de Red Aceitável -->
+        <div class="master-risk-box">
+          <span class="master-risk-label">🛡️ Red Global (R$):</span>
+          <input type="number" id="masterRedInput" class="master-risk-input" step="10" value="200" title="Valor base de Red Aceitável para cálculo de stakes">
+        </div>
+
+        <!-- Seletor de visualização (1, 2 ou 4 jogos) -->
+        <div class="view-toggle-group">
+          <button class="view-toggle-btn active" data-view="view-4" title="Visualizar 4 Jogos em Grid (2x2)">4 Jogos</button>
+          <button class="view-toggle-btn" data-view="view-2" title="Visualizar 2 Jogos">2 Jogos</button>
+          <button class="view-toggle-btn" data-view="view-1" title="Foco em 1 Jogo Único">1 Jogo</button>
+        </div>
+
+        <!-- Botão Abrir Pêndulos -->
+        <button id="openPendulosHeaderBtn" class="btn btn-secondary">
+          <span>📖 Mapa Pêndulos V6</span>
+        </button>
+
+        <!-- Botão de Som -->
+        <button id="soundToggleBtn" class="btn btn-secondary">
+          <span>🔔 Som Ativo</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Conteúdo Principal -->
+  <main class="app-main">
+
+    <!-- Barra de Resumo Global / KPIs da Sessão -->
+    <section class="quick-summary-bar">
+      <div class="summary-card">
+        <div class="summary-card-info">
+          <span class="summary-card-label">Operações Fechadas</span>
+          <span id="statTotalTrades" class="summary-card-value">0</span>
+        </div>
+        <div class="summary-card-icon">📋</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-card-info">
+          <span class="summary-card-label">Win Rate</span>
+          <span id="statWinRate" class="summary-card-value text-green">0.0% (0G / 0R)</span>
+        </div>
+        <div class="summary-card-icon">🎯</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-card-info">
+          <span class="summary-card-label">P/L Líquido Total</span>
+          <span id="statPLTotal" class="summary-card-value text-primary">R$ 0,00</span>
+        </div>
+        <div class="summary-card-icon">💰</div>
+      </div>
+
+      <div class="summary-card">
+        <div class="summary-card-info">
+          <span class="summary-card-label">ROI Geral</span>
+          <span id="statROIGeral" class="summary-card-value text-primary">0,0%</span>
+        </div>
+        <div class="summary-card-icon">📈</div>
+      </div>
+    </section>
+
+    <!-- Grid Multi-Jogos (Suporte até 4 jogos em paralelo) -->
+    <section id="gamesGrid" class="games-grid view-4">
+      <!-- Slot 1 -->
+      <div id="slotCard1" class="game-card"></div>
+      <!-- Slot 2 -->
+      <div id="slotCard2" class="game-card"></div>
+      <!-- Slot 3 -->
+      <div id="slotCard3" class="game-card"></div>
+      <!-- Slot 4 -->
+      <div id="slotCard4" class="game-card"></div>
+    </section>
+
+    <!-- Seção de Histórico de Operações -->
+    <section class="history-section">
+      <div class="history-header">
+        <h2 class="history-title">
+          <span>📜</span> Histórico de Trades da Sessão
+        </h2>
+        <div style="display: flex; gap: 0.5rem;">
+          <button id="exportHistoryBtn" class="btn btn-primary btn-sm">
+            <span>💾 Exportar CSV</span>
+          </button>
+          <button id="clearHistoryBtn" class="btn btn-secondary btn-sm" style="color: var(--color-red);">
+            <span>🗑️ Limpar</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="history-table-wrapper">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Hora</th>
+              <th>Jogo</th>
+              <th>Estratégia</th>
+              <th>Odd Entrada</th>
+              <th>Odd Saída</th>
+              <th>Stake</th>
+              <th>P/L Líquido</th>
+              <th>ROI</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody"></tbody>
+        </table>
+        <div id="emptyHistoryMessage" class="empty-history-message">
+          Nenhum trade finalizado nesta sessão. As operações fechadas com cashout aparecerão aqui automaticamente.
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal do Mapa de Pêndulos Parede V6 -->
+  <div id="penduloModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h3 style="font-size: 1.15rem; font-weight: 800; color: #ffffff;">📖 Mapa de Pêndulos - Under Limit (Parede V6)</h3>
+          <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem;">
+            Clique em qualquer linha para carregar os parâmetros instantaneamente no jogo selecionado.
+          </p>
+        </div>
+        <button id="closePenduloModalBtn" class="modal-close-btn">&times;</button>
+      </div>
+
+      <div style="padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border-subtle); background: var(--bg-surface);">
+        <input type="text" id="penduloSearchInput" placeholder="🔍 Filtrar por Odd 365, Odd Justa ou Zona (ex: 3.50, Rápida...)" class="select-control" style="font-size: 0.85rem;">
+      </div>
+
+      <div class="modal-body">
+        <table class="pendulo-table">
+          <thead>
+            <tr>
+              <th>Odd 365</th>
+              <th>Odd Justa</th>
+              <th>Caminho</th>
+              <th>Saída</th>
+              <th>Ticks</th>
+              <th>Valor/Tick</th>
+              <th>Valor Bloco</th>
+              <th>Zona</th>
+            </tr>
+          </thead>
+          <tbody id="penduloTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Container de Toasts de Notificação -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Scripts da Aplicação (Módulos ES6) -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

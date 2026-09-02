@@ -1,0 +1,24 @@
+{
+  "name": "projeto_back_under",
+  "version": "1.0.0",
+  "description": "Terminal Web de Alta Performance para Trade Esportivo em Back Under",
+  "main": "js/app.js",
+  "type": "module",
+  "scripts": {
+    "test": "node test/test-calculations.js",
+    "start": "npx serve ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/obadoceria-gif/Projeto_Back_Under.git"
+  },
+  "keywords": [
+    "trading-esportivo",
+    "back-under",
+    "betfair",
+    "odds",
+    "stake-management"
+  ],
+  "author": "Projeto Back Under",
+  "license": "MIT"
+}
