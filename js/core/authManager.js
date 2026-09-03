@@ -1,11 +1,12 @@
 /**
  * Gerenciador de Autenticação, Sessões e Controle de Usuários
- * Suporte a papéis de Administrador e Usuários, logs de acesso e sessão única.
+ * Suporte a Solicitações de Cadastro (Aprovação/Reprovação pelo Admin),
+ * campos de WhatsApp, Cidade, papéis de Administrador e Trader, e logs de auditoria.
  */
 
-const USERS_STORAGE_KEY = 'projeto_back_under_users_v1';
-const SESSION_STORAGE_KEY = 'projeto_back_under_session_v1';
-const LOGS_STORAGE_KEY = 'projeto_back_under_access_logs_v1';
+const USERS_STORAGE_KEY = 'projeto_back_under_users_v2';
+const SESSION_STORAGE_KEY = 'projeto_back_under_session_v2';
+const LOGS_STORAGE_KEY = 'projeto_back_under_access_logs_v2';
 
 export class AuthManager {
   constructor() {
@@ -19,25 +20,27 @@ export class AuthManager {
           id: 'usr_admin_1',
           name: 'Administrador Master',
           email: 'admin@backunder.pro',
+          whatsapp: '(11) 99999-9999',
+          city: 'São Paulo / SP',
           password: 'admin',
           role: 'admin',
-          status: 'active', // 'active' | 'blocked'
+          status: 'active', // 'active' | 'pending' | 'blocked'
           createdAt: new Date().toISOString(),
           lastLogin: new Date().toISOString(),
-          lastDevice: 'Windows 11 (Chrome)',
-          lastLocation: 'Porto Alegre / RS'
+          lastDevice: 'Windows 11 (Chrome)'
         },
         {
           id: 'usr_teste_1',
           name: 'Trader Teste',
           email: 'trader@teste.com',
+          whatsapp: '(51) 98888-7777',
+          city: 'Porto Alegre / RS',
           password: 'teste',
           role: 'user',
           status: 'active',
           createdAt: new Date().toISOString(),
           lastLogin: null,
-          lastDevice: 'Android (Mobile)',
-          lastLocation: 'São Paulo / SP'
+          lastDevice: 'Android (Mobile)'
         }
       ];
       localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(defaultUsers));
@@ -83,7 +86,6 @@ export class AuthManager {
     };
 
     logs.unshift(newLog);
-    // Guarda os últimos 50 logs
     localStorage.setItem(LOGS_STORAGE_KEY, JSON.stringify(logs.slice(0, 50)));
   }
 
@@ -102,12 +104,20 @@ export class AuthManager {
       return { success: false, message: 'Senha incorreta. Tente novamente.' };
     }
 
+    if (user.status === 'pending') {
+      this.addAccessLog(user, false, 'Cadastro pendente de aprovação');
+      return { 
+        success: false, 
+        message: '⏳ Seu cadastro está em análise pelo Administrador. Assim que for liberado, você conseguirá acessar o cockpit.' 
+      };
+    }
+
     if (user.status === 'blocked') {
       this.addAccessLog(user, false, 'Acesso bloqueado pelo Administrador');
       return { success: false, message: 'Seu acesso está bloqueado. Entre em contato com o Administrador.' };
     }
 
-    // Atualiza último login do usuário
+    // Atualiza último login
     user.lastLogin = new Date().toISOString();
     user.lastDevice = navigator.userAgent.includes('Mobile') ? 'Mobile (Smartphone)' : 'Desktop (Computador)';
     this.saveUsers(users);
@@ -118,6 +128,8 @@ export class AuthManager {
       name: user.name,
       email: user.email,
       role: user.role,
+      whatsapp: user.whatsapp || '',
+      city: user.city || '',
       token: 'tok_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
       loginAt: new Date().toISOString()
     };
@@ -150,7 +162,41 @@ export class AuthManager {
     return session && session.role === 'admin';
   }
 
-  createUser({ name, email, password, role = 'user' }) {
+  /**
+   * Solicitação de Cadastro pelo Usuário Público (Fica com status 'pending')
+   */
+  requestRegistration({ name, whatsapp, city, email, password }) {
+    const users = this.getUsers();
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (users.some(u => u.email.toLowerCase() === normalizedEmail)) {
+      return { success: false, message: 'Já existe um cadastro com este e-mail.' };
+    }
+
+    const newUser = {
+      id: 'usr_' + Date.now(),
+      name: name.trim(),
+      whatsapp: whatsapp.trim(),
+      city: city.trim(),
+      email: normalizedEmail,
+      password: password.trim(),
+      role: 'user',
+      status: 'pending', // Pendente de aprovação do Admin
+      createdAt: new Date().toISOString(),
+      lastLogin: null,
+      lastDevice: 'Aguardando aprovação'
+    };
+
+    users.push(newUser);
+    this.saveUsers(users);
+    this.addAccessLog(newUser, true, 'Nova solicitação de cadastro recebida');
+    return { success: true, user: newUser };
+  }
+
+  /**
+   * Criação direta pelo Administrador (Já nasce 'active')
+   */
+  createUser({ name, email, whatsapp = '', city = '', password, role = 'user' }) {
     const users = this.getUsers();
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -161,13 +207,15 @@ export class AuthManager {
     const newUser = {
       id: 'usr_' + Date.now(),
       name: name.trim(),
+      whatsapp: whatsapp.trim(),
+      city: city.trim(),
       email: normalizedEmail,
       password: password.trim(),
       role: role,
       status: 'active',
       createdAt: new Date().toISOString(),
       lastLogin: null,
-      lastDevice: 'Nunca acessou'
+      lastDevice: 'Cadastrado pelo Admin'
     };
 
     users.push(newUser);
@@ -175,12 +223,33 @@ export class AuthManager {
     return { success: true, user: newUser };
   }
 
+  approveUser(userId) {
+    const users = this.getUsers();
+    const user = users.find(u => u.id === userId);
+    if (!user) return false;
+
+    user.status = 'active';
+    this.saveUsers(users);
+    this.addAccessLog(user, true, 'Cadastro aprovado pelo Administrador');
+    return true;
+  }
+
+  rejectUser(userId) {
+    let users = this.getUsers();
+    const user = users.find(u => u.id === userId);
+    if (!user) return false;
+
+    users = users.filter(u => u.id !== userId);
+    this.saveUsers(users);
+    this.addAccessLog(user, false, 'Cadastro recusado pelo Administrador');
+    return true;
+  }
+
   toggleUserStatus(userId) {
     const users = this.getUsers();
     const user = users.find(u => u.id === userId);
     if (!user) return false;
 
-    // Não permite bloquear o admin principal
     if (user.role === 'admin' && user.id === 'usr_admin_1') {
       return false;
     }
@@ -200,6 +269,11 @@ export class AuthManager {
     users = users.filter(u => u.id !== userId);
     this.saveUsers(users);
     return true;
+  }
+
+  getPendingUsersCount() {
+    const users = this.getUsers();
+    return users.filter(u => u.status === 'pending').length;
   }
 }
 
