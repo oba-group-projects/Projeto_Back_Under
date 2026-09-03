@@ -13,7 +13,7 @@
 </head>
 <body>
 
-  <!-- Topo da Aplicação (Header Sticky Limpo) -->
+  <!-- Topo da Aplicação (Header Sticky Limpo & Focado) -->
   <header class="app-header">
     <div class="header-container">
       <div class="brand-wrapper">
@@ -21,37 +21,27 @@
         <div>
           <div style="display: flex; align-items: center; gap: 0.4rem;">
             <span class="brand-title">PROJETO BACK UNDER</span>
-            <span class="brand-badge">PRO HUD</span>
+            <span class="brand-badge">PRO COCKPIT</span>
           </div>
         </div>
       </div>
 
-      <!-- Controles Globais do Header -->
+      <!-- Controles de Layout (1, 2, 3 ou 4 Jogos Centralizados) -->
       <div class="header-controls">
-        <!-- Seletor de visualização (1, 2 ou 4 jogos) -->
         <div class="view-toggle-group">
-          <button class="view-toggle-btn active" data-view="view-4" title="Visualizar 4 Jogos em Grid (2x2)">4 Jogos</button>
+          <button class="view-toggle-btn active" data-view="view-4" title="Visualizar 4 Jogos (2x2)">4 Jogos</button>
+          <button class="view-toggle-btn" data-view="view-3" title="Visualizar 3 Jogos">3 Jogos</button>
           <button class="view-toggle-btn" data-view="view-2" title="Visualizar 2 Jogos">2 Jogos</button>
-          <button class="view-toggle-btn" data-view="view-1" title="Foco em 1 Jogo Único">1 Jogo</button>
+          <button class="view-toggle-btn" data-view="view-1" title="Foco em 1 Jogo Único Centralizado">1 Jogo</button>
         </div>
-
-        <!-- Botão Acessar Planilha Google Sheets Oficial -->
-        <a href="https://docs.google.com/spreadsheets/d/1N1qP-n4e4LJTXvUGVm9CNiGySE9mvOrriGlvIZUWV0k/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="btn btn-sheets" title="Abrir Planilha Mestre no Google Docs">
-          <span>📊 Planilha Google Sheets</span>
-        </a>
-
-        <!-- Botão Abrir Pêndulos -->
-        <button id="openPendulosHeaderBtn" class="btn btn-secondary">
-          <span>📖 Mapa Pêndulos</span>
-        </button>
       </div>
     </div>
   </header>
 
-  <!-- Conteúdo Principal: Cockpit Grid Multi-Jogos -->
+  <!-- Conteúdo Principal: Cockpit Grid Multi-Jogos Centralizado -->
   <main class="app-main" style="padding: 0.75rem;">
 
-    <!-- Grid Multi-Jogos (Suporte até 4 jogos em paralelo) -->
+    <!-- Grid Multi-Jogos (Suporte a 1, 2, 3 ou 4 jogos) -->
     <section id="gamesGrid" class="games-grid view-4">
       <!-- Slot 1 -->
       <div id="slotCard1" class="game-card"></div>
@@ -64,40 +54,6 @@
     </section>
 
   </main>
-
-  <!-- Modal do Mapa de Pêndulos Parede V6 -->
-  <div id="penduloModal" class="modal-overlay">
-    <div class="modal-content">
-      <div class="modal-header">
-        <div>
-          <h3 style="font-size: 1.1rem; font-weight: 800; color: #ffffff;">📖 Mapa de Pêndulos - Under Limit (Parede V6)</h3>
-        </div>
-        <button id="closePenduloModalBtn" class="modal-close-btn">&times;</button>
-      </div>
-
-      <div style="padding: 0.6rem 1rem; border-bottom: 1px solid var(--border-subtle); background: var(--bg-surface);">
-        <input type="text" id="penduloSearchInput" placeholder="🔍 Filtrar por Odd 365, Odd Justa ou Zona (ex: 3.50, Rápida...)" class="select-control" style="font-size: 0.85rem;">
-      </div>
-
-      <div class="modal-body">
-        <table class="pendulo-table">
-          <thead>
-            <tr>
-              <th>Odd 365</th>
-              <th>Odd Justa</th>
-              <th>Caminho</th>
-              <th>Saída</th>
-              <th>Ticks</th>
-              <th>Valor/Tick</th>
-              <th>Valor Bloco</th>
-              <th>Zona</th>
-            </tr>
-          </thead>
-          <tbody id="penduloTableBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
 
   <!-- Scripts da Aplicação (Módulos ES6) -->
   <script type="module" src="js/app.js"></script>
