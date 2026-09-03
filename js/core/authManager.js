@@ -24,6 +24,9 @@ export class AuthManager {
       }
     }
 
+    // Remove qualquer cadastro secundário duplicado com o mesmo e-mail do admin principal
+    users = users.filter(u => u.id === 'usr_admin_1' || (u.email && u.email.toLowerCase() !== 'pc_far@hotmail.com' && u.email.toLowerCase() !== 'admin@backunder.pro'));
+
     // Busca se já existe o admin principal
     let admin = users.find(u => u.id === 'usr_admin_1' || u.role === 'admin');
     if (!admin) {
@@ -33,7 +36,7 @@ export class AuthManager {
         email: 'pc_far@hotmail.com',
         whatsapp: '51996069505',
         city: 'Porto Alegre / RS',
-        password: 'admin',
+        password: 'admin123',
         role: 'admin',
         status: 'active',
         createdAt: new Date().toISOString(),
@@ -43,11 +46,12 @@ export class AuthManager {
       users.unshift(admin);
     } else {
       // Atualiza os dados do Administrador Master para os dados oficiais
+      admin.id = 'usr_admin_1';
+      admin.role = 'admin';
       admin.name = 'Bora Group Projects';
       admin.email = 'pc_far@hotmail.com';
       admin.whatsapp = '51996069505';
       admin.city = 'Porto Alegre / RS';
-      // Se a senha ainda for 'admin', definimos 'admin123' como padrão claro
       if (admin.password === 'admin') {
         admin.password = 'admin123';
       }
@@ -75,6 +79,8 @@ export class AuthManager {
     // Atualiza a sessão ativa se o usuário atual for o admin
     const currentSession = this.getCurrentSession();
     if (currentSession && (currentSession.userId === 'usr_admin_1' || currentSession.role === 'admin')) {
+      currentSession.userId = 'usr_admin_1';
+      currentSession.role = 'admin';
       currentSession.name = 'Bora Group Projects';
       currentSession.email = 'pc_far@hotmail.com';
       currentSession.whatsapp = '51996069505';
@@ -130,7 +136,7 @@ export class AuthManager {
     const normalizedEmail = (email || '').trim().toLowerCase();
     
     // Busca usuário pelo e-mail ou apelido do admin
-    let user = users.find(u => u.email.toLowerCase() === normalizedEmail);
+    let user = users.find(u => u.email && u.email.toLowerCase() === normalizedEmail);
     if (!user && (normalizedEmail === 'admin@backunder.pro' || normalizedEmail === 'admin')) {
       user = users.find(u => u.id === 'usr_admin_1' || u.role === 'admin');
     }
@@ -200,7 +206,11 @@ export class AuthManager {
     const session = this.getCurrentSession();
     if (!session) return null;
     const users = this.getUsers();
-    return users.find(u => u.id === session.userId) || null;
+    let user = users.find(u => u.id === session.userId);
+    if (!user && session.role === 'admin') {
+      user = users.find(u => u.id === 'usr_admin_1' || u.role === 'admin');
+    }
+    return user || null;
   }
 
   isAuthenticated() {
@@ -235,20 +245,31 @@ export class AuthManager {
    * Atualização de Perfil pelo Próprio Usuário Logado
    */
   updateProfile(userId, { name, whatsapp, city, email, currentPassword, newPassword }) {
-    const users = this.getUsers();
-    const user = users.find(u => u.id === userId);
+    let users = this.getUsers();
+    let user = users.find(u => u.id === userId);
+    
+    // Se for o admin e não achou por ID exato, busca o admin principal
+    if (!user && (userId === 'usr_admin_1' || this.isAdmin())) {
+      user = users.find(u => u.id === 'usr_admin_1' || u.role === 'admin');
+    }
     if (!user) return { success: false, message: 'Usuário não encontrado.' };
 
     const normalizedEmail = (email || '').trim().toLowerCase();
-    const emailInUse = users.some(u => u.id !== userId && u.email.toLowerCase() === normalizedEmail);
-    if (emailInUse) {
-      return { success: false, message: 'Este e-mail já está em uso por outro usuário.' };
+
+    // Se for o admin, remove automaticamente qualquer outro cadastro duplicado com o mesmo email
+    if (user.id === 'usr_admin_1' || user.role === 'admin') {
+      users = users.filter(u => u.id === user.id || (u.email && u.email.toLowerCase() !== normalizedEmail));
+    } else {
+      const emailInUse = users.some(u => u.id !== user.id && u.email && u.email.toLowerCase() === normalizedEmail);
+      if (emailInUse) {
+        return { success: false, message: 'Este e-mail já está em uso por outro usuário.' };
+      }
     }
 
-    // Se informou nova senha, valida a senha atual (ou master admin flexível)
+    // Se informou nova senha, valida a senha atual (ou master admin autenticado)
     if (newPassword && newPassword.trim() !== '') {
-      const isCurrentValid = user.password === currentPassword || 
-                             (user.id === 'usr_admin_1' && (currentPassword === 'admin' || currentPassword === 'admin123' || !currentPassword));
+      const isMasterAdmin = (user.id === 'usr_admin_1' || user.role === 'admin');
+      const isCurrentValid = isMasterAdmin || (user.password === currentPassword);
       if (!isCurrentValid) {
         return { success: false, message: 'A senha atual informada está incorreta.' };
       }
@@ -264,7 +285,9 @@ export class AuthManager {
 
     // Atualiza a sessão ativa
     const currentSession = this.getCurrentSession();
-    if (currentSession && currentSession.userId === userId) {
+    if (currentSession) {
+      currentSession.userId = user.id;
+      currentSession.role = user.role;
       currentSession.name = user.name;
       currentSession.email = user.email;
       currentSession.whatsapp = user.whatsapp;

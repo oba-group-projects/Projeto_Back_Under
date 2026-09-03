@@ -91,8 +91,8 @@ export class LoginModal {
           <a href="https://wa.me/5551996069505?text=Ol%C3%A1!%20Gostaria%20de%20suporte%2Flibera%C3%A7%C3%A3o%20de%20acesso%20no%20Cockpit%20Precifica%C3%A7%C3%A3o%20Justa%20Back%20ao%20Under." 
              target="_blank" 
              rel="noopener noreferrer" 
-             style="display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; text-decoration: none; padding: 0.45rem 0.85rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3); transition: all 0.2s ease;">
-            <span>💬 Falar no WhatsApp com o Administrador</span>
+             style="display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; text-decoration: none; padding: 0.45rem 0.95rem; border-radius: 6px; font-size: 0.78rem; font-weight: 700; box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3); transition: all 0.2s ease;">
+            <span>💬 Falar no WhatsApp</span>
           </a>
         </div>
       </div>
@@ -168,7 +168,7 @@ export class LoginModal {
         regSuccess.innerHTML = `
           <strong>🎉 Cadastro Realizado com Sucesso!</strong><br>
           Seus dados foram cadastrados e estão em ativação pelo Administrador.<br>
-          <span style="font-size: 0.7rem; color: #a7f3d0;">Chame o Admin no WhatsApp abaixo para agilizar a liberação!</span>
+          <span style="font-size: 0.7rem; color: #a7f3d0;">Chame no WhatsApp abaixo para agilizar a liberação!</span>
         `;
         regSuccess.style.display = 'block';
         regForm.reset();
