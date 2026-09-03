@@ -1,7 +1,7 @@
 /**
  * Gerenciador de Autenticação, Sessões e Controle de Usuários
- * Suporte a Solicitações de Cadastro (Aprovação/Reprovação pelo Admin),
- * campos de WhatsApp, Cidade, papéis de Administrador e Trader, e logs de auditoria.
+ * Suporte a Atualização de Perfil pelo Próprio Usuário, Troca de Senha com Validação Forte,
+ * Solicitações de Cadastro e Auditoria de Acessos.
  */
 
 const USERS_STORAGE_KEY = 'projeto_back_under_users_v2';
@@ -20,11 +20,11 @@ export class AuthManager {
           id: 'usr_admin_1',
           name: 'Administrador Master',
           email: 'admin@backunder.pro',
-          whatsapp: '(11) 99999-9999',
+          whatsapp: '11999999999',
           city: 'São Paulo / SP',
           password: 'admin',
           role: 'admin',
-          status: 'active', // 'active' | 'pending' | 'blocked'
+          status: 'active',
           createdAt: new Date().toISOString(),
           lastLogin: new Date().toISOString(),
           lastDevice: 'Windows 11 (Chrome)'
@@ -33,7 +33,7 @@ export class AuthManager {
           id: 'usr_teste_1',
           name: 'Trader Teste',
           email: 'trader@teste.com',
-          whatsapp: '(51) 98888-7777',
+          whatsapp: '51988887777',
           city: 'Porto Alegre / RS',
           password: 'teste',
           role: 'user',
@@ -153,6 +153,13 @@ export class AuthManager {
     }
   }
 
+  getCurrentUser() {
+    const session = this.getCurrentSession();
+    if (!session) return null;
+    const users = this.getUsers();
+    return users.find(u => u.id === session.userId) || null;
+  }
+
   isAuthenticated() {
     return this.getCurrentSession() !== null;
   }
@@ -160,6 +167,49 @@ export class AuthManager {
   isAdmin() {
     const session = this.getCurrentSession();
     return session && session.role === 'admin';
+  }
+
+  /**
+   * Atualização de Perfil pelo Próprio Usuário Logado
+   */
+  updateProfile(userId, { name, whatsapp, city, email, currentPassword, newPassword }) {
+    const users = this.getUsers();
+    const user = users.find(u => u.id === userId);
+    if (!user) return { success: false, message: 'Usuário não encontrado.' };
+
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const emailInUse = users.some(u => u.id !== userId && u.email.toLowerCase() === normalizedEmail);
+    if (emailInUse) {
+      return { success: false, message: 'Este e-mail já está em uso por outro usuário.' };
+    }
+
+    // Se informou nova senha, valida a senha atual
+    if (newPassword && newPassword.trim() !== '') {
+      if (!currentPassword || user.password !== currentPassword) {
+        return { success: false, message: 'A senha atual informada está incorreta.' };
+      }
+      user.password = newPassword.trim();
+    }
+
+    user.name = name.trim();
+    user.whatsapp = whatsapp.trim();
+    user.city = city.trim();
+    user.email = normalizedEmail;
+
+    this.saveUsers(users);
+
+    // Atualiza a sessão ativa
+    const currentSession = this.getCurrentSession();
+    if (currentSession && currentSession.userId === userId) {
+      currentSession.name = user.name;
+      currentSession.email = user.email;
+      currentSession.whatsapp = user.whatsapp;
+      currentSession.city = user.city;
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(currentSession));
+    }
+
+    this.addAccessLog(user, true, 'Perfil atualizado com sucesso');
+    return { success: true, user };
   }
 
   /**
@@ -181,7 +231,7 @@ export class AuthManager {
       email: normalizedEmail,
       password: password.trim(),
       role: 'user',
-      status: 'pending', // Pendente de aprovação do Admin
+      status: 'pending',
       createdAt: new Date().toISOString(),
       lastLogin: null,
       lastDevice: 'Aguardando aprovação'
@@ -194,7 +244,7 @@ export class AuthManager {
   }
 
   /**
-   * Criação direta pelo Administrador (Já nasce 'active')
+   * Criação direta pelo Administrador
    */
   createUser({ name, email, whatsapp = '', city = '', password, role = 'user' }) {
     const users = this.getUsers();

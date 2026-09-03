@@ -1,13 +1,14 @@
 /**
- * Controlador Principal da Aplicação - Projeto Back Under Multi-Jogos
+ * Controlador Principal da Aplicação - PRECIFICAÇÃO JUSTA BACK AO UNDER
  * - Autenticação e Perfis (Administrador Master e Trader)
- * - Dashboard do Administrador
+ * - Dashboard do Administrador e Modal de Meu Perfil (Edição e Senha Forte)
  * - Gestão dos Slots 1 a 4 com Layouts Centralizados (1, 2, 3 e 4 Jogos)
  */
 import { GameSlot } from './components/GameSlot.js';
 import { PenduloModal } from './components/PenduloModal.js';
 import { LoginModal } from './components/LoginModal.js';
 import { AdminDashboard } from './components/AdminDashboard.js';
+import { UserProfileModal } from './components/UserProfileModal.js';
 import { authManager } from './core/authManager.js';
 
 class App {
@@ -18,6 +19,7 @@ class App {
     this.penduloModal = null;
     this.loginModal = null;
     this.adminDashboard = null;
+    this.userProfileModal = null;
 
     this.init();
   }
@@ -28,6 +30,7 @@ class App {
     this.initSlots();
     this.initPenduloModal();
     this.initAdminDashboard();
+    this.initUserProfileModal();
     this.bindHeaderEvents();
     this.updateUserUI();
   }
@@ -47,6 +50,13 @@ class App {
   initAdminDashboard() {
     this.adminDashboard = new AdminDashboard(() => {
       this.updateUserUI();
+    });
+  }
+
+  initUserProfileModal() {
+    this.userProfileModal = new UserProfileModal((updatedUser) => {
+      this.updateUserUI();
+      this.showToast('Dados salvos com sucesso!');
     });
   }
 
@@ -116,6 +126,14 @@ class App {
   }
 
   bindHeaderEvents() {
+    // Clique no Badge de Perfil abre o Modal de Edição / Troca de Senha
+    const profileBadge = document.getElementById('userProfileBadge');
+    if (profileBadge) {
+      profileBadge.addEventListener('click', () => {
+        if (this.userProfileModal) this.userProfileModal.show();
+      });
+    }
+
     // Botão Abrir Painel Admin
     const adminBtn = document.getElementById('adminDashboardBtn');
     if (adminBtn) {

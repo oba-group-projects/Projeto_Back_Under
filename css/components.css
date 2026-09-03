@@ -1,10 +1,11 @@
 /**
- * Estilos Modernos de Alta Visibilidade - HUD Cockpit V7 Projeto Back Under
+ * Estilos Modernos de Alta Visibilidade - HUD Cockpit V8 Projeto Back Under
  * - Fundo Destacado para Odd Justa
  * - Sem Overflow nas Caixas de Odd Live e Minuto TV
  * - Cores de Cabeçalho Diferenciadas para Cada um dos 4 Slots
  * - Telas de Login e Solicitação de Cadastro (Nome, WhatsApp, Cidade)
- * - Dashboard do Administrador com Aprovação de Cadastros e WhatsApp
+ * - Dashboard do Administrador com Atalhos para WhatsApp e E-mail
+ * - Modal de Meu Perfil com Troca de Senha e Medidor de Força
  */
 
 /* ========================================================
@@ -89,7 +90,7 @@ input[type=number] {
   gap: 0.6rem;
 }
 
-/* Informações do Usuário no Topo */
+/* Informações do Usuário no Topo (Clicável para Editar Perfil) */
 .user-profile-badge {
   display: flex;
   align-items: center;
@@ -97,10 +98,19 @@ input[type=number] {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem 0.6rem;
   font-size: 0.72rem;
   font-weight: 700;
   color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.user-profile-badge:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
 }
 
 /* Botões do Topo */
@@ -181,6 +191,33 @@ input[type=number] {
 .btn-sm {
   padding: 0.25rem 0.5rem;
   font-size: 0.7rem;
+}
+
+/* Links de Contato Clicáveis na Tabela do Admin */
+.admin-contact-link {
+  text-decoration: none;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.admin-contact-link.whats-link {
+  color: #4ade80;
+}
+.admin-contact-link.whats-link:hover {
+  color: #86efac;
+  text-decoration: underline;
+}
+
+.admin-contact-link.email-link {
+  color: #38bdf8;
+}
+.admin-contact-link.email-link:hover {
+  color: #7dd3fc;
+  text-decoration: underline;
 }
 
 /* Seletor de visualização (1, 2, 3, 4 jogos) */
@@ -980,7 +1017,7 @@ input[type=number] {
 }
 
 /* ========================================================
-   MODAL DE PÊNDULOS
+   MODAL DE PÊNDULOS E PERFIL
    ======================================================== */
 .modal-overlay {
   position: fixed;

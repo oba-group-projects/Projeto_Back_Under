@@ -1,10 +1,21 @@
 /**
  * Painel / Dashboard do Administrador - PRECIFICAÇÃO JUSTA BACK AO UNDER
  * - Gerenciamento de Usuários e Aprovação de Solicitações Pendentes
- * - Integração com WhatsApp direto para avisar o usuário aprovado
+ * - Atalhos Rápidos para WhatsApp Direto e Envio de E-mail
  * - Monitor de Acessos e Auditoria em Tempo Real
  */
 import { authManager } from '../core/authManager.js';
+
+function formatPhoneDisplay(raw) {
+  if (!raw) return '-';
+  const clean = raw.replace(/\D/g, '');
+  if (clean.length === 11) {
+    return `(${clean.slice(0, 2)}) ${clean.slice(2, 7)}-${clean.slice(7)}`;
+  } else if (clean.length === 10) {
+    return `(${clean.slice(0, 2)}) ${clean.slice(2, 6)}-${clean.slice(6)}`;
+  }
+  return raw;
+}
 
 export class AdminDashboard {
   constructor(onUserUpdated) {
@@ -19,7 +30,7 @@ export class AdminDashboard {
     this.overlay.id = 'adminDashboardModal';
 
     this.overlay.innerHTML = `
-      <div class="modal-content" style="max-width: 1050px; max-height: 90vh;">
+      <div class="modal-content" style="max-width: 1080px; max-height: 90vh;">
         <div class="modal-header" style="background: linear-gradient(135deg, rgba(30, 58, 138, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);">
           <div style="display: flex; align-items: center; gap: 0.5rem;">
             <span style="font-size: 1.3rem;">👑</span>
@@ -47,7 +58,7 @@ export class AdminDashboard {
           <div id="adminTabPending" class="admin-tab-content active">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
               <span style="font-size: 0.8rem; font-weight: 800; color: #fef08a;">⏳ Cadastros Aguardando Sua Aprovação:</span>
-              <span style="font-size: 0.7rem; color: var(--text-muted);">Aprove para liberar o acesso ao cockpit</span>
+              <span style="font-size: 0.7rem; color: var(--text-muted);">Clique no WhatsApp ou E-mail para falar direto com o aluno</span>
             </div>
 
             <div style="overflow-x: auto;">
@@ -55,9 +66,9 @@ export class AdminDashboard {
                 <thead>
                   <tr>
                     <th>Nome</th>
-                    <th>WhatsApp</th>
+                    <th>WhatsApp (Link Direto)</th>
                     <th>Cidade / UF</th>
-                    <th>E-mail</th>
+                    <th>E-mail (Link Direto)</th>
                     <th>Data Solicitação</th>
                     <th style="text-align: center;">Ações do Admin</th>
                   </tr>
@@ -75,7 +86,7 @@ export class AdminDashboard {
               <h4 style="font-size: 0.8rem; font-weight: 800; color: #fef08a; margin: 0 0 0.5rem 0;">➕ Cadastrar Novo Usuário Diretamente:</h4>
               <form id="adminCreateUserForm" style="display: flex; gap: 0.4rem; flex-wrap: wrap;">
                 <input type="text" id="newUserName" placeholder="Nome Completo" required class="select-control" style="flex: 1; min-width: 120px; font-size: 0.75rem;">
-                <input type="tel" id="newUserWhats" placeholder="WhatsApp" class="select-control" style="width: 120px; font-size: 0.75rem;">
+                <input type="tel" id="newUserWhats" placeholder="WhatsApp (DDD)" class="select-control" style="width: 125px; font-size: 0.75rem;">
                 <input type="text" id="newUserCity" placeholder="Cidade/UF" class="select-control" style="width: 110px; font-size: 0.75rem;">
                 <input type="email" id="newUserEmail" placeholder="E-mail" required class="select-control" style="flex: 1; min-width: 140px; font-size: 0.75rem;">
                 <input type="password" id="newUserPassword" placeholder="Senha" required class="select-control" style="width: 90px; font-size: 0.75rem;">
@@ -93,9 +104,9 @@ export class AdminDashboard {
                 <thead>
                   <tr>
                     <th>Nome</th>
-                    <th>WhatsApp</th>
+                    <th>WhatsApp (Link Direto)</th>
                     <th>Cidade</th>
-                    <th>E-mail</th>
+                    <th>E-mail (Link Direto)</th>
                     <th>Papel</th>
                     <th>Status</th>
                     <th>Último Acesso</th>
@@ -215,24 +226,31 @@ export class AdminDashboard {
 
     tbody.innerHTML = pendingUsers.map(u => {
       const cleanWhats = (u.whatsapp || '').replace(/\D/g, '');
+      const whatsFormatted = formatPhoneDisplay(u.whatsapp);
       const whatsUrl = cleanWhats ? `https://wa.me/55${cleanWhats}?text=${encodeURIComponent(`Olá ${u.name}! Seu cadastro no Cockpit Precificação Justa Back ao Under foi aprovado com sucesso! Acesse em: https://obadoceria-gif.github.io/Projeto_Back_Under/`)}` : '#';
+      const mailtoUrl = `mailto:${u.email}?subject=${encodeURIComponent('Acesso ao Cockpit Precificação Justa Back ao Under')}&body=${encodeURIComponent(`Olá ${u.name},\n\nSeu cadastro no Cockpit Precificação Justa Back ao Under foi aprovado!\n\nAcesse o link: https://obadoceria-gif.github.io/Projeto_Back_Under/\nSeu E-mail: ${u.email}\n\nBons trades!`)}`;
 
       return `
         <tr>
           <td style="font-weight: 700; color: #ffffff;">${u.name}</td>
-          <td style="color: #4ade80; font-family: var(--font-mono);">${u.whatsapp || '-'}</td>
+          <td>
+            ${cleanWhats ? `
+              <a href="${whatsUrl}" target="_blank" rel="noopener noreferrer" class="admin-contact-link whats-link" title="Clique para abrir no WhatsApp">
+                📲 ${whatsFormatted}
+              </a>
+            ` : '-'}
+          </td>
           <td style="color: var(--text-secondary);">${u.city || '-'}</td>
-          <td style="color: var(--color-cyan);">${u.email}</td>
+          <td>
+            <a href="${mailtoUrl}" class="admin-contact-link email-link" title="Clique para enviar um e-mail">
+              ✉️ ${u.email}
+            </a>
+          </td>
           <td style="color: var(--text-muted);">${new Date(u.createdAt).toLocaleString('pt-BR')}</td>
           <td style="text-align: center; white-space: nowrap;">
             <button class="btn btn-success btn-sm admin-approve-btn" data-user-id="${u.id}" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">
               ✔️ Aprovar
             </button>
-            ${cleanWhats ? `
-              <a href="${whatsUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="background: #25d366; color: #ffffff; padding: 0.2rem 0.5rem; font-size: 0.7rem; margin-left: 0.2rem;">
-                💬 Whats
-              </a>
-            ` : ''}
             <button class="btn btn-danger btn-sm admin-reject-btn" data-user-id="${u.id}" style="padding: 0.2rem 0.5rem; font-size: 0.7rem; margin-left: 0.2rem;">
               ❌ Recusar
             </button>
@@ -272,12 +290,27 @@ export class AdminDashboard {
     tbody.innerHTML = approvedUsers.map(u => {
       const isActive = u.status === 'active';
       const isMasterAdmin = u.id === 'usr_admin_1';
+      const cleanWhats = (u.whatsapp || '').replace(/\D/g, '');
+      const whatsFormatted = formatPhoneDisplay(u.whatsapp);
+      const whatsUrl = cleanWhats ? `https://wa.me/55${cleanWhats}?text=${encodeURIComponent(`Olá ${u.name}! Tudo bem?`)}` : '#';
+      const mailtoUrl = `mailto:${u.email}?subject=${encodeURIComponent('Suporte Precificação Justa Back ao Under')}`;
+
       return `
         <tr>
           <td style="font-weight: 700; color: #ffffff;">${u.name}</td>
-          <td style="color: #4ade80; font-family: var(--font-mono); font-size: 0.7rem;">${u.whatsapp || '-'}</td>
+          <td>
+            ${cleanWhats ? `
+              <a href="${whatsUrl}" target="_blank" rel="noopener noreferrer" class="admin-contact-link whats-link" title="Clique para abrir no WhatsApp">
+                📲 ${whatsFormatted}
+              </a>
+            ` : '-'}
+          </td>
           <td style="color: var(--text-secondary); font-size: 0.7rem;">${u.city || '-'}</td>
-          <td style="color: var(--color-cyan);">${u.email}</td>
+          <td>
+            <a href="${mailtoUrl}" class="admin-contact-link email-link" title="Clique para enviar um e-mail">
+              ✉️ ${u.email}
+            </a>
+          </td>
           <td><span style="font-size: 0.65rem; font-weight: 800; padding: 0.15rem 0.4rem; border-radius: 3px; background: ${u.role === 'admin' ? 'rgba(234, 179, 8, 0.2); color: #fef08a;' : 'rgba(56, 189, 248, 0.2); color: #bae6fd;'}">${u.role.toUpperCase()}</span></td>
           <td><span style="font-size: 0.65rem; font-weight: 800; padding: 0.15rem 0.4rem; border-radius: 3px; background: ${isActive ? 'rgba(16, 185, 129, 0.2); color: #34d399;' : 'rgba(239, 68, 68, 0.2); color: #f87171;'}">${isActive ? '🟢 ATIVO' : '🔴 BLOQUEADO'}</span></td>
           <td style="color: var(--text-secondary); font-size: 0.7rem;">${u.lastLogin ? new Date(u.lastLogin).toLocaleString('pt-BR') : 'Nunca'}</td>

@@ -12,6 +12,7 @@ const filesToTest = [
   '/js/components/OperationsHistory.js',
   '/js/components/LoginModal.js',
   '/js/components/AdminDashboard.js',
+  '/js/components/UserProfileModal.js',
   '/js/core/authManager.js',
   '/js/core/oddsCalculator.js',
   '/js/core/pendulosData.js',
