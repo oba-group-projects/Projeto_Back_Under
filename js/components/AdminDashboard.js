@@ -5,6 +5,7 @@
  * - Monitor de Acessos e Auditoria em Tempo Real
  */
 import { authManager } from '../core/authManager.js';
+import { themeManager, DEFAULT_THEME } from '../core/themeManager.js';
 
 function formatPhoneDisplay(raw) {
   if (!raw) return '-';
@@ -48,6 +49,7 @@ export class AdminDashboard {
             ⏳ Solicitações Pendentes <span id="pendingBadgeCount" class="admin-tab-badge">0</span>
           </button>
           <button class="admin-tab-btn" data-admin-tab="users">👥 Usuários Aprovados</button>
+          <button class="admin-tab-btn" data-admin-tab="customizer">🎨 Customização & Cores</button>
           <button class="admin-tab-btn" data-admin-tab="logs">📍 Monitor de Acessos</button>
           <button class="admin-tab-btn" data-admin-tab="sheets">📊 Planilha & Fórmulas</button>
         </div>
@@ -119,7 +121,171 @@ export class AdminDashboard {
 
           </div>
 
-          <!-- ABA 3: LOGS DE ACESSO -->
+          <!-- ABA 3: CUSTOMIZAÇÃO & IDENTIDADE VISUAL -->
+          <div id="adminTabCustomizer" class="admin-tab-content" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+              <div>
+                <h4 style="font-size: 0.9rem; font-weight: 800; color: #fef08a; margin: 0;">🎨 Módulo de Customização & Identidade Visual</h4>
+                <p style="font-size: 0.7rem; color: var(--text-muted); margin: 0.15rem 0 0 0;">Defina as cores, tipografia e dados de suporte oficiais para todos os traders.</p>
+              </div>
+              <div style="display: flex; gap: 0.4rem;">
+                <button type="button" id="btnResetTheme" class="btn btn-secondary btn-sm" style="font-size: 0.72rem;">↺ Restaurar Padrões</button>
+                <button type="button" id="btnSaveTheme" class="btn btn-success btn-sm" style="font-size: 0.75rem; padding: 0.35rem 0.85rem;">💾 Salvar Identidade</button>
+              </div>
+            </div>
+
+            <div class="admin-customizer-grid">
+              
+              <!-- CARD 1: TIPOGRAFIA OFICIAL -->
+              <div class="admin-customizer-card">
+                <div class="admin-customizer-card-header">
+                  <span>🔤</span>
+                  <h5 class="admin-customizer-title">TIPOGRAFIA DO COCKPIT</h5>
+                </div>
+                <div class="admin-font-options-grid" id="themeFontOptions">
+                  <label class="admin-font-choice-label active" data-font="calibri">
+                    <input type="radio" name="adminFontTheme" value="calibri" checked>
+                    <span style="font-family: var(--font-calibri);">Calibri Pro (Padrão)</span>
+                  </label>
+                  <label class="admin-font-choice-label" data-font="outfit">
+                    <input type="radio" name="adminFontTheme" value="outfit">
+                    <span style="font-family: var(--font-outfit);">Outfit (Moderna)</span>
+                  </label>
+                  <label class="admin-font-choice-label" data-font="jakarta">
+                    <input type="radio" name="adminFontTheme" value="jakarta">
+                    <span style="font-family: var(--font-jakarta);">Plus Jakarta (Tech)</span>
+                  </label>
+                  <label class="admin-font-choice-label" data-font="rajdhani">
+                    <input type="radio" name="adminFontTheme" value="rajdhani">
+                    <span style="font-family: var(--font-rajdhani);">Rajdhani (HUD)</span>
+                  </label>
+                  <label class="admin-font-choice-label" data-font="inter" style="grid-column: span 2;">
+                    <input type="radio" name="adminFontTheme" value="inter">
+                    <span style="font-family: var(--font-inter);">Inter (Clássica Minimalista)</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- CARD 2: ESCALA E ZOOM -->
+              <div class="admin-customizer-card">
+                <div class="admin-customizer-card-header">
+                  <span>📐</span>
+                  <h5 class="admin-customizer-title">ESCALA & ZOOM DO HUD</h5>
+                </div>
+                <div style="display: flex; gap: 0.5rem;" id="themeScaleOptions">
+                  <label class="admin-font-choice-label" style="flex: 1;" data-scale="compact">
+                    <input type="radio" name="adminHudScale" value="compact">
+                    <span>Compacto (93%)</span>
+                  </label>
+                  <label class="admin-font-choice-label active" style="flex: 1;" data-scale="normal">
+                    <input type="radio" name="adminHudScale" value="normal" checked>
+                    <span>Padrão (100%)</span>
+                  </label>
+                  <label class="admin-font-choice-label" style="flex: 1;" data-scale="large">
+                    <input type="radio" name="adminHudScale" value="large">
+                    <span>Amplo / TV (107%)</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- CARD 3: CORES DOS SLOTS 1 A 4 -->
+              <div class="admin-customizer-card">
+                <div class="admin-customizer-card-header">
+                  <span>🎮</span>
+                  <h5 class="admin-customizer-title">CORES DOS 4 SLOTS (HEADER)</h5>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.4rem;">
+                  <div class="admin-color-picker-row">
+                    <span class="admin-color-label">Slot #1 (Jogo 1):</span>
+                    <div class="admin-color-input-wrapper">
+                      <input type="color" id="themeColorSlot1" class="admin-color-input-picker" value="#1e3a8a">
+                      <input type="text" id="themeTextSlot1" class="admin-color-hex-text" value="#1e3a8a">
+                    </div>
+                  </div>
+                  <div class="admin-color-picker-row">
+                    <span class="admin-color-label">Slot #2 (Jogo 2):</span>
+                    <div class="admin-color-input-wrapper">
+                      <input type="color" id="themeColorSlot2" class="admin-color-input-picker" value="#064e3b">
+                      <input type="text" id="themeTextSlot2" class="admin-color-hex-text" value="#064e3b">
+                    </div>
+                  </div>
+                  <div class="admin-color-picker-row">
+                    <span class="admin-color-label">Slot #3 (Jogo 3):</span>
+                    <div class="admin-color-input-wrapper">
+                      <input type="color" id="themeColorSlot3" class="admin-color-input-picker" value="#581c87">
+                      <input type="text" id="themeTextSlot3" class="admin-color-hex-text" value="#581c87">
+                    </div>
+                  </div>
+                  <div class="admin-color-picker-row">
+                    <span class="admin-color-label">Slot #4 (Jogo 4):</span>
+                    <div class="admin-color-input-wrapper">
+                      <input type="color" id="themeColorSlot4" class="admin-color-input-picker" value="#78350f">
+                      <input type="text" id="themeTextSlot4" class="admin-color-hex-text" value="#78350f">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CARD 4: CORES DOS BLOCOS 1 E 2 -->
+              <div class="admin-customizer-card">
+                <div class="admin-customizer-card-header">
+                  <span>📊</span>
+                  <h5 class="admin-customizer-title">CORES DOS BLOCOS (TOPO & FUNDO)</h5>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.45rem;">
+                  <div class="admin-color-picker-row">
+                    <span class="admin-color-label">Topo (Back) Fundo:</span>
+                    <div class="admin-color-input-wrapper">
+                      <input type="color" id="themeColorTopoBg" class="admin-color-input-picker" value="#e0f2fe">
+                      <input type="text" id="themeTextTopoBg" class="admin-color-hex-text" value="#e0f2fe">
+                    </div>
+                  </div>
+                  <div class="admin-color-picker-row">
+                    <span class="admin-color-label">Topo (Back) Texto:</span>
+                    <div class="admin-color-input-wrapper">
+                      <input type="color" id="themeColorTopoText" class="admin-color-input-picker" value="#0369a1">
+                      <input type="text" id="themeTextTopoText" class="admin-color-hex-text" value="#0369a1">
+                    </div>
+                  </div>
+                  <div class="admin-color-picker-row">
+                    <span class="admin-color-label">Fundo (Lay) Fundo:</span>
+                    <div class="admin-color-input-wrapper">
+                      <input type="color" id="themeColorFundoBg" class="admin-color-input-picker" value="#ffe4e6">
+                      <input type="text" id="themeTextFundoBg" class="admin-color-hex-text" value="#ffe4e6">
+                    </div>
+                  </div>
+                  <div class="admin-color-picker-row">
+                    <span class="admin-color-label">Fundo (Lay) Texto:</span>
+                    <div class="admin-color-input-wrapper">
+                      <input type="color" id="themeColorFundoText" class="admin-color-input-picker" value="#be123c">
+                      <input type="text" id="themeTextFundoText" class="admin-color-hex-text" value="#be123c">
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CARD 5: DADOS DE SUPORTE WHATSAPP -->
+              <div class="admin-customizer-card" style="grid-column: 1 / -1;">
+                <div class="admin-customizer-card-header">
+                  <span>📲</span>
+                  <h5 class="admin-customizer-title">SUPORTE WHATSAPP OFICIAL</h5>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 0.65rem;">
+                  <div class="login-input-group">
+                    <label class="login-label">WHATSAPP (COM DDD):</label>
+                    <input type="tel" id="themeSupportWhats" class="login-input" placeholder="(51) 99606-9505" value="51996069505">
+                  </div>
+                  <div class="login-input-group">
+                    <label class="login-label">MENSAGEM AUTOMÁTICA DO BOTÃO:</label>
+                    <input type="text" id="themeSupportMsg" class="login-input" placeholder="Mensagem pré-formatada">
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ABA 4: LOGS DE ACESSO -->
           <div id="adminTabLogs" class="admin-tab-content" style="display: none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
               <span style="font-size: 0.8rem; font-weight: 800; color: #ffffff;">📍 Registro de Acessos em Tempo Real:</span>
@@ -142,7 +308,7 @@ export class AdminDashboard {
             </div>
           </div>
 
-          <!-- ABA 4: PLANILHA & FÓRMULAS -->
+          <!-- ABA 5: PLANILHA & FÓRMULAS -->
           <div id="adminTabSheets" class="admin-tab-content" style="display: none;">
             <div style="background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1rem;">
               <h4 style="font-size: 0.9rem; font-weight: 800; color: #ffffff; margin: 0 0 0.5rem 0;">📊 Planilha Mestre Google Sheets (Área Restrita):</h4>
@@ -176,11 +342,13 @@ export class AdminDashboard {
 
         this.overlay.querySelector('#adminTabPending').style.display = tab === 'pending' ? 'block' : 'none';
         this.overlay.querySelector('#adminTabUsers').style.display = tab === 'users' ? 'block' : 'none';
+        this.overlay.querySelector('#adminTabCustomizer').style.display = tab === 'customizer' ? 'block' : 'none';
         this.overlay.querySelector('#adminTabLogs').style.display = tab === 'logs' ? 'block' : 'none';
         this.overlay.querySelector('#adminTabSheets').style.display = tab === 'sheets' ? 'block' : 'none';
 
         if (tab === 'pending') this.renderPending();
         if (tab === 'users') this.renderUsers();
+        if (tab === 'customizer') this.renderCustomizer();
         if (tab === 'logs') this.renderLogs();
       });
     });
@@ -204,6 +372,154 @@ export class AdminDashboard {
         alert(res.message);
       }
     });
+
+    this.bindCustomizerEvents();
+  }
+
+  bindCustomizerEvents() {
+    // 1. Tipografia (Radios)
+    const fontLabels = this.overlay.querySelectorAll('#themeFontOptions .admin-font-choice-label');
+    fontLabels.forEach(label => {
+      label.addEventListener('click', () => {
+        const radio = label.querySelector('input');
+        if (radio) {
+          radio.checked = true;
+          fontLabels.forEach(l => l.classList.remove('active'));
+          label.classList.add('active');
+          themeManager.applyTheme({ ...this.getCustomizerFormValues(), fontTheme: radio.value });
+        }
+      });
+    });
+
+    // 2. Escala / Zoom (Radios)
+    const scaleLabels = this.overlay.querySelectorAll('#themeScaleOptions .admin-font-choice-label');
+    scaleLabels.forEach(label => {
+      label.addEventListener('click', () => {
+        const radio = label.querySelector('input');
+        if (radio) {
+          radio.checked = true;
+          scaleLabels.forEach(l => l.classList.remove('active'));
+          label.classList.add('active');
+          themeManager.applyTheme({ ...this.getCustomizerFormValues(), hudScale: radio.value });
+        }
+      });
+    });
+
+    // 3. Sincronização e Live Preview de Color Pickers
+    const pairs = [
+      { picker: 'themeColorSlot1', text: 'themeTextSlot1' },
+      { picker: 'themeColorSlot2', text: 'themeTextSlot2' },
+      { picker: 'themeColorSlot3', text: 'themeTextSlot3' },
+      { picker: 'themeColorSlot4', text: 'themeTextSlot4' },
+      { picker: 'themeColorTopoBg', text: 'themeTextTopoBg' },
+      { picker: 'themeColorTopoText', text: 'themeTextTopoText' },
+      { picker: 'themeColorFundoBg', text: 'themeTextFundoBg' },
+      { picker: 'themeColorFundoText', text: 'themeTextFundoText' }
+    ];
+
+    pairs.forEach(({ picker, text }) => {
+      const pEl = this.overlay.querySelector(`#${picker}`);
+      const tEl = this.overlay.querySelector(`#${text}`);
+      if (pEl && tEl) {
+        pEl.addEventListener('input', (e) => {
+          tEl.value = e.target.value;
+          themeManager.applyTheme(this.getCustomizerFormValues());
+        });
+        tEl.addEventListener('input', (e) => {
+          if (/^#[0-9A-Fa-f]{6}$/.test(e.target.value)) {
+            pEl.value = e.target.value;
+            themeManager.applyTheme(this.getCustomizerFormValues());
+          }
+        });
+      }
+    });
+
+    // 4. Botão Salvar
+    const btnSave = this.overlay.querySelector('#btnSaveTheme');
+    if (btnSave) {
+      btnSave.addEventListener('click', () => {
+        const values = this.getCustomizerFormValues();
+        themeManager.saveTheme(values);
+        alert('✅ Identidade visual e configurações salvas com sucesso para todos os usuários!');
+      });
+    }
+
+    // 5. Botão Restaurar
+    const btnReset = this.overlay.querySelector('#btnResetTheme');
+    if (btnReset) {
+      btnReset.addEventListener('click', () => {
+        if (confirm('Deseja restaurar todas as cores, fontes e padrões originais?')) {
+          themeManager.resetToDefaults();
+          this.renderCustomizer();
+          alert('↺ Padrões de fábrica restaurados!');
+        }
+      });
+    }
+  }
+
+  getCustomizerFormValues() {
+    const selectedFont = this.overlay.querySelector('input[name="adminFontTheme"]:checked')?.value || 'calibri';
+    const selectedScale = this.overlay.querySelector('input[name="adminHudScale"]:checked')?.value || 'normal';
+
+    return {
+      fontTheme: selectedFont,
+      hudScale: selectedScale,
+      slot1Color: this.overlay.querySelector('#themeTextSlot1')?.value || '#1e3a8a',
+      slot2Color: this.overlay.querySelector('#themeTextSlot2')?.value || '#064e3b',
+      slot3Color: this.overlay.querySelector('#themeTextSlot3')?.value || '#581c87',
+      slot4Color: this.overlay.querySelector('#themeTextSlot4')?.value || '#78350f',
+      topoBg: this.overlay.querySelector('#themeTextTopoBg')?.value || '#e0f2fe',
+      topoText: this.overlay.querySelector('#themeTextTopoText')?.value || '#0369a1',
+      fundoBg: this.overlay.querySelector('#themeTextFundoBg')?.value || '#ffe4e6',
+      fundoText: this.overlay.querySelector('#themeTextFundoText')?.value || '#be123c',
+      supportWhatsApp: this.overlay.querySelector('#themeSupportWhats')?.value || '51996069505',
+      supportMsg: this.overlay.querySelector('#themeSupportMsg')?.value || 'Olá! Gostaria de suporte/liberação de acesso no Cockpit Precificação Justa Back ao Under.'
+    };
+  }
+
+  renderCustomizer() {
+    const theme = themeManager.getTheme();
+
+    // 1. Tipografia
+    const fontRadio = this.overlay.querySelector(`input[name="adminFontTheme"][value="${theme.fontTheme || 'calibri'}"]`);
+    if (fontRadio) {
+      fontRadio.checked = true;
+      this.overlay.querySelectorAll('#themeFontOptions .admin-font-choice-label').forEach(l => l.classList.remove('active'));
+      fontRadio.closest('.admin-font-choice-label')?.classList.add('active');
+    }
+
+    // 2. Escala
+    const scaleRadio = this.overlay.querySelector(`input[name="adminHudScale"][value="${theme.hudScale || 'normal'}"]`);
+    if (scaleRadio) {
+      scaleRadio.checked = true;
+      this.overlay.querySelectorAll('#themeScaleOptions .admin-font-choice-label').forEach(l => l.classList.remove('active'));
+      scaleRadio.closest('.admin-font-choice-label')?.classList.add('active');
+    }
+
+    // 3. Cores dos Slots
+    const setColors = (pickerId, textId, val) => {
+      const p = this.overlay.querySelector(`#${pickerId}`);
+      const t = this.overlay.querySelector(`#${textId}`);
+      if (p) p.value = val;
+      if (t) t.value = val;
+    };
+
+    setColors('themeColorSlot1', 'themeTextSlot1', theme.slot1Color || DEFAULT_THEME.slot1Color);
+    setColors('themeColorSlot2', 'themeTextSlot2', theme.slot2Color || DEFAULT_THEME.slot2Color);
+    setColors('themeColorSlot3', 'themeTextSlot3', theme.slot3Color || DEFAULT_THEME.slot3Color);
+    setColors('themeColorSlot4', 'themeTextSlot4', theme.slot4Color || DEFAULT_THEME.slot4Color);
+
+    // 4. Cores dos Blocos
+    setColors('themeColorTopoBg', 'themeTextTopoBg', theme.topoBg || DEFAULT_THEME.topoBg);
+    setColors('themeColorTopoText', 'themeTextTopoText', theme.topoText || DEFAULT_THEME.topoText);
+    setColors('themeColorFundoBg', 'themeTextFundoBg', theme.fundoBg || DEFAULT_THEME.fundoBg);
+    setColors('themeColorFundoText', 'themeTextFundoText', theme.fundoText || DEFAULT_THEME.fundoText);
+
+    // 5. Suporte
+    const whatsInput = this.overlay.querySelector('#themeSupportWhats');
+    const msgInput = this.overlay.querySelector('#themeSupportMsg');
+    if (whatsInput) whatsInput.value = theme.supportWhatsApp || DEFAULT_THEME.supportWhatsApp;
+    if (msgInput) msgInput.value = theme.supportMsg || DEFAULT_THEME.supportMsg;
   }
 
   renderPending() {
@@ -373,6 +689,7 @@ export class AdminDashboard {
   show() {
     this.renderPending();
     this.renderUsers();
+    this.renderCustomizer();
     this.overlay.classList.add('open');
   }
 

@@ -1,8 +1,5 @@
-/**
- * Modal / Tela de Autenticação e Solicitação de Cadastro
- * Suporte a Login e Novo Cadastro com Nome / WhatsApp / Cidade
- */
 import { authManager } from '../core/authManager.js';
+import { themeManager } from '../core/themeManager.js';
 
 export class LoginModal {
   constructor(onLoginSuccess) {
@@ -15,6 +12,10 @@ export class LoginModal {
     this.overlay = document.createElement('div');
     this.overlay.className = 'login-modal-overlay';
     this.overlay.id = 'loginModalOverlay';
+
+    const theme = themeManager.getTheme();
+    const cleanWhats = (theme.supportWhatsApp || '51996069505').replace(/\D/g, '');
+    const whatsMsg = encodeURIComponent(theme.supportMsg || 'Olá! Gostaria de tirar uma dúvida/suporte no Cockpit Precificação Justa Back ao Under.');
 
     this.overlay.innerHTML = `
       <div class="login-card" style="max-width: 440px;">
@@ -88,7 +89,8 @@ export class LoginModal {
         <!-- RODAPÉ: SUPORTE & WHATSAPP DIRETO DO ADMINISTRADOR -->
         <div class="login-footer-info" style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 0.85rem; margin-top: 0.85rem; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.45rem;">
           <span style="font-size: 0.72rem; color: #94a3b8;">Dúvidas, suporte ou liberação de acesso imediato?</span>
-          <a href="https://wa.me/5551996069505?text=Ol%C3%A1!%20Gostaria%20de%20suporte%2Flibera%C3%A7%C3%A3o%20de%20acesso%20no%20Cockpit%20Precifica%C3%A7%C3%A3o%20Justa%20Back%20ao%20Under." 
+          <a id="loginWhatsSupportLink" 
+             href="https://wa.me/55${cleanWhats}?text=${whatsMsg}" 
              target="_blank" 
              rel="noopener noreferrer" 
              style="display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; text-decoration: none; padding: 0.45rem 0.95rem; border-radius: 6px; font-size: 0.78rem; font-weight: 700; box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3); transition: all 0.2s ease;">

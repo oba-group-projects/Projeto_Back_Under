@@ -310,7 +310,7 @@ input[type=number] {
 
 /* Slot #1: Azul / Índigo */
 #slotCard1 .hud-card-header {
-  background: linear-gradient(135deg, rgba(30, 58, 138, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+  background: var(--slot1-header-bg, linear-gradient(135deg, rgba(30, 58, 138, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%));
 }
 #slotCard1 .game-slot-badge {
   background: rgba(59, 130, 246, 0.25);
@@ -320,7 +320,7 @@ input[type=number] {
 
 /* Slot #2: Verde Esmeralda / Teal */
 #slotCard2 .hud-card-header {
-  background: linear-gradient(135deg, rgba(6, 78, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+  background: var(--slot2-header-bg, linear-gradient(135deg, rgba(6, 78, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%));
 }
 #slotCard2 .game-slot-badge {
   background: rgba(16, 185, 129, 0.25);
@@ -330,7 +330,7 @@ input[type=number] {
 
 /* Slot #3: Roxo / Violeta */
 #slotCard3 .hud-card-header {
-  background: linear-gradient(135deg, rgba(88, 28, 135, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+  background: var(--slot3-header-bg, linear-gradient(135deg, rgba(88, 28, 135, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%));
 }
 #slotCard3 .game-slot-badge {
   background: rgba(168, 85, 247, 0.25);
@@ -340,7 +340,7 @@ input[type=number] {
 
 /* Slot #4: Âmbar / Laranja */
 #slotCard4 .hud-card-header {
-  background: linear-gradient(135deg, rgba(120, 53, 15, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+  background: var(--slot4-header-bg, linear-gradient(135deg, rgba(120, 53, 15, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%));
 }
 #slotCard4 .game-slot-badge {
   background: rgba(245, 158, 11, 0.25);
@@ -846,19 +846,19 @@ input[type=number] {
 
 /* TOPO: Azul Pastel idêntico à imagem do usuário */
 .bloco-topo-pastel {
-  background: #e0f2fe !important;
-  border: 1.5px solid #7dd3fc !important;
+  background: var(--color-topo-bg, #e0f2fe) !important;
+  border: 1.5px solid var(--color-topo-border, #7dd3fc) !important;
 }
-.bloco-topo-pastel .bloco-pastel-label { color: #0284c7; }
-.bloco-topo-pastel .bloco-pastel-number { color: #0369a1; }
+.bloco-topo-pastel .bloco-pastel-label { color: var(--color-topo-text, #0284c7) !important; }
+.bloco-topo-pastel .bloco-pastel-number { color: var(--color-topo-text, #0369a1) !important; }
 
 /* FUNDO: Rosa Pastel idêntico à imagem do usuário */
 .bloco-fundo-pastel {
-  background: #ffe4e6 !important;
-  border: 1.5px solid #fda4af !important;
+  background: var(--color-fundo-bg, #ffe4e6) !important;
+  border: 1.5px solid var(--color-fundo-border, #fda4af) !important;
 }
-.bloco-fundo-pastel .bloco-pastel-label { color: #e11d48; }
-.bloco-fundo-pastel .bloco-pastel-number { color: #be123c; }
+.bloco-fundo-pastel .bloco-pastel-label { color: var(--color-fundo-text, #e11d48) !important; }
+.bloco-fundo-pastel .bloco-pastel-number { color: var(--color-fundo-text, #be123c) !important; }
 
 .bloco-pastel-label {
   font-size: 0.58rem;
@@ -868,11 +868,127 @@ input[type=number] {
 }
 
 .bloco-pastel-number {
-  font-family: var(--font-mono);
+  font-family: var(--font-mono) !important;
   font-size: 1.35rem;
   font-weight: 900;
   line-height: 1.1;
   margin-top: 0.05rem;
+}
+
+/* ========================================================
+   ESTILOS DA ABA DE CUSTOMIZAÇÃO & IDENTIDADE NO ADMIN
+   ======================================================== */
+.admin-customizer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+.admin-customizer-card {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid var(--border-medium);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-customizer-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.45rem;
+}
+
+.admin-customizer-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #fef08a;
+  margin: 0;
+}
+
+.admin-font-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.admin-font-choice-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #020617;
+  border: 1.5px solid #334155;
+  border-radius: 6px;
+  padding: 0.45rem 0.6rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.75rem;
+  color: #e2e8f0;
+}
+
+.admin-font-choice-label:hover {
+  border-color: var(--color-blue);
+}
+
+.admin-font-choice-label.active {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.admin-color-picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #020617;
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  padding: 0.35rem 0.65rem;
+  gap: 0.5rem;
+}
+
+.admin-color-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.admin-color-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.admin-color-input-picker {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.admin-color-input-picker::-webkit-color-swatch {
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.admin-color-hex-text {
+  width: 70px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 4px;
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  padding: 0.2rem 0.35rem;
+  text-align: center;
 }
 
 /* ========================================================
