@@ -1,10 +1,11 @@
 /**
- * Componente do Slot de Jogo Individual - Cockpit de Alta Visibilidade (HUD V4)
- * - Destaque Hero para Minuto Atual e Odd Justa (tamanho gigante)
- * - Diferença % centralizada diretamente abaixo da Odd Justa
- * - Zona de velocidade destacada com cores vivas (Rápida 🟢, Média 🟡, Lenta 🔵)
- * - Blocos 1 e 2 com células Topo (Azul Pastel) e Fundo (Rosa Pastel) da imagem do usuário
- * - Painel de Evento simplificado (Minuto + Nova Odd + Botão Recalcular)
+ * Componente do Slot de Jogo Individual - Cockpit de Alta Visibilidade (HUD V5)
+ * - Espaço maior para Minuto TV e inputs
+ * - Odd Justa com card de fundo destacado
+ * - Remoção de 'Ex:' de todos os placeholders
+ * - Diferença % concisa (sem quebras de linha)
+ * - Zona centralizada abaixo do campo de Odd Live
+ * - Remoção dos botões de spinner do navegador
  */
 import { calculateMinuteCurve, getMinuteMetrics } from '../core/minuteDecayEngine.js';
 import { moveOddTicks } from '../core/oddsCalculator.js';
@@ -215,7 +216,7 @@ export class GameSlot {
       zoneBadge.innerHTML = `<span>${zIcon} ZONA ${cm.zona.toUpperCase()}</span>`;
     }
 
-    // Diferença % Centralizada abaixo da Odd Justa
+    // Diferença % Concisa e Centralizada Abaixo da Odd Justa
     if (valueDiffBadge) {
       const live = parseFloat(this.state.liveOddCurrentMinute);
       if (live && live > 1.0) {
@@ -226,12 +227,11 @@ export class GameSlot {
 
         valueDiffBadge.className = `hud-diff-badge ${isGood ? 'diff-good' : (isBad ? 'diff-bad' : 'diff-fair')}`;
         valueDiffBadge.innerHTML = `
-          <span>DIF:</span>
-          <strong>${sign}${diff.toFixed(1)}% ${isGood ? '📈 VALOR UNDER' : (isBad ? '📉 CARO' : '⚖️ JUSTO')}</strong>
+          <strong>${sign}${diff.toFixed(1)}% ${isGood ? '📈 VALOR' : (isBad ? '📉 SEM VALOR' : '⚖️ JUSTO')}</strong>
         `;
       } else {
         valueDiffBadge.className = `hud-diff-badge diff-fair`;
-        valueDiffBadge.innerHTML = `<span>DIF:</span><strong>0.0% ⚖️ JUSTO</strong>`;
+        valueDiffBadge.innerHTML = `<strong>0.0% ⚖️ JUSTO</strong>`;
       }
     }
   }
@@ -443,7 +443,7 @@ export class GameSlot {
 
       <div class="hud-card-body">
         
-        <!-- Linha 1: Configuração Obrigatória (Campos Amarelos com Botões + e -) -->
+        <!-- Linha 1: Configuração Obrigatória (Campos Amarelos com Botões + e - e Mais Espaço) -->
         <div class="hud-config-bar">
           
           <!-- Odd Inicial -->
@@ -458,21 +458,21 @@ export class GameSlot {
           </div>
 
           <!-- Acréscimos -->
-          <div class="hud-input-cell-yellow" style="flex: 0.7;">
+          <div class="hud-input-cell-yellow" style="flex: 0.75;">
             <span class="hud-cell-label">➕ ACR:</span>
             <div class="hud-cell-input-row">
               <button class="hud-mini-stepper-btn hud-added-minus-btn" title="Diminuir Acréscimo">-</button>
-              <input type="number" class="hud-yellow-field hud-added-min-input" value="${this.state.addedMinutes}" style="width: 36px;">
+              <input type="number" class="hud-yellow-field hud-added-min-input" value="${this.state.addedMinutes}">
               <button class="hud-mini-stepper-btn hud-added-plus-btn" title="Aumentar Acréscimo">+</button>
             </div>
           </div>
 
-          <!-- Minuto TV e Sincronização -->
-          <div class="hud-input-cell-yellow" style="flex: 1.15;">
+          <!-- Minuto TV e Sincronização (Espaçoso) -->
+          <div class="hud-input-cell-yellow hud-tv-cell" style="flex: 1.3;">
             <span class="hud-cell-label">📺 MINUTO TV:</span>
             <div class="hud-cell-input-row">
               <button class="hud-mini-stepper-btn hud-tv-minus-btn" title="Minuto Anterior">-</button>
-              <input type="number" class="hud-yellow-field hud-tv-min-input" value="${this.state.tvMinuteInput}" style="width: 40px;">
+              <input type="number" class="hud-yellow-field hud-tv-min-input" value="${this.state.tvMinuteInput}">
               <button class="hud-mini-stepper-btn hud-tv-plus-btn" title="Próximo Minuto">+</button>
               <button class="btn btn-primary btn-sm hud-sync-btn" title="Sincronizar Minuto e Iniciar Cronômetro">⚡ Sync</button>
             </div>
@@ -483,42 +483,43 @@ export class GameSlot {
         <!-- Linha 2: O PAINEL PRINCIPAL DO MINUTO ATUAL (HERO DESTAQUE) -->
         <div class="hud-main-minute-banner">
           
-          <!-- Cabeçalho do Painel: Minuto Gigante, Coluna Central Odd Justa + Diferença %, e Odd Live + Zona -->
+          <!-- Cabeçalho do Painel: Minuto Gigante, Coluna Central Odd Justa com Fundo Destacado, e Odd Live + Zona -->
           <div class="hud-hero-metrics-grid">
             
             <!-- Coluna 1: Minuto Atual Gigante -->
             <div class="hud-minute-hero-col">
               <span class="hud-metric-label">MINUTO</span>
-              <div style="display: flex; align-items: center; gap: 0.25rem;">
+              <div style="display: flex; align-items: center; gap: 0.35rem; margin-top: 0.15rem;">
                 <span class="hud-minute-hero-badge">${this.state.currentMinute}'</span>
-                <div style="display: flex; flex-direction: column; gap: 1px;">
+                <div style="display: flex; flex-direction: column; gap: 2px;">
                   <button class="hud-step-mini-btn hud-min-plus" title="+1 minuto">▲</button>
                   <button class="hud-step-mini-btn hud-min-minus" title="-1 minuto">▼</button>
                 </div>
               </div>
             </div>
 
-            <!-- Coluna 2 Central: Odd Justa Gigante + DIFERENÇA % Centralizada Abaixo -->
-            <div class="hud-odd-justa-central-col">
-              <span class="hud-metric-label">ODD JUSTA DO MINUTO</span>
-              <span class="hud-odd-justa-hero">0.00</span>
+            <!-- Coluna 2 Central: Card Destacado com Odd Justa + Diferença % Concisa Abaixo -->
+            <div class="hud-odd-justa-card-container">
+              <div class="hud-odd-justa-highlight-card">
+                <span class="hud-metric-label" style="color: #93c5fd;">ODD JUSTA DO MINUTO</span>
+                <span class="hud-odd-justa-hero">0.00</span>
+              </div>
               
-              <!-- DIFERENÇA % CENTRALIZADA LOGO ABAIXO DA ODD JUSTA -->
+              <!-- DIFERENÇA % CONCISA E CENTRALIZADA ABAIXO DA ODD JUSTA -->
               <div class="hud-diff-badge diff-fair">
-                <span>DIF:</span>
                 <strong>0.0% ⚖️ JUSTO</strong>
               </div>
             </div>
 
-            <!-- Coluna 3: Odd Live (Amarelo Claro) + Zona Destacada -->
+            <!-- Coluna 3: Odd Live (Sem 'Ex:') + Zona Centralizada Abaixo -->
             <div class="hud-live-zone-col">
               <!-- Campo Odd Live -->
               <div class="hud-live-cell-yellow">
                 <span class="hud-live-cell-label">ODD LIVE:</span>
-                <input type="number" step="0.01" class="hud-yellow-field hud-live-odd-input" placeholder="Ex: 2.26" value="${this.state.liveOddCurrentMinute}" style="width: 78px; font-size: 1.15rem; font-weight: 900;">
+                <input type="number" step="0.01" class="hud-yellow-field hud-live-odd-input" value="${this.state.liveOddCurrentMinute}">
               </div>
 
-              <!-- Zona Destacada com Cores Vivas -->
+              <!-- Zona Centralizada Abaixo -->
               <div class="zone-badge hud-zone-badge zone-media">
                 <span>🟡 ZONA MÉDIA</span>
               </div>
@@ -573,19 +574,19 @@ export class GameSlot {
 
         </div>
 
-        <!-- Linha 3: REGISTRO DE EVENTO / RETORNO DE JOGO (SIMPLIFICADO) -->
+        <!-- Linha 3: REGISTRO DE EVENTO / RETORNO DE JOGO (SIMPLIFICADO, SEM 'Ex:') -->
         <div class="hud-event-recalc-bar">
           <span class="event-recalc-title">⚡ REGISTRAR EVENTO:</span>
 
           <div class="event-recalc-inputs">
             <div class="event-input-wrapper">
               <span class="event-mini-label">Minuto:</span>
-              <input type="number" class="hud-yellow-field event-min-input" value="${this.state.currentMinute}" style="width: 44px; font-size: 0.9rem;">
+              <input type="number" class="hud-yellow-field event-min-input" value="${this.state.currentMinute}" style="width: 48px;">
             </div>
 
             <div class="event-input-wrapper">
               <span class="event-mini-label">Nova Odd:</span>
-              <input type="number" step="0.01" class="hud-yellow-field event-odd-input" placeholder="Ex: 5.60" style="width: 76px; font-size: 0.95rem;">
+              <input type="number" step="0.01" class="hud-yellow-field event-odd-input" style="width: 72px;">
             </div>
 
             <button class="btn btn-success btn-sm event-apply-btn" title="Aplicar e Recalcular Curva">✔️ Recalcular</button>
