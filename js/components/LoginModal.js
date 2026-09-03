@@ -1,5 +1,5 @@
-import { authManager } from '../core/authManager.js';
-import { themeManager } from '../core/themeManager.js';
+import { authManager } from '../core/authManager.js?v=2.5';
+import { themeManager } from '../core/themeManager.js?v=2.5';
 
 export class LoginModal {
   constructor(onLoginSuccess) {

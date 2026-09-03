@@ -4,7 +4,7 @@
  * - Medidor de Força de Senha em Tempo Real
  * - Gerador de Senhas Fortes Automático
  */
-import { authManager } from '../core/authManager.js';
+import { authManager } from '../core/authManager.js?v=2.5';
 
 export class UserProfileModal {
   constructor(onProfileUpdated) {

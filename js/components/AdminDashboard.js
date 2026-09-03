@@ -4,8 +4,8 @@
  * - Atalhos Rápidos para WhatsApp Direto e Envio de E-mail
  * - Monitor de Acessos e Auditoria em Tempo Real
  */
-import { authManager } from '../core/authManager.js';
-import { themeManager, DEFAULT_THEME } from '../core/themeManager.js';
+import { authManager } from '../core/authManager.js?v=2.5';
+import { themeManager, DEFAULT_THEME } from '../core/themeManager.js?v=2.5';
 
 function formatPhoneDisplay(raw) {
   if (!raw) return '-';
