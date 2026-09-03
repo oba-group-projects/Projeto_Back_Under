@@ -3,9 +3,20 @@
  * Dark Mode Premium, Glassmorphism, Paleta Esportiva de Alta Visibilidade
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Rajdhani:wght@500;600;700;800&family=JetBrains+Mono:wght@400;600;700;800&display=swap');
 
 :root {
+  /* Opções de Tipografia Profissional */
+  --font-calibri: 'Calibri', 'Candara', 'Segoe UI', -apple-system, sans-serif;
+  --font-outfit: 'Outfit', -apple-system, sans-serif;
+  --font-jakarta: 'Plus Jakarta Sans', -apple-system, sans-serif;
+  --font-rajdhani: 'Rajdhani', -apple-system, sans-serif;
+  --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  /* Fonte Padrão Ativa (Calibri Pro) */
+  --font-sans: var(--font-calibri);
+  --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+
   /* Cores Base de Fundo e Superfície */
   --bg-app: #060913;
   --bg-surface: #0b1120;
@@ -39,10 +50,6 @@
 
   --color-purple: #8b5cf6;
   --color-cyan: #06b6d4;
-
-  /* Tipografia e Textos */
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
 
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
@@ -126,3 +133,15 @@ body {
 .text-yellow { color: var(--color-yellow); }
 .text-blue { color: var(--color-blue); }
 .text-cyan { color: var(--color-cyan); }
+
+/* Temas de Fontes Selecionáveis Dinamicamente */
+body.font-theme-calibri, body.font-theme-calibri * { font-family: var(--font-calibri); }
+body.font-theme-outfit, body.font-theme-outfit * { font-family: var(--font-outfit); }
+body.font-theme-jakarta, body.font-theme-jakarta * { font-family: var(--font-jakarta); }
+body.font-theme-rajdhani, body.font-theme-rajdhani * { font-family: var(--font-rajdhani); }
+body.font-theme-inter, body.font-theme-inter * { font-family: var(--font-inter); }
+
+/* Preservação da fonte mono para números específicos e odds quando aplicável */
+.font-mono, .timer-display, .hud-minute-hero-badge, .bloco1-topo-val, .bloco1-fundo-val, .bloco2-topo-val, .bloco2-fundo-val, .hud-odd-justa-hero {
+  font-family: var(--font-mono) !important;
+}

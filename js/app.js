@@ -15,6 +15,7 @@ class App {
   constructor() {
     this.masterRed = 200;
     this.viewMode = 'view-4'; // 'view-1' | 'view-2' | 'view-3' | 'view-4'
+    this.fontTheme = 'calibri'; // 'calibri' | 'outfit' | 'jakarta' | 'rajdhani' | 'inter'
     this.slots = [];
     this.penduloModal = null;
     this.loginModal = null;
@@ -26,6 +27,7 @@ class App {
 
   init() {
     this.loadSettings();
+    this.applyFontTheme(this.fontTheme);
     this.initAuth();
     this.initSlots();
     this.initPenduloModal();
@@ -33,6 +35,17 @@ class App {
     this.initUserProfileModal();
     this.bindHeaderEvents();
     this.updateUserUI();
+  }
+
+  applyFontTheme(theme) {
+    this.fontTheme = theme || 'calibri';
+    document.body.classList.remove('font-theme-calibri', 'font-theme-outfit', 'font-theme-jakarta', 'font-theme-rajdhani', 'font-theme-inter');
+    document.body.classList.add(`font-theme-${this.fontTheme}`);
+    
+    const fontSelect = document.getElementById('fontThemeSelect');
+    if (fontSelect && fontSelect.value !== this.fontTheme) {
+      fontSelect.value = this.fontTheme;
+    }
   }
 
   initAuth() {
@@ -87,6 +100,7 @@ class App {
         const parsed = JSON.parse(saved);
         if (parsed.masterRed) this.masterRed = parsed.masterRed;
         if (parsed.viewMode) this.viewMode = parsed.viewMode;
+        if (parsed.fontTheme) this.fontTheme = parsed.fontTheme;
       }
     } catch (e) {
       console.warn('Erro ao carregar configurações salvas:', e);
@@ -97,7 +111,8 @@ class App {
     try {
       const data = {
         masterRed: this.masterRed,
-        viewMode: this.viewMode
+        viewMode: this.viewMode,
+        fontTheme: this.fontTheme
       };
       localStorage.setItem('projeto_back_under_settings', JSON.stringify(data));
     } catch (e) {
@@ -151,6 +166,17 @@ class App {
         authManager.logout();
         this.updateUserUI();
         if (this.loginModal) this.loginModal.show();
+      });
+    }
+
+    // Seletor de estilo da fonte
+    const fontSelect = document.getElementById('fontThemeSelect');
+    if (fontSelect) {
+      fontSelect.value = this.fontTheme;
+      fontSelect.addEventListener('change', (e) => {
+        this.applyFontTheme(e.target.value);
+        this.saveSettings();
+        this.showToast(`Fonte alterada para ${e.target.options[e.target.selectedIndex].text}`);
       });
     }
 
