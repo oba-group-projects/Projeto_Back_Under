@@ -1,12 +1,13 @@
 /**
- * Componente do Slot de Jogo Individual - Cockpit de Alta Visibilidade (HUD V3)
- * - Steppers funcionais (+ e -) para Odd Inicial, Acréscimos, Minuto TV e Minuto Atual
- * - Inputs com fundo amarelo claro estilo planilha
- * - Blocos 1 e 2 com Topo (Azul Back) e Fundo (Rosa Lay)
- * - Módulo de eventos e recalibração com Minuto + Odd de Retorno
+ * Componente do Slot de Jogo Individual - Cockpit de Alta Visibilidade (HUD V4)
+ * - Destaque Hero para Minuto Atual e Odd Justa (tamanho gigante)
+ * - Diferença % centralizada diretamente abaixo da Odd Justa
+ * - Zona de velocidade destacada com cores vivas (Rápida 🟢, Média 🟡, Lenta 🔵)
+ * - Blocos 1 e 2 com células Topo (Azul Pastel) e Fundo (Rosa Pastel) da imagem do usuário
+ * - Painel de Evento simplificado (Minuto + Nova Odd + Botão Recalcular)
  */
-import { calculateMinuteCurve, getMinuteMetrics, applyGoalOddShift } from '../core/minuteDecayEngine.js';
-import { moveOddTicks, calculateTicksDistance } from '../core/oddsCalculator.js';
+import { calculateMinuteCurve, getMinuteMetrics } from '../core/minuteDecayEngine.js';
+import { moveOddTicks } from '../core/oddsCalculator.js';
 import { findClosestLadder } from '../core/ladderData.js';
 
 export class GameSlot {
@@ -187,8 +188,8 @@ export class GameSlot {
     if (!cm) return;
 
     // Minuto e Odd Justa
-    const minuteBadge = this.container.querySelector('.hud-minute-badge');
-    const oddJustaDisplay = this.container.querySelector('.hud-odd-justa');
+    const minuteBadge = this.container.querySelector('.hud-minute-hero-badge');
+    const oddJustaDisplay = this.container.querySelector('.hud-odd-justa-hero');
     const zoneBadge = this.container.querySelector('.hud-zone-badge');
     const valueDiffBadge = this.container.querySelector('.hud-diff-badge');
 
@@ -206,14 +207,15 @@ export class GameSlot {
     if (bloco2Topo) bloco2Topo.textContent = cm.topo2.toFixed(2);
     if (bloco2Fundo) bloco2Fundo.textContent = cm.fundo2.toFixed(2);
 
+    // Zona com cores e badges destacados
     if (zoneBadge) {
-      zoneBadge.className = `zone-badge ${
-        cm.zona === 'Rápida' ? 'zone-rapida' : (cm.zona === 'Média' ? 'zone-media' : 'zone-lenta')
-      }`;
-      zoneBadge.textContent = `Zona ${cm.zona}`;
+      const zClass = cm.zona === 'Rápida' ? 'zone-rapida' : (cm.zona === 'Média' || cm.zona === 'Normal' ? 'zone-media' : 'zone-lenta');
+      const zIcon = cm.zona === 'Rápida' ? '🟢' : (cm.zona === 'Média' || cm.zona === 'Normal' ? '🟡' : '🔵');
+      zoneBadge.className = `zone-badge ${zClass}`;
+      zoneBadge.innerHTML = `<span>${zIcon} ZONA ${cm.zona.toUpperCase()}</span>`;
     }
 
-    // Diferença % Mercado vs Justa
+    // Diferença % Centralizada abaixo da Odd Justa
     if (valueDiffBadge) {
       const live = parseFloat(this.state.liveOddCurrentMinute);
       if (live && live > 1.0) {
@@ -225,7 +227,7 @@ export class GameSlot {
         valueDiffBadge.className = `hud-diff-badge ${isGood ? 'diff-good' : (isBad ? 'diff-bad' : 'diff-fair')}`;
         valueDiffBadge.innerHTML = `
           <span>DIF:</span>
-          <strong>${sign}${diff.toFixed(1)}% ${isGood ? '📈 VALOR' : (isBad ? '📉 CARO' : '⚖️ JUSTO')}</strong>
+          <strong>${sign}${diff.toFixed(1)}% ${isGood ? '📈 VALOR UNDER' : (isBad ? '📉 CARO' : '⚖️ JUSTO')}</strong>
         `;
       } else {
         valueDiffBadge.className = `hud-diff-badge diff-fair`;
@@ -392,8 +394,6 @@ export class GameSlot {
     const eventMinInput = this.container.querySelector('.event-min-input');
     const eventOddInput = this.container.querySelector('.event-odd-input');
     const eventApplyBtn = this.container.querySelector('.event-apply-btn');
-    const quickGolFavBtn = this.container.querySelector('.quick-gol-fav-btn');
-    const quickGolContraBtn = this.container.querySelector('.quick-gol-contra-btn');
 
     if (eventApplyBtn && eventOddInput && eventMinInput) {
       eventApplyBtn.addEventListener('click', () => {
@@ -401,24 +401,6 @@ export class GameSlot {
       });
       eventOddInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') this.applyEventOverride(eventMinInput.value, eventOddInput.value);
-      });
-    }
-
-    if (quickGolFavBtn && eventOddInput) {
-      quickGolFavBtn.addEventListener('click', () => {
-        const cur = parseFloat(this.state.liveOddCurrentMinute) || (this.state.currentMetrics ? this.state.currentMetrics.oddJusta : this.state.initialOdd);
-        const shift = applyGoalOddShift(cur, true);
-        eventOddInput.value = shift.toFixed(2);
-        this.applyEventOverride(eventMinInput ? eventMinInput.value : this.state.currentMinute, shift);
-      });
-    }
-
-    if (quickGolContraBtn && eventOddInput) {
-      quickGolContraBtn.addEventListener('click', () => {
-        const cur = parseFloat(this.state.liveOddCurrentMinute) || (this.state.currentMetrics ? this.state.currentMetrics.oddJusta : this.state.initialOdd);
-        const shift = applyGoalOddShift(cur, false);
-        eventOddInput.value = shift.toFixed(2);
-        this.applyEventOverride(eventMinInput ? eventMinInput.value : this.state.currentMinute, shift);
       });
     }
 
@@ -498,44 +480,53 @@ export class GameSlot {
 
         </div>
 
-        <!-- Linha 2: O PAINEL PRINCIPAL DO MINUTO ATUAL -->
+        <!-- Linha 2: O PAINEL PRINCIPAL DO MINUTO ATUAL (HERO DESTAQUE) -->
         <div class="hud-main-minute-banner">
           
-          <!-- Cabeçalho do Painel: Minuto, Odd Justa, Odd Live e Desvio -->
-          <div class="hud-banner-top-row">
+          <!-- Cabeçalho do Painel: Minuto Gigante, Coluna Central Odd Justa + Diferença %, e Odd Live + Zona -->
+          <div class="hud-hero-metrics-grid">
             
-            <!-- Minuto Badge & Stepper -->
-            <div style="display: flex; align-items: center; gap: 0.35rem;">
-              <span class="hud-minute-badge">${this.state.currentMinute}'</span>
-              <div style="display: flex; flex-direction: column; gap: 1px;">
-                <button class="hud-step-mini-btn hud-min-plus" title="+1 minuto">▲</button>
-                <button class="hud-step-mini-btn hud-min-minus" title="-1 minuto">▼</button>
+            <!-- Coluna 1: Minuto Atual Gigante -->
+            <div class="hud-minute-hero-col">
+              <span class="hud-metric-label">MINUTO</span>
+              <div style="display: flex; align-items: center; gap: 0.25rem;">
+                <span class="hud-minute-hero-badge">${this.state.currentMinute}'</span>
+                <div style="display: flex; flex-direction: column; gap: 1px;">
+                  <button class="hud-step-mini-btn hud-min-plus" title="+1 minuto">▲</button>
+                  <button class="hud-step-mini-btn hud-min-minus" title="-1 minuto">▼</button>
+                </div>
               </div>
             </div>
 
-            <!-- Odd Justa (Valor Gigante) -->
-            <div class="hud-metric-group">
-              <span class="hud-metric-label">ODD JUSTA</span>
-              <span class="hud-odd-justa">0.00</span>
+            <!-- Coluna 2 Central: Odd Justa Gigante + DIFERENÇA % Centralizada Abaixo -->
+            <div class="hud-odd-justa-central-col">
+              <span class="hud-metric-label">ODD JUSTA DO MINUTO</span>
+              <span class="hud-odd-justa-hero">0.00</span>
+              
+              <!-- DIFERENÇA % CENTRALIZADA LOGO ABAIXO DA ODD JUSTA -->
+              <div class="hud-diff-badge diff-fair">
+                <span>DIF:</span>
+                <strong>0.0% ⚖️ JUSTO</strong>
+              </div>
             </div>
 
-            <!-- Campo de Odd Live no Minuto Atual (Amarelo Claro) -->
-            <div class="hud-live-cell-yellow">
-              <span class="hud-live-cell-label">ODD LIVE:</span>
-              <input type="number" step="0.01" class="hud-yellow-field hud-live-odd-input" placeholder="Ex: 2.26" value="${this.state.liveOddCurrentMinute}" style="width: 76px; font-size: 1.15rem; font-weight: 900;">
+            <!-- Coluna 3: Odd Live (Amarelo Claro) + Zona Destacada -->
+            <div class="hud-live-zone-col">
+              <!-- Campo Odd Live -->
+              <div class="hud-live-cell-yellow">
+                <span class="hud-live-cell-label">ODD LIVE:</span>
+                <input type="number" step="0.01" class="hud-yellow-field hud-live-odd-input" placeholder="Ex: 2.26" value="${this.state.liveOddCurrentMinute}" style="width: 78px; font-size: 1.15rem; font-weight: 900;">
+              </div>
+
+              <!-- Zona Destacada com Cores Vivas -->
+              <div class="zone-badge hud-zone-badge zone-media">
+                <span>🟡 ZONA MÉDIA</span>
+              </div>
             </div>
 
-            <!-- Diferença % (Valor) -->
-            <div class="hud-diff-badge diff-fair">
-              <span>DIF:</span>
-              <strong>0.0% ⚖️</strong>
-            </div>
-
-            <!-- Zona -->
-            <span class="zone-badge hud-zone-badge zone-media">Zona Média</span>
           </div>
 
-          <!-- BLOCOS 1 E 2 COM TOPO (AZUL BACK) E FUNDO (ROSA LAY) -->
+          <!-- BLOCOS 1 E 2 COM AS CORES PASTEL DA IMAGEM (AZUL TOPO / ROSA FUNDO) -->
           <div class="hud-blocos-giant-grid">
             
             <!-- Card Bloco Justo 1 -->
@@ -544,18 +535,16 @@ export class GameSlot {
                 <span class="giant-bloco-title">🛡️ BLOCO JUSTO 1</span>
               </div>
               <div class="giant-bloco-body">
-                <!-- Topo (Azul Back) -->
-                <div class="bloco-subcol bloco-topo-exchange">
-                  <span class="bloco-sublabel">TOPO (BACK)</span>
-                  <span class="bloco-big-number bloco1-topo-val">0.00</span>
+                <!-- Topo (Azul Pastel do Excel) -->
+                <div class="bloco-pastel-cell bloco-topo-pastel">
+                  <span class="bloco-pastel-label">TOPO</span>
+                  <span class="bloco-pastel-number bloco1-topo-val">0.00</span>
                 </div>
                 
-                <div class="bloco-arrow">➔</div>
-                
-                <!-- Fundo (Rosa Lay) -->
-                <div class="bloco-subcol bloco-fundo-exchange">
-                  <span class="bloco-sublabel">FUNDO (LAY)</span>
-                  <span class="bloco-big-number bloco1-fundo-val">0.00</span>
+                <!-- Fundo (Rosa Pastel do Excel) -->
+                <div class="bloco-pastel-cell bloco-fundo-pastel">
+                  <span class="bloco-pastel-label">FUNDO</span>
+                  <span class="bloco-pastel-number bloco1-fundo-val">0.00</span>
                 </div>
               </div>
             </div>
@@ -566,18 +555,16 @@ export class GameSlot {
                 <span class="giant-bloco-title">🛡️ BLOCO JUSTO 2</span>
               </div>
               <div class="giant-bloco-body">
-                <!-- Topo (Azul Back) -->
-                <div class="bloco-subcol bloco-topo-exchange">
-                  <span class="bloco-sublabel">TOPO (BACK)</span>
-                  <span class="bloco-big-number bloco2-topo-val">0.00</span>
+                <!-- Topo (Azul Pastel do Excel) -->
+                <div class="bloco-pastel-cell bloco-topo-pastel">
+                  <span class="bloco-pastel-label">TOPO</span>
+                  <span class="bloco-pastel-number bloco2-topo-val">0.00</span>
                 </div>
                 
-                <div class="bloco-arrow">➔</div>
-                
-                <!-- Fundo (Rosa Lay) -->
-                <div class="bloco-subcol bloco-fundo-exchange">
-                  <span class="bloco-sublabel">FUNDO (LAY)</span>
-                  <span class="bloco-big-number bloco2-fundo-val">0.00</span>
+                <!-- Fundo (Rosa Pastel do Excel) -->
+                <div class="bloco-pastel-cell bloco-fundo-pastel">
+                  <span class="bloco-pastel-label">FUNDO</span>
+                  <span class="bloco-pastel-number bloco2-fundo-val">0.00</span>
                 </div>
               </div>
             </div>
@@ -586,30 +573,22 @@ export class GameSlot {
 
         </div>
 
-        <!-- Linha 3: REGISTRO DE EVENTO / RETORNO DE JOGO (MINUTO + ODD) -->
+        <!-- Linha 3: REGISTRO DE EVENTO / RETORNO DE JOGO (SIMPLIFICADO) -->
         <div class="hud-event-recalc-bar">
-          <div class="event-recalc-title">
-            <span>⚡ RETORNO / EVENTO:</span>
-          </div>
+          <span class="event-recalc-title">⚡ REGISTRAR EVENTO:</span>
 
           <div class="event-recalc-inputs">
             <div class="event-input-wrapper">
-              <span class="event-mini-label">Min:</span>
-              <input type="number" class="hud-yellow-field event-min-input" value="${this.state.currentMinute}" style="width: 38px; font-size: 0.85rem;">
+              <span class="event-mini-label">Minuto:</span>
+              <input type="number" class="hud-yellow-field event-min-input" value="${this.state.currentMinute}" style="width: 44px; font-size: 0.9rem;">
             </div>
 
             <div class="event-input-wrapper">
-              <span class="event-mini-label">Odd:</span>
-              <input type="number" step="0.01" class="hud-yellow-field event-odd-input" placeholder="Nova Odd" style="width: 68px; font-size: 0.85rem;">
+              <span class="event-mini-label">Nova Odd:</span>
+              <input type="number" step="0.01" class="hud-yellow-field event-odd-input" placeholder="Ex: 5.60" style="width: 76px; font-size: 0.95rem;">
             </div>
 
             <button class="btn btn-success btn-sm event-apply-btn" title="Aplicar e Recalcular Curva">✔️ Recalcular</button>
-
-            <!-- Atalhos Rápidos de Gol -->
-            <div style="display: flex; gap: 0.25rem; margin-left: auto;">
-              <button class="btn btn-secondary btn-sm quick-gol-fav-btn" title="Gol a Favor (x2.5)" style="padding: 0.2rem 0.4rem; font-size: 0.65rem;">⚽ Fav (x2.5)</button>
-              <button class="btn btn-secondary btn-sm quick-gol-contra-btn" title="Gol Contra (/2.5)" style="padding: 0.2rem 0.4rem; font-size: 0.65rem; color: #f87171;">🔴 Contra (/2.5)</button>
-            </div>
           </div>
         </div>
 

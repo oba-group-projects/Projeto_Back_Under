@@ -1,9 +1,10 @@
 /**
- * Estilos Modernos de Alta Visibilidade - HUD Cockpit V3 Projeto Back Under
- * - Inputs com Fundo Amarelo Claro Estilo Planilha
- * - Blocos 1 e 2 Diferenciados com Topo (Azul Back) e Fundo (Rosa Lay)
- * - Steppers + e - Funcionais em todos os campos
- * - Barra de Retorno de Jogo / Evento
+ * Estilos Modernos de Alta Visibilidade - HUD Cockpit V4 Projeto Back Under
+ * - Células Amarelas Claras Estilo Planilha
+ * - Topo (Azul Pastel) e Fundo (Rosa Pastel) Exatamente como no Excel da Imagem
+ * - Destaque Hero para Minuto e Odd Justa
+ * - Diferença % Centralizada Abaixo da Odd Justa
+ * - Zonas com Cores Vivas e Destacadas
  */
 
 /* ========================================================
@@ -16,7 +17,7 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  padding: 0.6rem 1.25rem;
+  padding: 0.55rem 1.25rem;
 }
 
 .header-container {
@@ -385,36 +386,44 @@
 }
 
 /* ========================================================
-   PAINEL PRINCIPAL DO MINUTO ATUAL
+   PAINEL PRINCIPAL DO MINUTO ATUAL (HERO DESTAQUE)
    ======================================================== */
 .hud-main-minute-banner {
   background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 58, 138, 0.25) 100%);
   border: 1.5px solid rgba(59, 130, 246, 0.5);
   border-radius: var(--radius-md);
-  padding: 0.55rem 0.75rem;
+  padding: 0.6rem 0.75rem;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0.6rem;
   box-shadow: 0 0 16px rgba(59, 130, 246, 0.12);
 }
 
-.hud-banner-top-row {
-  display: flex;
+.hud-hero-metrics-grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.4fr 1.1fr;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.45rem;
-  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-.hud-minute-badge {
+/* Coluna 1: Minuto */
+.hud-minute-hero-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+}
+
+.hud-minute-hero-badge {
   background: var(--color-blue);
   color: #ffffff;
   font-family: var(--font-mono);
-  font-size: 1.1rem;
+  font-size: 1.45rem;
   font-weight: 900;
-  padding: 0.25rem 0.55rem;
-  border-radius: 4px;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
+  line-height: 1;
 }
 
 .hud-step-mini-btn {
@@ -431,10 +440,13 @@
   background: var(--color-blue);
 }
 
-.hud-metric-group {
+/* Coluna 2 Central: Odd Justa + Diferença % Centralizada Abaixo */
+.hud-odd-justa-central-col {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .hud-metric-label {
@@ -442,15 +454,52 @@
   font-weight: 800;
   color: var(--text-muted);
   letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-.hud-odd-justa {
+.hud-odd-justa-hero {
   font-family: var(--font-mono);
-  font-size: 1.5rem;
+  font-size: 1.85rem;
   font-weight: 900;
   color: #ffffff;
-  text-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
-  line-height: 1.1;
+  text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+  line-height: 1;
+  margin: 0.1rem 0 0.25rem 0;
+}
+
+.hud-diff-badge {
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+}
+.hud-diff-badge.diff-good {
+  background: rgba(16, 185, 129, 0.25);
+  border: 1px solid rgba(16, 185, 129, 0.6);
+  color: #34d399;
+}
+.hud-diff-badge.diff-bad {
+  background: rgba(239, 68, 68, 0.25);
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  color: #f87171;
+}
+.hud-diff-badge.diff-fair {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-secondary);
+}
+
+/* Coluna 3: Odd Live + Zona */
+.hud-live-zone-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
 }
 
 .hud-live-cell-yellow {
@@ -470,34 +519,42 @@
   white-space: nowrap;
 }
 
-.hud-diff-badge {
-  padding: 0.25rem 0.45rem;
-  border-radius: 4px;
-  font-size: 0.72rem;
-  font-family: var(--font-mono);
-  font-weight: 800;
-  display: flex;
+/* Badges de Zona Destacados com Cores Vivas */
+.zone-badge {
+  font-size: 0.68rem;
+  font-weight: 900;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  display: inline-flex;
   align-items: center;
   gap: 0.25rem;
+  letter-spacing: 0.03em;
 }
-.hud-diff-badge.diff-good {
-  background: rgba(16, 185, 129, 0.25);
-  border: 1px solid rgba(16, 185, 129, 0.6);
-  color: #34d399;
+
+.zone-rapida {
+  background: rgba(5, 46, 22, 0.85);
+  color: #4ade80;
+  border: 1.5px solid #22c55e;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
 }
-.hud-diff-badge.diff-bad {
-  background: rgba(239, 68, 68, 0.25);
-  border: 1px solid rgba(239, 68, 68, 0.6);
-  color: #f87171;
+
+.zone-media {
+  background: rgba(69, 26, 3, 0.85);
+  color: #fbbf24;
+  border: 1.5px solid #f59e0b;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
 }
-.hud-diff-badge.diff-fair {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--text-secondary);
+
+.zone-lenta {
+  background: rgba(23, 37, 84, 0.85);
+  color: #60a5fa;
+  border: 1.5px solid #3b82f6;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
 }
 
 /* ========================================================
-   BLOCOS GIGANTES (DIFERENCIADOS + CORES BACK E LAY)
+   BLOCOS GIGANTES (CORES PASTEL DA IMAGEM DO USUÁRIO)
    ======================================================== */
 .hud-blocos-giant-grid {
   display: grid;
@@ -514,16 +571,14 @@
   border: 1.5px solid;
 }
 
-/* Bloco 1: Fundo Verde Esmeralda Escuro */
 .card-bloco1 {
-  background: linear-gradient(135deg, rgba(6, 78, 59, 0.55) 0%, rgba(15, 23, 42, 0.85) 100%);
+  background: linear-gradient(135deg, rgba(6, 78, 59, 0.5) 0%, rgba(15, 23, 42, 0.85) 100%);
   border-color: rgba(16, 185, 129, 0.65);
 }
 .card-bloco1 .giant-bloco-title { color: #34d399; }
 
-/* Bloco 2: Fundo Azul Índigo Escuro */
 .card-bloco2 {
-  background: linear-gradient(135deg, rgba(30, 27, 75, 0.55) 0%, rgba(15, 23, 42, 0.85) 100%);
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.5) 0%, rgba(15, 23, 42, 0.85) 100%);
   border-color: rgba(99, 102, 241, 0.65);
 }
 .card-bloco2 .giant-bloco-title { color: #a5b4fc; }
@@ -542,69 +597,64 @@
 }
 
 .giant-bloco-body {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.3rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
 }
 
-.bloco-subcol {
+.bloco-pastel-cell {
+  border-radius: 4px;
+  padding: 0.35rem 0.45rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1;
-  padding: 0.25rem 0.35rem;
-  border-radius: 4px;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
-/* TOPO: Azul Betfair Back */
-.bloco-topo-exchange {
-  background: rgba(30, 58, 138, 0.45);
-  border: 1.5px solid #38bdf8;
+/* TOPO: Azul Pastel idêntico à imagem do usuário */
+.bloco-topo-pastel {
+  background: #e0f2fe !important;
+  border: 1.5px solid #7dd3fc !important;
 }
-.bloco-topo-exchange .bloco-sublabel { color: #bae6fd; }
-.bloco-topo-exchange .bloco-big-number { color: #ffffff; }
+.bloco-topo-pastel .bloco-pastel-label { color: #0284c7; }
+.bloco-topo-pastel .bloco-pastel-number { color: #0369a1; }
 
-/* FUNDO: Rosa Betfair Lay */
-.bloco-fundo-exchange {
-  background: rgba(136, 19, 55, 0.45);
-  border: 1.5px solid #f472b6;
+/* FUNDO: Rosa Pastel idêntico à imagem do usuário */
+.bloco-fundo-pastel {
+  background: #ffe4e6 !important;
+  border: 1.5px solid #fda4af !important;
 }
-.bloco-fundo-exchange .bloco-sublabel { color: #fbcfe8; }
-.bloco-fundo-exchange .bloco-big-number { color: #ffffff; }
+.bloco-fundo-pastel .bloco-pastel-label { color: #e11d48; }
+.bloco-fundo-pastel .bloco-pastel-number { color: #be123c; }
 
-.bloco-sublabel {
-  font-size: 0.55rem;
-  font-weight: 800;
+.bloco-pastel-label {
+  font-size: 0.58rem;
+  font-weight: 900;
   text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.bloco-big-number {
+.bloco-pastel-number {
   font-family: var(--font-mono);
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   font-weight: 900;
   line-height: 1.1;
-  margin-top: 0.1rem;
-}
-
-.bloco-arrow {
-  font-size: 0.9rem;
-  color: var(--text-muted);
-  font-weight: 700;
+  margin-top: 0.05rem;
 }
 
 /* ========================================================
-   BARRA DE RETORNO DE JOGO / EVENTO
+   BARRA DE RETORNO DE JOGO / EVENTO (SIMPLIFICADA)
    ======================================================== */
 .hud-event-recalc-bar {
-  background: rgba(15, 23, 42, 0.8);
+  background: rgba(15, 23, 42, 0.9);
   border: 1px solid rgba(250, 204, 21, 0.35);
   border-radius: var(--radius-sm);
-  padding: 0.35rem 0.5rem;
+  padding: 0.35rem 0.55rem;
   display: flex;
   align-items: center;
-  gap: 0.45rem;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
 .event-recalc-title {
@@ -617,45 +667,19 @@
 .event-recalc-inputs {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  flex: 1;
-  flex-wrap: wrap;
+  gap: 0.4rem;
 }
 
 .event-input-wrapper {
   display: flex;
   align-items: center;
-  gap: 0.2rem;
+  gap: 0.25rem;
 }
 
 .event-mini-label {
   font-size: 0.62rem;
   font-weight: 700;
   color: var(--text-secondary);
-}
-
-/* Badges de Zona */
-.zone-badge {
-  font-size: 0.62rem;
-  font-weight: 800;
-  padding: 0.15rem 0.4rem;
-  border-radius: var(--radius-full);
-  text-transform: uppercase;
-}
-.zone-rapida {
-  background: rgba(16, 185, 129, 0.2);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.4);
-}
-.zone-media {
-  background: rgba(245, 158, 11, 0.2);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.4);
-}
-.zone-lenta {
-  background: rgba(59, 130, 246, 0.2);
-  color: #60a5fa;
-  border: 1px solid rgba(59, 130, 246, 0.4);
 }
 
 /* ========================================================
