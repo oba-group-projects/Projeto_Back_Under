@@ -1,154 +1,142 @@
 /**
- * Orquestrador Principal do Terminal - Projeto Back Under
+ * Controlador Principal da Aplicação - Projeto Back Under Multi-Jogos
+ * - Autenticação e Perfis (Administrador Master e Trader)
+ * - Dashboard do Administrador
+ * - Gestão dos Slots 1 a 4 com Layouts Centralizados (1, 2, 3 e 4 Jogos)
  */
 import { GameSlot } from './components/GameSlot.js';
 import { PenduloModal } from './components/PenduloModal.js';
-import { OperationsHistory } from './components/OperationsHistory.js';
-import { formatCurrency, formatPercent } from './core/oddsCalculator.js';
+import { LoginModal } from './components/LoginModal.js';
+import { AdminDashboard } from './components/AdminDashboard.js';
+import { authManager } from './core/authManager.js';
 
-class BackUnderApp {
+class App {
   constructor() {
-    this.masterRed = 200; // Padrão da planilha
-    this.viewMode = 'view-4'; // 'view-4' | 'view-2' | 'view-1'
-    this.audioEnabled = true;
+    this.masterRed = 200;
+    this.viewMode = 'view-4'; // 'view-1' | 'view-2' | 'view-3' | 'view-4'
     this.slots = [];
-    this.audioCtx = null;
+    this.penduloModal = null;
+    this.loginModal = null;
+    this.adminDashboard = null;
 
     this.init();
   }
 
   init() {
     this.loadSettings();
-    this.initAudio();
-    this.initElements();
+    this.initAuth();
+    this.initSlots();
     this.initPenduloModal();
-    this.initHistory();
-    this.initGameSlots();
-    this.updateGlobalStats();
+    this.initAdminDashboard();
+    this.bindHeaderEvents();
+    this.updateUserUI();
+  }
+
+  initAuth() {
+    this.loginModal = new LoginModal((user) => {
+      this.updateUserUI();
+      this.showToast(`Bem-vindo, ${user.name}!`);
+    });
+
+    // Se não estiver autenticado, exibe a tela de login
+    if (!authManager.isAuthenticated()) {
+      this.loginModal.show();
+    }
+  }
+
+  initAdminDashboard() {
+    this.adminDashboard = new AdminDashboard(() => {
+      this.updateUserUI();
+    });
+  }
+
+  updateUserUI() {
+    const session = authManager.getCurrentSession();
+    const userArea = document.getElementById('userHeaderArea');
+    const nameDisplay = document.getElementById('userNameDisplay');
+    const roleIcon = document.getElementById('userRoleIcon');
+    const adminBtn = document.getElementById('adminDashboardBtn');
+
+    if (session) {
+      if (userArea) userArea.style.display = 'flex';
+      if (nameDisplay) nameDisplay.textContent = session.name;
+      if (roleIcon) roleIcon.textContent = session.role === 'admin' ? '👑' : '👤';
+
+      if (adminBtn) {
+        adminBtn.style.display = session.role === 'admin' ? 'inline-flex' : 'none';
+      }
+    } else {
+      if (userArea) userArea.style.display = 'none';
+    }
   }
 
   loadSettings() {
     try {
-      const savedRed = localStorage.getItem('projeto_back_under_master_red');
-      if (savedRed) this.masterRed = parseFloat(savedRed) || 200;
-
-      const savedView = localStorage.getItem('projeto_back_under_view_mode');
-      if (savedView) this.viewMode = savedView;
+      const saved = localStorage.getItem('projeto_back_under_settings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.masterRed) this.masterRed = parsed.masterRed;
+        if (parsed.viewMode) this.viewMode = parsed.viewMode;
+      }
     } catch (e) {
-      console.warn('Erro ao carregar configurações locais:', e);
+      console.warn('Erro ao carregar configurações salvas:', e);
     }
   }
 
   saveSettings() {
     try {
-      localStorage.setItem('projeto_back_under_master_red', this.masterRed.toString());
-      localStorage.setItem('projeto_back_under_view_mode', this.viewMode);
+      const data = {
+        masterRed: this.masterRed,
+        viewMode: this.viewMode
+      };
+      localStorage.setItem('projeto_back_under_settings', JSON.stringify(data));
     } catch (e) {
-      console.warn('Erro ao salvar configurações locais:', e);
+      console.warn('Erro ao salvar configurações:', e);
     }
   }
 
-  initAudio() {
-    try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (AudioContext) {
-        this.audioCtx = new AudioContext();
+  initSlots() {
+    const slotContainers = [
+      document.getElementById('slotCard1'),
+      document.getElementById('slotCard2'),
+      document.getElementById('slotCard3'),
+      document.getElementById('slotCard4')
+    ];
+
+    slotContainers.forEach((container, index) => {
+      if (container) {
+        const slot = new GameSlot(index + 1, container, {
+          getMasterRed: () => this.masterRed,
+          onTradeCompleted: (tradeData) => this.handleTradeCompleted(tradeData),
+          onOpenPendulos: (slotId) => this.openPenduloModalForSlot(slotId)
+        });
+        this.slots.push(slot);
       }
-    } catch (e) {
-      console.warn('Audio Context não suportado no navegador.');
-    }
+    });
   }
 
-  playBeep(type = 'green') {
-    if (!this.audioEnabled || !this.audioCtx) return;
-    try {
-      if (this.audioCtx.state === 'suspended') {
-        this.audioCtx.resume();
-      }
-      const osc = this.audioCtx.createOscillator();
-      const gain = this.audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(this.audioCtx.destination);
-
-      if (type === 'green') {
-        osc.frequency.setValueAtTime(587.33, this.audioCtx.currentTime); // D5
-        osc.frequency.exponentialRampToValueAtTime(880, this.audioCtx.currentTime + 0.15); // A5
-        gain.gain.setValueAtTime(0.2, this.audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.25);
-        osc.start();
-        osc.stop(this.audioCtx.currentTime + 0.25);
-      } else if (type === 'red') {
-        osc.frequency.setValueAtTime(300, this.audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(150, this.audioCtx.currentTime + 0.25);
-        gain.gain.setValueAtTime(0.25, this.audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.3);
-        osc.start();
-        osc.stop(this.audioCtx.currentTime + 0.3);
-      } else {
-        osc.frequency.setValueAtTime(440, this.audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.08);
-        osc.start();
-        osc.stop(this.audioCtx.currentTime + 0.08);
-      }
-    } catch (e) {
-      // Ignora erro de áudio
-    }
-  }
-
-  showToast(message, type = 'success') {
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
-
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.innerHTML = `
-      <span>${type === 'success' ? '✅' : '⚠️'}</span>
-      <span>${message}</span>
-    `;
-
-    container.appendChild(toast);
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.style.transform = 'translateY(10px)';
-      setTimeout(() => toast.remove(), 300);
-    }, 3500);
-  }
-
-  initElements() {
-    // Red Global Input
-    const masterRedInput = document.getElementById('masterRedInput');
-    if (masterRedInput) {
-      masterRedInput.value = this.masterRed;
-      masterRedInput.addEventListener('input', (e) => {
-        const val = parseFloat(e.target.value);
-        if (!isNaN(val) && val > 0) {
-          this.masterRed = val;
-          this.saveSettings();
-          this.slots.forEach(slot => slot.recalculate());
+  bindHeaderEvents() {
+    // Botão Abrir Painel Admin
+    const adminBtn = document.getElementById('adminDashboardBtn');
+    if (adminBtn) {
+      adminBtn.addEventListener('click', () => {
+        if (authManager.isAdmin() && this.adminDashboard) {
+          this.adminDashboard.show();
         }
       });
     }
 
-    // Botão de Áudio
-    const soundToggleBtn = document.getElementById('soundToggleBtn');
-    if (soundToggleBtn) {
-      soundToggleBtn.addEventListener('click', () => {
-        this.audioEnabled = !this.audioEnabled;
-        soundToggleBtn.textContent = this.audioEnabled ? '🔔 Som Ativo' : '🔕 Mudo';
-        if (this.audioEnabled) this.playBeep('green');
+    // Botão Logout
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        authManager.logout();
+        this.updateUserUI();
+        if (this.loginModal) this.loginModal.show();
       });
     }
 
-    // Botão Abrir Modal de Pêndulos no Header
-    const openPendulosHeaderBtn = document.getElementById('openPendulosHeaderBtn');
-    if (openPendulosHeaderBtn) {
-      openPendulosHeaderBtn.addEventListener('click', () => {
-        if (this.penduloModal) this.penduloModal.open();
-      });
-    }
-
-    // Seletor de visualização (1, 2, 4 jogos)
+    // Seletor de visualização (1, 2, 3, 4 jogos)
     const viewButtons = document.querySelectorAll('.view-toggle-btn');
     const gamesGrid = document.getElementById('gamesGrid');
 
@@ -176,82 +164,52 @@ class BackUnderApp {
       if (targetSlotId && this.slots[targetSlotId - 1]) {
         this.slots[targetSlotId - 1].setOdd365(selectedOdd365);
         this.showToast(`Pêndulo (365: ${selectedOdd365.toFixed(2)}) aplicado ao Slot #${targetSlotId}`);
-      } else {
-        // Aplica ao primeiro slot livre
-        this.slots[0].setOdd365(selectedOdd365);
-        this.showToast(`Pêndulo (365: ${selectedOdd365.toFixed(2)}) aplicado ao Slot #1`);
       }
-      this.playBeep('click');
     });
   }
 
-  initHistory() {
-    this.history = new OperationsHistory((stats) => {
-      this.updateGlobalStats(stats);
-    });
+  openPenduloModalForSlot(slotId) {
+    if (this.penduloModal) {
+      this.penduloModal.open(slotId);
+    }
   }
 
-  initGameSlots() {
-    const slotContainers = [
-      document.getElementById('slotCard1'),
-      document.getElementById('slotCard2'),
-      document.getElementById('slotCard3'),
-      document.getElementById('slotCard4')
-    ];
-
-    this.slots = slotContainers.map((container, idx) => {
-      const slotId = idx + 1;
-      return new GameSlot(slotId, container, {
-        getMasterRed: () => this.masterRed,
-        onOpenPendulos: (id) => this.penduloModal.open(id),
-        onTradeCompleted: (tradeData) => {
-          const registered = this.history.addTrade(tradeData);
-          if (registered.status === 'GREEN') {
-            this.playBeep('green');
-            this.showToast(`Green registrado: +${formatCurrency(registered.lucroLiquido)} em ${registered.gameName}`, 'success');
-          } else if (registered.status === 'RED') {
-            this.playBeep('red');
-            this.showToast(`Red registrado: ${formatCurrency(registered.lucroLiquido)} em ${registered.gameName}`, 'error');
-          } else {
-            this.playBeep('click');
-            this.showToast(`Operação zerada (0x0) em ${registered.gameName}`, 'info');
-          }
-        }
-      });
-    });
+  handleTradeCompleted(tradeData) {
+    this.showToast(`Operação concluída no ${tradeData.gameName}!`);
   }
 
-  updateGlobalStats(stats = null) {
-    if (!stats && this.history) {
-      stats = this.history.getStats();
-    }
-    if (!stats) return;
+  showToast(message) {
+    const existing = document.querySelector('.app-toast');
+    if (existing) existing.remove();
 
-    const totalTradesEl = document.getElementById('statTotalTrades');
-    const winrateEl = document.getElementById('statWinRate');
-    const plTotalEl = document.getElementById('statPLTotal');
-    const roiGeralEl = document.getElementById('statROIGeral');
+    const toast = document.createElement('div');
+    toast.className = 'app-toast';
+    toast.textContent = message;
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #ffffff;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+      z-index: 1000;
+      animation: fadeIn 0.2s ease;
+    `;
 
-    if (totalTradesEl) totalTradesEl.textContent = stats.totalTrades;
-    if (winrateEl) winrateEl.textContent = `${stats.winRate.toFixed(1)}% (${stats.totalGreens}G / ${stats.totalReds}R)`;
-    
-    if (plTotalEl) {
-      const isGreen = stats.totalPL > 0;
-      const isRed = stats.totalPL < 0;
-      plTotalEl.className = `summary-card-value ${isGreen ? 'text-green' : (isRed ? 'text-red' : 'text-primary')}`;
-      plTotalEl.textContent = formatCurrency(stats.totalPL);
-    }
-
-    if (roiGeralEl) {
-      const isGreen = stats.roiGeral > 0;
-      const isRed = stats.roiGeral < 0;
-      roiGeralEl.className = `summary-card-value ${isGreen ? 'text-green' : (isRed ? 'text-red' : 'text-primary')}`;
-      roiGeralEl.textContent = formatPercent(stats.roiGeral);
-    }
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s ease';
+      setTimeout(() => toast.remove(), 300);
+    }, 2500);
   }
 }
 
-// Inicializa quando o DOM estiver pronto
+// Inicializa a aplicação ao carregar o DOM
 document.addEventListener('DOMContentLoaded', () => {
-  window.app = new BackUnderApp();
+  window.app = new App();
 });

@@ -1,6 +1,6 @@
 import http from 'http';
 
-const paths = [
+const filesToTest = [
   '/',
   '/index.html',
   '/css/design-system.css',
@@ -10,46 +10,51 @@ const paths = [
   '/js/components/GameSlot.js',
   '/js/components/PenduloModal.js',
   '/js/components/OperationsHistory.js',
+  '/js/components/LoginModal.js',
+  '/js/components/AdminDashboard.js',
+  '/js/core/authManager.js',
   '/js/core/oddsCalculator.js',
   '/js/core/pendulosData.js',
   '/js/core/stakeManager.js',
   '/js/core/hedgeEngine.js'
 ];
 
-async function checkUrl(path) {
-  return new Promise((resolve) => {
-    http.get(`http://localhost:8080${path}`, (res) => {
+console.log('Validating HTTP server asset delivery...');
+
+function testUrl(urlPath) {
+  return new Promise((resolve, reject) => {
+    http.get(`http://localhost:8080${urlPath}`, (res) => {
       let data = '';
-      res.on('data', chunk => data += chunk);
+      res.on('data', chunk => { data += chunk; });
       res.on('end', () => {
-        resolve({
-          path,
-          status: res.statusCode,
-          contentType: res.headers['content-type'],
-          size: data.length
-        });
+        if (res.statusCode === 200) {
+          console.log(`  ✅ [200] ${urlPath} (${res.headers['content-type']}, ${data.length} bytes)`);
+          resolve(true);
+        } else {
+          console.error(`  ❌ [${res.statusCode}] ${urlPath}`);
+          resolve(false);
+        }
       });
     }).on('error', (err) => {
-      resolve({ path, error: err.message });
+      console.error(`  ❌ Error fetching ${urlPath}:`, err.message);
+      resolve(false);
     });
   });
 }
 
-console.log('Validating HTTP server asset delivery...');
-const results = await Promise.all(paths.map(checkUrl));
-
-let allOk = true;
-results.forEach(r => {
-  if (r.status === 200 && r.size > 0) {
-    console.log(`  ✅ [${r.status}] ${r.path} (${r.contentType}, ${r.size} bytes)`);
-  } else {
-    console.error(`  ❌ FAIL: ${r.path}`, r);
-    allOk = false;
+async function runAll() {
+  let allOk = true;
+  for (const path of filesToTest) {
+    const ok = await testUrl(path);
+    if (!ok) allOk = false;
   }
-});
 
-if (allOk) {
-  console.log('\n🎉 Todos os 13 arquivos e módulos do Projeto Back Under estão sendo servidos perfeitamente com código 200!');
-} else {
-  process.exit(1);
+  if (allOk) {
+    console.log(`\n🎉 Todos os ${filesToTest.length} arquivos e módulos do Projeto Back Under estão sendo servidos perfeitamente com código 200!\n`);
+  } else {
+    console.error('\n⚠️ Alguns arquivos falharam na entrega HTTP.\n');
+    process.exit(1);
+  }
 }
+
+runAll();

@@ -26,14 +26,35 @@
         </div>
       </div>
 
-      <!-- Controles de Layout (1, 2, 3 ou 4 Jogos Centralizados) -->
+      <!-- Controles de Layout (1, 2, 3 ou 4 Jogos) e Usuário -->
       <div class="header-controls">
+        
+        <!-- Seletores de Layout -->
         <div class="view-toggle-group">
           <button class="view-toggle-btn active" data-view="view-4" title="Visualizar 4 Jogos (2x2)">4 Jogos</button>
           <button class="view-toggle-btn" data-view="view-3" title="Visualizar 3 Jogos">3 Jogos</button>
-          <button class="view-toggle-btn" data-view="view-2" title="Visualizar 2 Jogos">2 Jogos</button>
+          <button class="view-toggle-btn" data-view="view-2" title="Visualizar 2 Jogos (Um abaixo do outro)">2 Jogos</button>
           <button class="view-toggle-btn" data-view="view-1" title="Foco em 1 Jogo Único Centralizado">1 Jogo</button>
         </div>
+
+        <!-- Área de Autenticação / Perfil -->
+        <div id="userHeaderArea" style="display: flex; align-items: center; gap: 0.4rem;">
+          <div id="userProfileBadge" class="user-profile-badge">
+            <span id="userRoleIcon">👤</span>
+            <span id="userNameDisplay">Trader</span>
+          </div>
+
+          <!-- Botão Painel Admin (Visível apenas para Administrador) -->
+          <button id="adminDashboardBtn" class="btn btn-admin btn-sm" style="display: none;" title="Abrir Painel de Controle Master">
+            👑 Painel Admin
+          </button>
+
+          <!-- Botão Logout -->
+          <button id="logoutBtn" class="btn btn-secondary btn-sm" title="Encerrar Sessão">
+            🚪 Sair
+          </button>
+        </div>
+
       </div>
     </div>
   </header>
