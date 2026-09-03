@@ -1,10 +1,9 @@
 /**
- * Componente do Slot de Jogo Individual (Suporte até 4 jogos em paralelo)
- * Integrado ao Motor de Decaimento Minuto a Minuto e Sincronização Automática (Planilha IN LIVE / HTFT)
+ * Componente do Slot de Jogo Individual - Cockpit de Alta Visibilidade (HUD)
+ * Focado 100% no Minuto Atual, Sincronização Rápida e Decaimento da Planilha Google Docs
  */
-import { STRATEGIES, calculateStakeFromRed } from '../core/stakeManager.js';
 import { calculateMinuteCurve, getMinuteMetrics, applyGoalOddShift } from '../core/minuteDecayEngine.js';
-import { moveOddTicks, calculateTicksDistance, formatCurrency, formatPercent, normalizeOdd } from '../core/oddsCalculator.js';
+import { moveOddTicks, calculateTicksDistance, formatCurrency, formatPercent } from '../core/oddsCalculator.js';
 import { calculateHedge } from '../core/hedgeEngine.js';
 import { findClosestLadder } from '../core/ladderData.js';
 
@@ -12,7 +11,7 @@ export class GameSlot {
   constructor(slotId, containerElement, { getMasterRed, onTradeCompleted, onOpenPendulos }) {
     this.slotId = slotId;
     this.container = containerElement;
-    this.getMasterRed = getMasterRed;
+    this.getMasterRed = getMasterRed || (() => 200);
     this.onTradeCompleted = onTradeCompleted;
     this.onOpenPendulos = onOpenPendulos;
 
@@ -20,29 +19,24 @@ export class GameSlot {
     this.state = {
       gameName: `Jogo ${slotId}`,
       period: 'HT', // 'HT' | 'FT'
-      strategyKey: 'back_under_pendulos',
-      customRed: null, // null herda do global
       initialOdd: 3.35,
       addedMinutes: 2,
       currentMinute: 1,
-      liveOddInput: 3.35,
+      liveOddCurrentMinute: '', // odd informada pelo trader para o minuto atual
       liveCorrections: {},
-      
-      // Métricas calculadas
-      minuteCurve: [],
-      currentMetrics: null,
-      stakeCalculada: 0,
-      lucroMedio: 0,
-      redMedio: 0,
       
       // Velocidade do tempo
       ticksPorMinuto: 0,
       pctPorMinuto: 0,
       
+      // Métricas calculadas
+      minuteCurve: [],
+      currentMetrics: null,
+      stakeBase: 800,
+      
       inTrade: false,
       timerSeconds: 0,
-      timerRunning: false,
-      showFullTable: false
+      timerRunning: false
     };
 
     this.timerInterval = null;
@@ -50,12 +44,6 @@ export class GameSlot {
     this.render();
     this.bindEvents();
     this.recalculate();
-  }
-
-  getEffectiveRed() {
-    return this.state.customRed !== null && this.state.customRed !== undefined 
-      ? this.state.customRed 
-      : this.getMasterRed();
   }
 
   recomputeCurve() {
@@ -67,7 +55,7 @@ export class GameSlot {
     });
     this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
 
-    // Calcula Ticks por minuto e % por minuto base
+    // Ticks por minuto e % por minuto base
     const ladderItem = findClosestLadder(this.state.initialOdd);
     const totalMin = 45 + (Number(this.state.addedMinutes) || 0);
     this.state.ticksPorMinuto = Number((ladderItem.tickIndex / totalMin).toFixed(2));
@@ -79,8 +67,10 @@ export class GameSlot {
     this.state.currentMinute = period === 'HT' ? 1 : 46;
     this.state.initialOdd = period === 'HT' ? 3.35 : 5.10;
     this.state.addedMinutes = period === 'HT' ? 2 : 5;
-    this.state.liveOddInput = this.state.initialOdd;
+    this.state.liveOddCurrentMinute = '';
+    this.state.liveCorrections = {};
     this.state.timerSeconds = 0;
+    this.pauseTimer();
     this.recomputeCurve();
     this.render();
     this.bindEvents();
@@ -88,8 +78,7 @@ export class GameSlot {
   }
 
   setInitialOdd(odd) {
-    this.state.initialOdd = Number(odd);
-    this.state.liveOddInput = Number(odd);
+    this.state.initialOdd = Number(odd) || 2.00;
     this.recomputeCurve();
     this.recalculate();
   }
@@ -98,27 +87,40 @@ export class GameSlot {
     const isHT = this.state.period === 'HT';
     const minStart = isHT ? 1 : 46;
     const maxMin = isHT ? (45 + this.state.addedMinutes) : (90 + this.state.addedMinutes);
-    this.state.currentMinute = Math.max(minStart, Math.min(maxMin, parseInt(min, 10) || minStart));
-    this.state.timerSeconds = (this.state.currentMinute - minStart) * 60;
-    this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
+    const newMin = Math.max(minStart, Math.min(maxMin, parseInt(min, 10) || minStart));
     
-    // Atualiza slider e display de minuto
-    const slider = this.container.querySelector('.slot-minute-slider');
-    if (slider) slider.value = this.state.currentMinute;
+    // Ao mudar o minuto, se for um novo minuto, limpa o input de odd live para nova leitura
+    if (newMin !== this.state.currentMinute) {
+      this.state.currentMinute = newMin;
+      this.state.liveOddCurrentMinute = this.state.liveCorrections[newMin] ? this.state.liveCorrections[newMin].toString() : '';
+      this.state.timerSeconds = (newMin - minStart) * 60;
+      
+      const liveInput = this.container.querySelector('.hud-live-odd-input');
+      if (liveInput) liveInput.value = this.state.liveOddCurrentMinute;
 
+      const tvMinInput = this.container.querySelector('.hud-tv-min-input');
+      if (tvMinInput) tvMinInput.value = newMin;
+    }
+
+    this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
     this.recalculate();
     this.updateTimerDisplay();
   }
 
+  syncFromTV(min) {
+    this.setMinute(min);
+    this.startTimer();
+  }
+
   applyGoal(isFavor) {
     const currentJusta = this.state.currentMetrics ? this.state.currentMetrics.oddJusta : this.state.initialOdd;
-    const baseOdd = this.state.liveOddInput || currentJusta;
+    const baseOdd = parseFloat(this.state.liveOddCurrentMinute) || currentJusta;
     const newOdd = applyGoalOddShift(baseOdd, isFavor);
-    this.state.liveOddInput = newOdd;
+    this.state.liveOddCurrentMinute = newOdd.toFixed(2);
     this.state.liveCorrections[this.state.currentMinute] = newOdd;
     
-    const liveInput = this.container.querySelector('.slot-live-odd-input');
-    if (liveInput) liveInput.value = newOdd.toFixed(2);
+    const liveInput = this.container.querySelector('.hud-live-odd-input');
+    if (liveInput) liveInput.value = this.state.liveOddCurrentMinute;
 
     this.recomputeCurve();
     this.recalculate();
@@ -126,102 +128,78 @@ export class GameSlot {
 
   recalculate() {
     this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
-    const red = this.getEffectiveRed();
-    const metrics = calculateStakeFromRed(this.state.strategyKey, red, {
-      valorBloco: 4.0,
-      stopLossPct: 0.25
-    });
-
-    this.state.stakeCalculada = metrics.stake;
-    this.state.lucroMedio = metrics.lucroMedio;
-    this.state.redMedio = metrics.redMedio;
+    const cm = this.state.currentMetrics;
+    if (!cm) return;
 
     // Recalcula Hedge do minuto
-    const oddEntrada = this.state.initialOdd;
-    const oddAtual = Number(this.state.liveOddInput) || (this.state.currentMetrics ? this.state.currentMetrics.oddJusta : oddEntrada);
+    const liveOdd = parseFloat(this.state.liveOddCurrentMinute) || cm.oddJusta;
     const hedge = calculateHedge({
-      oddEntrada: oddEntrada,
-      stakeEntrada: this.state.stakeCalculada,
-      oddAtual: oddAtual,
+      oddEntrada: this.state.initialOdd,
+      stakeEntrada: this.state.stakeBase,
+      oddAtual: liveOdd,
       comissaoPct: 0.0325
     });
 
-    this.updateUI(metrics, hedge);
+    this.updateUI(hedge);
   }
 
-  updateUI(metrics, hedge) {
+  updateUI(hedge) {
     const cm = this.state.currentMetrics;
     if (!cm) return;
 
     // Minuto e Odd Justa
-    const minuteBadge = this.container.querySelector('.slot-current-minute-badge');
-    const oddJustaDisplay = this.container.querySelector('.slot-odd-justa-display');
-    const bloco1Display = this.container.querySelector('.slot-bloco1-display');
-    const bloco2Display = this.container.querySelector('.slot-bloco2-display');
-    const zoneBadge = this.container.querySelector('.slot-zone-badge');
-    const valueDiffBadge = this.container.querySelector('.slot-value-diff-badge');
-    const progressFill = this.container.querySelector('.slot-progress-fill');
-    const speedInfo = this.container.querySelector('.slot-speed-info');
+    const minuteBadge = this.container.querySelector('.hud-minute-badge');
+    const oddJustaDisplay = this.container.querySelector('.hud-odd-justa');
+    const bloco1Display = this.container.querySelector('.hud-bloco1');
+    const bloco2Display = this.container.querySelector('.hud-bloco2');
+    const zoneBadge = this.container.querySelector('.hud-zone-badge');
+    const valueDiffBadge = this.container.querySelector('.hud-diff-badge');
+    const speedDisplay = this.container.querySelector('.hud-speed-display');
+    const cashoutDisplay = this.container.querySelector('.hud-cashout-display');
 
     if (minuteBadge) minuteBadge.textContent = `${cm.minute}'`;
     if (oddJustaDisplay) oddJustaDisplay.textContent = cm.oddJusta.toFixed(2);
-    if (bloco1Display) bloco1Display.textContent = `T: ${cm.topo1.toFixed(2)} | F: ${cm.fundo1.toFixed(2)}`;
-    if (bloco2Display) bloco2Display.textContent = `T: ${cm.topo2.toFixed(2)} | F: ${cm.fundo2.toFixed(2)}`;
+    if (bloco1Display) bloco1Display.textContent = `${cm.topo1.toFixed(2)} ➔ ${cm.fundo1.toFixed(2)}`;
+    if (bloco2Display) bloco2Display.textContent = `${cm.topo2.toFixed(2)} ➔ ${cm.fundo2.toFixed(2)}`;
 
-    if (speedInfo) {
-      speedInfo.textContent = `⚡ ${this.state.ticksPorMinuto} ticks/min (${this.state.pctPorMinuto}%/min)`;
-    }
-
-    // Barra de Progresso do Tempo
-    if (progressFill) {
-      const isHT = this.state.period === 'HT';
-      const total = 45 + this.state.addedMinutes;
-      const current = isHT ? cm.minute : (cm.minute - 45);
-      const pct = Math.min(100, Math.max(0, (current / total) * 100));
-      progressFill.style.width = `${pct}%`;
+    if (speedDisplay) {
+      speedDisplay.textContent = `⚡ ${this.state.ticksPorMinuto} ticks/min (${this.state.pctPorMinuto}%/min)`;
     }
 
     if (zoneBadge) {
-      zoneBadge.className = `zone-badge slot-zone-badge ${
+      zoneBadge.className = `zone-badge ${
         cm.zona === 'Rápida' ? 'zone-rapida' : (cm.zona === 'Média' ? 'zone-media' : 'zone-lenta')
       }`;
       zoneBadge.textContent = `Zona ${cm.zona}`;
     }
 
-    // Diferença de Valor entre Mercado Live e Odd Justa
+    // Diferença % Mercado vs Justa
     if (valueDiffBadge) {
-      const live = Number(this.state.liveOddInput) || cm.oddJusta;
-      const diff = ((live / cm.oddJusta) - 1) * 100;
-      const sign = diff > 0 ? '+' : '';
-      const isGoodForUnder = diff > 0.5;
-      const isExpensive = diff < -0.5;
+      const live = parseFloat(this.state.liveOddCurrentMinute);
+      if (live && live > 1.0) {
+        const diff = ((live / cm.oddJusta) - 1) * 100;
+        const sign = diff > 0 ? '+' : '';
+        const isGood = diff > 0.5; // Odd acima da justa = valor no Under
+        const isBad = diff < -0.5;
 
-      valueDiffBadge.className = `badge-valordiff ${isGoodForUnder ? 'val-good' : (isExpensive ? 'val-bad' : 'val-fair')}`;
-      valueDiffBadge.innerHTML = `
-        <span>Mercado vs Justa:</span>
-        <strong>${sign}${diff.toFixed(1)}% ${isGoodForUnder ? '📈 (VALOR UNDER)' : (isExpensive ? '📉 (SEM VALOR)' : '⚖️ (JUSTO)')}</strong>
-      `;
+        valueDiffBadge.className = `hud-diff-badge ${isGood ? 'diff-good' : (isBad ? 'diff-bad' : 'diff-fair')}`;
+        valueDiffBadge.innerHTML = `
+          <span>DIF:</span>
+          <strong>${sign}${diff.toFixed(1)}% ${isGood ? '📈 VALOR' : (isBad ? '📉 CARO' : '⚖️ JUSTO')}</strong>
+        `;
+      } else {
+        valueDiffBadge.className = `hud-diff-badge diff-fair`;
+        valueDiffBadge.innerHTML = `<span>DIF:</span><strong>0.0% ⚖️ JUSTO</strong>`;
+      }
     }
 
-    // Stake e Retornos
-    const stakeDisplay = this.container.querySelector('.slot-stake-display');
-    const lucroDisplay = this.container.querySelector('.slot-lucro-display');
-    const redDisplay = this.container.querySelector('.slot-red-display');
-    const hedgeResult = this.container.querySelector('.slot-hedge-result');
-
-    if (stakeDisplay) stakeDisplay.textContent = formatCurrency(metrics.stake);
-    if (lucroDisplay) lucroDisplay.textContent = formatCurrency(metrics.lucroMedio);
-    if (redDisplay) redDisplay.textContent = formatCurrency(metrics.redMedio);
-
-    if (hedgeResult) {
-      hedgeResult.className = `hedge-result-display slot-hedge-result ${
-        hedge.isGreen ? 'green' : (hedge.isRed ? 'red' : 'neutral')
-      }`;
+    // Cashout retorno
+    if (cashoutDisplay) {
       const sign = hedge.lucroLiquido > 0 ? '+' : '';
-      hedgeResult.innerHTML = `
-        <span style="font-size: 0.75rem; text-transform: uppercase;">Cashout / P&L Atual</span>
-        <span style="font-size: 1.05rem; font-weight: 800;">${sign}${formatCurrency(hedge.lucroLiquido)} (${sign}${formatPercent(hedge.roiPct)})</span>
-      `;
+      const isGreen = hedge.lucroLiquido > 0.01;
+      const isRed = hedge.lucroLiquido < -0.01;
+      cashoutDisplay.className = `hud-cashout-display ${isGreen ? 'text-green' : (isRed ? 'text-red' : 'text-primary')}`;
+      cashoutDisplay.textContent = `${sign}${formatCurrency(hedge.lucroLiquido)} (${sign}${formatPercent(hedge.roiPct)})`;
     }
 
     if (this.state.inTrade) {
@@ -230,8 +208,35 @@ export class GameSlot {
       this.container.classList.remove('active-trade');
     }
 
-    if (this.state.showFullTable) {
-      this.renderMinuteTable();
+    // Atualiza mini contexto de minutos anteriores e próximos
+    this.updateContextMiniRows();
+  }
+
+  updateContextMiniRows() {
+    const prevEl = this.container.querySelector('.hud-prev-minute');
+    const nextEl = this.container.querySelector('.hud-next-minute');
+    const isHT = this.state.period === 'HT';
+    const minStart = isHT ? 1 : 46;
+    const maxMin = isHT ? (45 + this.state.addedMinutes) : (90 + this.state.addedMinutes);
+
+    if (prevEl) {
+      const prevMin = this.state.currentMinute - 1;
+      if (prevMin >= minStart) {
+        const prevM = getMinuteMetrics(this.state.minuteCurve, prevMin);
+        prevEl.innerHTML = `<span>${prevMin}':</span> <strong>${prevM.oddJusta.toFixed(2)}</strong>`;
+      } else {
+        prevEl.innerHTML = `<span>-</span>`;
+      }
+    }
+
+    if (nextEl) {
+      const nextMin = this.state.currentMinute + 1;
+      if (nextMin <= maxMin) {
+        const nextM = getMinuteMetrics(this.state.minuteCurve, nextMin);
+        nextEl.innerHTML = `<span>${nextMin}':</span> <strong>${nextM.oddJusta.toFixed(2)}</strong>`;
+      } else {
+        nextEl.innerHTML = `<span>Fim</span>`;
+      }
     }
   }
 
@@ -245,7 +250,7 @@ export class GameSlot {
       this.state.timerSeconds++;
       this.updateTimerDisplay();
 
-      // A cada 60 segundos passados, avança 1 minuto no cálculo automaticamente
+      // Ao completar 60s, avança o minuto
       const isHT = this.state.period === 'HT';
       const baseMin = isHT ? 1 : 46;
       const calcMinute = baseMin + Math.floor(this.state.timerSeconds / 60);
@@ -273,37 +278,12 @@ export class GameSlot {
   updateTimerDisplay() {
     const timerDisplay = this.container.querySelector('.timer-display');
     if (timerDisplay) {
-      const minutes = Math.floor(this.state.timerSeconds / 60);
-      const seconds = this.state.timerSeconds % 60;
       const isHT = this.state.period === 'HT';
-      const matchMin = (isHT ? 1 : 46) + minutes;
-      timerDisplay.textContent = `${String(matchMin).padStart(2, '0')}:${String(seconds).padStart(2, '0')}'`;
+      const minStart = isHT ? 1 : 46;
+      const minutes = minStart + Math.floor(this.state.timerSeconds / 60);
+      const seconds = this.state.timerSeconds % 60;
+      timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}'`;
     }
-  }
-
-  adjustLiveOdd(ticks) {
-    this.state.liveOddInput = moveOddTicks(this.state.liveOddInput || this.state.initialOdd, ticks);
-    const liveOddInput = this.container.querySelector('.slot-live-odd-input');
-    if (liveOddInput) liveOddInput.value = this.state.liveOddInput.toFixed(2);
-    this.recalculate();
-  }
-
-  renderMinuteTable() {
-    const tbody = this.container.querySelector('.minute-table-tbody');
-    if (!tbody) return;
-
-    tbody.innerHTML = this.state.minuteCurve.map(row => {
-      const isCurrent = row.minute === this.state.currentMinute;
-      return `
-        <tr style="${isCurrent ? 'background: rgba(59, 130, 246, 0.25); font-weight: 800;' : ''}">
-          <td style="color: ${isCurrent ? '#facc15' : 'var(--text-primary)'};">${row.minute}'</td>
-          <td style="color: #60a5fa;">${row.oddJusta.toFixed(2)}</td>
-          <td style="color: var(--text-secondary); font-size: 0.75rem;">${row.topo1.toFixed(2)} - ${row.fundo1.toFixed(2)}</td>
-          <td style="color: var(--text-secondary); font-size: 0.75rem;">${row.topo2.toFixed(2)} - ${row.fundo2.toFixed(2)}</td>
-          <td><span class="zone-badge ${row.zona === 'Rápida' ? 'zone-rapida' : (row.zona === 'Média' ? 'zone-media' : 'zone-lenta')}" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">${row.zona}</span></td>
-        </tr>
-      `;
-    }).join('');
   }
 
   bindEvents() {
@@ -324,7 +304,7 @@ export class GameSlot {
     });
 
     // Odd Inicial (Campo Amarelo)
-    const initialOddInput = this.container.querySelector('.slot-initial-odd-input');
+    const initialOddInput = this.container.querySelector('.hud-initial-odd-input');
     if (initialOddInput) {
       initialOddInput.addEventListener('input', (e) => {
         const val = parseFloat(e.target.value);
@@ -335,7 +315,7 @@ export class GameSlot {
     }
 
     // Acréscimos
-    const addedMinutesInput = this.container.querySelector('.slot-added-minutes-input');
+    const addedMinutesInput = this.container.querySelector('.hud-added-min-input');
     if (addedMinutesInput) {
       addedMinutesInput.addEventListener('input', (e) => {
         const val = parseInt(e.target.value, 10);
@@ -345,53 +325,48 @@ export class GameSlot {
       });
     }
 
-    // Red Aceitável (Campo Amarelo)
-    const redInput = this.container.querySelector('.slot-red-input');
-    if (redInput) {
-      redInput.addEventListener('input', (e) => {
-        const val = parseFloat(e.target.value);
-        this.state.customRed = isNaN(val) || val <= 0 ? null : val;
-        this.recalculate();
+    // Sincronização Minuto na TV
+    const tvMinInput = this.container.querySelector('.hud-tv-min-input');
+    const syncBtn = this.container.querySelector('.hud-sync-btn');
+    if (syncBtn && tvMinInput) {
+      syncBtn.addEventListener('click', () => {
+        const minVal = parseInt(tvMinInput.value, 10);
+        if (!isNaN(minVal)) {
+          this.syncFromTV(minVal);
+        }
       });
-    }
-
-    // Odd do Mercado Live
-    const liveOddInput = this.container.querySelector('.slot-live-odd-input');
-    if (liveOddInput) {
-      liveOddInput.addEventListener('input', (e) => {
-        const val = parseFloat(e.target.value);
-        if (!isNaN(val) && val >= 1.01) {
-          this.state.liveOddInput = val;
-          this.recalculate();
+      tvMinInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          const minVal = parseInt(tvMinInput.value, 10);
+          if (!isNaN(minVal)) this.syncFromTV(minVal);
         }
       });
     }
 
-    // Slider de Minuto
-    const minuteSlider = this.container.querySelector('.slot-minute-slider');
-    if (minuteSlider) {
-      minuteSlider.addEventListener('input', (e) => {
-        this.setMinute(parseInt(e.target.value, 10));
+    // Odd Live no Minuto Atual
+    const liveInput = this.container.querySelector('.hud-live-odd-input');
+    if (liveInput) {
+      liveInput.addEventListener('input', (e) => {
+        this.state.liveOddCurrentMinute = e.target.value.trim();
+        const val = parseFloat(e.target.value);
+        if (!isNaN(val) && val > 1.0) {
+          this.state.liveCorrections[this.state.currentMinute] = val;
+        } else {
+          delete this.state.liveCorrections[this.state.currentMinute];
+        }
+        this.recalculate();
       });
     }
 
     // Botões de Minuto (+1 / -1)
-    const btnMinMinus = this.container.querySelector('.slot-min-minus-btn');
-    const btnMinPlus = this.container.querySelector('.slot-min-plus-btn');
+    const btnMinMinus = this.container.querySelector('.hud-min-minus');
+    const btnMinPlus = this.container.querySelector('.hud-min-plus');
     if (btnMinMinus) btnMinMinus.addEventListener('click', () => this.setMinute(this.state.currentMinute - 1));
     if (btnMinPlus) btnMinPlus.addEventListener('click', () => this.setMinute(this.state.currentMinute + 1));
 
-    // Steppers de Odd Live (+/- 1 tick, +/- 5 ticks)
-    this.container.querySelectorAll('[data-live-tick]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const ticks = parseInt(btn.getAttribute('data-live-tick'), 10);
-        this.adjustLiveOdd(ticks);
-      });
-    });
-
     // Botões de Gol (Favor x2.5 / Contra /2.5)
-    const btnGolFav = this.container.querySelector('.slot-gol-fav-btn');
-    const btnGolContra = this.container.querySelector('.slot-gol-contra-btn');
+    const btnGolFav = this.container.querySelector('.hud-gol-fav-btn');
+    const btnGolContra = this.container.querySelector('.hud-gol-contra-btn');
     if (btnGolFav) btnGolFav.addEventListener('click', () => this.applyGoal(true));
     if (btnGolContra) btnGolContra.addEventListener('click', () => this.applyGoal(false));
 
@@ -408,22 +383,10 @@ export class GameSlot {
       resetTimerBtn.addEventListener('click', () => this.resetTimer());
     }
 
-    // Toggle Tabela Completa
-    const toggleTableBtn = this.container.querySelector('.slot-toggle-table-btn');
-    const fullTableContainer = this.container.querySelector('.slot-full-table-container');
-    if (toggleTableBtn && fullTableContainer) {
-      toggleTableBtn.addEventListener('click', () => {
-        this.state.showFullTable = !this.state.showFullTable;
-        fullTableContainer.style.display = this.state.showFullTable ? 'block' : 'none';
-        toggleTableBtn.textContent = this.state.showFullTable ? '▲ Ocultar Curva' : '▼ Ver Curva Minuto a Minuto';
-        if (this.state.showFullTable) this.renderMinuteTable();
-      });
-    }
-
     // Ações de Trade
-    const enterTradeBtn = this.container.querySelector('.slot-enter-trade-btn');
-    const cashoutBtn = this.container.querySelector('.slot-cashout-btn');
-    const resetSlotBtn = this.container.querySelector('.slot-reset-btn');
+    const enterTradeBtn = this.container.querySelector('.hud-enter-trade-btn');
+    const cashoutBtn = this.container.querySelector('.hud-cashout-btn');
+    const resetSlotBtn = this.container.querySelector('.hud-reset-slot-btn');
 
     if (enterTradeBtn) {
       enterTradeBtn.addEventListener('click', () => {
@@ -438,10 +401,11 @@ export class GameSlot {
 
     if (cashoutBtn) {
       cashoutBtn.addEventListener('click', () => {
+        const liveOdd = parseFloat(this.state.liveOddCurrentMinute) || (this.state.currentMetrics ? this.state.currentMetrics.oddJusta : this.state.initialOdd);
         const hedge = calculateHedge({
           oddEntrada: this.state.initialOdd,
-          stakeEntrada: this.state.stakeCalculada,
-          oddAtual: this.state.liveOddInput || this.state.currentMetrics.oddJusta,
+          stakeEntrada: this.state.stakeBase,
+          oddAtual: liveOdd,
           comissaoPct: 0.0325
         });
 
@@ -450,11 +414,11 @@ export class GameSlot {
             gameName: this.state.gameName,
             strategyName: `Back Under ${this.state.period} (Min ${this.state.currentMinute}')`,
             oddEntrada: this.state.initialOdd,
-            oddSaida: this.state.liveOddInput || this.state.currentMetrics.oddJusta,
-            stake: this.state.stakeCalculada,
+            oddSaida: liveOdd,
+            stake: this.state.stakeBase,
             lucroLiquido: hedge.lucroLiquido,
             roiPct: hedge.roiPct,
-            ticks: calculateTicksDistance(this.state.initialOdd, this.state.liveOddInput || this.state.currentMetrics.oddJusta)
+            ticks: calculateTicksDistance(this.state.initialOdd, liveOdd)
           });
         }
 
@@ -469,6 +433,7 @@ export class GameSlot {
         this.resetTimer();
         this.state.inTrade = false;
         this.state.liveCorrections = {};
+        this.state.liveOddCurrentMinute = '';
         this.setInitialOdd(this.state.period === 'HT' ? 3.35 : 5.10);
       });
     }
@@ -476,182 +441,125 @@ export class GameSlot {
 
   render() {
     const isHT = this.state.period === 'HT';
-    const minStart = isHT ? 1 : 46;
-    const maxMin = isHT ? (45 + this.state.addedMinutes) : (90 + this.state.addedMinutes);
 
     this.container.innerHTML = `
-      <!-- Cabeçalho do Slot -->
-      <div class="game-card-header">
-        <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">
+      <!-- Topo do Card -->
+      <div class="hud-card-header">
+        <div style="display: flex; align-items: center; gap: 0.4rem; flex: 1;">
           <span class="game-slot-badge">SLOT #${this.slotId}</span>
-          <input type="text" class="game-title-input" value="${this.state.gameName}" placeholder="Ex: Time A x Time B">
+          <input type="text" class="game-title-input" value="${this.state.gameName}" placeholder="Nome do Jogo">
         </div>
 
-        <!-- Seletor de Período (HT / FT) -->
         <div class="period-toggle-group">
           <button class="period-tab-btn ${isHT ? 'active' : ''}" data-period="HT">1ºT (HT)</button>
           <button class="period-tab-btn ${!isHT ? 'active' : ''}" data-period="FT">2ºT (FT)</button>
         </div>
 
-        <!-- Cronômetro -->
         <div class="game-timer-box">
           <span class="timer-display">${isHT ? '01:00' : '46:00'}'</span>
-          <button class="timer-btn timer-play-pause-btn" title="Iniciar/Pausar cronômetro">▶️</button>
-          <button class="timer-btn timer-reset-btn" title="Zerar cronômetro">🔄</button>
+          <button class="timer-btn timer-play-pause-btn" title="Iniciar / Pausar">▶️</button>
+          <button class="timer-btn timer-reset-btn" title="Zerar">🔄</button>
         </div>
       </div>
 
-      <div class="game-card-body">
-        <!-- Inputs Principais em Amarelo -->
-        <div class="primary-inputs-grid">
-          <!-- Campo 1: Odd Inicial -->
-          <div class="input-group-yellow">
-            <label class="input-label-yellow">
-              <span>🎯 Odd Inicial ${this.state.period}</span>
-            </label>
-            <input type="number" step="0.01" class="input-control-yellow slot-initial-odd-input" value="${this.state.initialOdd.toFixed(2)}">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem;">
-              <span style="font-size: 0.65rem; color: var(--text-muted);">Acréscimos:</span>
-              <input type="number" class="slot-added-minutes-input" value="${this.state.addedMinutes}" style="width: 45px; background: var(--bg-input); border: 1px solid var(--border-subtle); color: #fff; text-align: center; border-radius: 4px; font-size: 0.75rem;">
-            </div>
+      <div class="hud-card-body">
+        <!-- Linha 1: Configuração Inicial + Sincronização na TV -->
+        <div class="hud-config-bar">
+          <!-- Odd Inicial -->
+          <div class="hud-input-box-yellow">
+            <span class="hud-input-label">🎯 Odd Inicial:</span>
+            <input type="number" step="0.01" class="hud-input-field hud-initial-odd-input" value="${this.state.initialOdd.toFixed(2)}">
           </div>
 
-          <!-- Campo 2: Red Aceitável (R$) -->
-          <div class="input-group-yellow">
-            <label class="input-label-yellow">
-              <span>🛡️ Red Aceitável (R$)</span>
-            </label>
-            <input type="number" step="10" class="input-control-yellow slot-red-input" placeholder="Padrão Geral">
-            <div style="font-size: 0.6rem; color: var(--text-muted); text-align: right; margin-top: 0.25rem;">
-              Em branco = usa Red global
+          <!-- Acréscimos -->
+          <div class="hud-input-box-compact">
+            <span class="hud-input-label">➕ Acr:</span>
+            <input type="number" class="hud-input-field hud-added-min-input" value="${this.state.addedMinutes}" style="width: 38px;">
+          </div>
+
+          <!-- Sincronização Minuto na TV -->
+          <div class="hud-sync-box">
+            <span class="hud-input-label">📺 Minuto TV:</span>
+            <input type="number" class="hud-input-field hud-tv-min-input" value="${this.state.currentMinute}" style="width: 44px;">
+            <button class="btn btn-primary btn-sm hud-sync-btn" title="Sincronizar e Iniciar Cronômetro">⚡ Sync</button>
+          </div>
+        </div>
+
+        <!-- Linha 2: A LINHA MESTRA DO MINUTO ATUAL (Destaque Principal) -->
+        <div class="hud-main-minute-banner">
+          <div class="hud-banner-top-row">
+            <!-- Minuto Badge & Stepper -->
+            <div style="display: flex; align-items: center; gap: 0.35rem;">
+              <span class="hud-minute-badge">${this.state.currentMinute}'</span>
+              <div style="display: flex; flex-direction: column; gap: 1px;">
+                <button class="hud-step-mini-btn hud-min-plus" title="+1 minuto">▲</button>
+                <button class="hud-step-mini-btn hud-min-minus" title="-1 minuto">▼</button>
+              </div>
+            </div>
+
+            <!-- Odd Justa (Valor Gigante) -->
+            <div class="hud-metric-group">
+              <span class="hud-metric-label">ODD JUSTA</span>
+              <span class="hud-odd-justa">0.00</span>
+            </div>
+
+            <!-- Campo de Odd Live no Minuto Atual -->
+            <div class="hud-metric-group" style="background: rgba(0,0,0,0.4); padding: 0.2rem 0.5rem; border-radius: 6px; border: 1px solid rgba(59,130,246,0.3);">
+              <span class="hud-metric-label" style="color: var(--color-cyan);">ODD MERCADO LIVE</span>
+              <input type="number" step="0.01" class="hud-live-odd-input" placeholder="Ex: 2.26" value="${this.state.liveOddCurrentMinute}">
+            </div>
+
+            <!-- Diferença % (Valor) -->
+            <div class="hud-diff-badge diff-fair">
+              <span>DIF:</span>
+              <strong>0.0% ⚖️</strong>
+            </div>
+
+            <!-- Zona -->
+            <span class="zone-badge hud-zone-badge zone-media">Zona Média</span>
+          </div>
+
+          <!-- Linha Inferior do Banner: Blocos e Velocidade -->
+          <div class="hud-banner-bottom-row">
+            <div class="hud-bloco-col">
+              <span class="hud-bloco-title">Bloco Justo 1:</span>
+              <span class="hud-bloco-val hud-bloco1">-</span>
+            </div>
+            <div class="hud-bloco-col">
+              <span class="hud-bloco-title">Bloco Justo 2:</span>
+              <span class="hud-bloco-val hud-bloco2">-</span>
+            </div>
+            <div class="hud-bloco-col" style="text-align: right;">
+              <span class="hud-speed-display">⚡ 0 ticks/min</span>
             </div>
           </div>
         </div>
 
-        <!-- Slider de Navegação Rápida de Minuto -->
-        <div class="minute-slider-wrapper">
-          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; color: var(--text-secondary); font-weight: 700;">
-            <span>Avançar Minuto na TV:</span>
-            <span class="slot-speed-info" style="color: var(--color-cyan); font-size: 0.65rem;">⚡ ${this.state.ticksPorMinuto} ticks/min</span>
+        <!-- Mini-Fita de Contexto (Minuto Anterior e Próximo) -->
+        <div class="hud-mini-context-strip">
+          <div class="hud-context-item hud-prev-minute"><span>-</span></div>
+          <div class="hud-context-active"><span>📍 Ponto Atual</span></div>
+          <div class="hud-context-item hud-next-minute"><span>-</span></div>
+        </div>
+
+        <!-- Botões de Ação Rápida e Gols -->
+        <div class="hud-quick-actions">
+          <div style="display: flex; gap: 0.35rem; flex: 1;">
+            <button class="btn btn-secondary btn-sm hud-gol-fav-btn" title="Gol a Favor (x2.5)" style="flex: 1; padding: 0.25rem 0.4rem; font-size: 0.7rem;">⚽ Gol Fav (x2.5)</button>
+            <button class="btn btn-secondary btn-sm hud-gol-contra-btn" title="Gol Contra (/2.5)" style="flex: 1; padding: 0.25rem 0.4rem; font-size: 0.7rem; color: #f87171;">🔴 Gol Contra (/2.5)</button>
           </div>
-          <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.25rem;">
-            <span style="font-size: 0.7rem; color: var(--text-muted); font-family: var(--font-mono);">${minStart}'</span>
-            <input type="range" class="slot-minute-slider" min="${minStart}" max="${maxMin}" value="${this.state.currentMinute}" step="1" style="flex: 1; accent-color: var(--color-blue); cursor: pointer;">
-            <span style="font-size: 0.7rem; color: var(--text-muted); font-family: var(--font-mono);">${maxMin}'</span>
-          </div>
-          <!-- Barra de Progresso do Tempo -->
-          <div class="time-progress-bar">
-            <div class="time-progress-fill slot-progress-fill" style="width: 0%;"></div>
+
+          <div style="display: flex; align-items: center; gap: 0.4rem; background: var(--bg-surface); padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid var(--border-subtle);">
+            <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700;">CASHOUT:</span>
+            <span class="hud-cashout-display text-green" style="font-family: var(--font-mono); font-size: 0.8rem; font-weight: 800;">R$ 0,00</span>
           </div>
         </div>
 
-        <!-- Banner do Minuto Atual e Decaimento -->
-        <div class="minute-live-card">
-          <div class="minute-live-header">
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span class="minute-pill slot-current-minute-badge">${this.state.currentMinute}'</span>
-              <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Odd Justa do Minuto:</span>
-              <span class="minute-justa-value slot-odd-justa-display">0.00</span>
-            </div>
-            <div style="display: flex; gap: 0.25rem;">
-              <button class="step-btn slot-min-minus-btn" title="Minuto Anterior">-1'</button>
-              <button class="step-btn slot-min-plus-btn" title="Próximo Minuto">+1'</button>
-            </div>
-          </div>
-
-          <!-- Blocos 1 e 2 & Zona -->
-          <div class="minute-blocos-grid">
-            <div class="bloco-item">
-              <span class="bloco-label">Bloco Justo 1:</span>
-              <span class="bloco-val slot-bloco1-display">-</span>
-            </div>
-            <div class="bloco-item">
-              <span class="bloco-label">Bloco Justo 2:</span>
-              <span class="bloco-val slot-bloco2-display">-</span>
-            </div>
-            <div class="bloco-item" style="text-align: right;">
-              <span class="zone-badge slot-zone-badge zone-media">Zona Média</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Painel de Comparação Mercado Live & Gols -->
-        <div class="live-hedge-box">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 0.7rem; font-weight: 700; text-transform: uppercase; color: var(--text-secondary);">Odd Real no Mercado Live:</span>
-            <input type="number" step="0.01" class="hedge-odd-input slot-live-odd-input" value="${this.state.liveOddInput ? this.state.liveOddInput.toFixed(2) : ''}">
-          </div>
-
-          <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;">
-            <div class="stepper-row" style="margin: 0;">
-              <button class="step-btn" data-live-tick="-5">-5 ticks</button>
-              <button class="step-btn" data-live-tick="-1">-1 tick</button>
-              <button class="step-btn" data-live-tick="1">+1 tick</button>
-              <button class="step-btn" data-live-tick="5">+5 ticks</button>
-            </div>
-            <div style="display: flex; gap: 0.35rem;">
-              <button class="btn btn-secondary btn-sm slot-gol-fav-btn" title="Gol a Favor (x2.5)" style="padding: 0.2rem 0.4rem; font-size: 0.65rem;">⚽ Gol Fav</button>
-              <button class="btn btn-secondary btn-sm slot-gol-contra-btn" title="Gol Contra (/2.5)" style="padding: 0.2rem 0.4rem; font-size: 0.65rem; color: #f87171;">🔴 Gol Contra</button>
-            </div>
-          </div>
-
-          <!-- Indicador de Valor -->
-          <div class="slot-value-diff-badge badge-valordiff val-fair">
-            <span>Mercado vs Justa:</span>
-            <strong>0,0% ⚖️ (JUSTO)</strong>
-          </div>
-
-          <!-- P&L Cashout do Minuto -->
-          <div class="hedge-result-display slot-hedge-result green">
-            <span style="font-size: 0.75rem; text-transform: uppercase;">Cashout / P&L Atual</span>
-            <span style="font-size: 1.05rem; font-weight: 800;">+R$ 0,00 (+0,0%)</span>
-          </div>
-        </div>
-
-        <!-- Resumo de Stake & Risco -->
-        <div class="auto-results-panel" style="padding: 0.5rem 0.75rem;">
-          <div class="results-grid-3col">
-            <div class="metric-pill">
-              <span class="metric-pill-title">Stake</span>
-              <span class="metric-pill-value slot-stake-display text-cyan">R$ 0,00</span>
-            </div>
-            <div class="metric-pill">
-              <span class="metric-pill-title">Lucro Méd.</span>
-              <span class="metric-pill-value slot-lucro-display text-green">R$ 0,00</span>
-            </div>
-            <div class="metric-pill">
-              <span class="metric-pill-title">Red Máx.</span>
-              <span class="metric-pill-value slot-red-display text-red">R$ 0,00</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Botão Ver Curva Completa Minuto a Minuto -->
-        <button class="btn btn-secondary btn-sm slot-toggle-table-btn" style="width: 100%;">
-          ▼ Ver Curva Minuto a Minuto
-        </button>
-
-        <!-- Container da Tabela Minuto a Minuto (Oculto por padrão) -->
-        <div class="slot-full-table-container" style="display: none; max-height: 220px; overflow-y: auto; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
-          <table class="history-table" style="font-size: 0.75rem;">
-            <thead>
-              <tr>
-                <th>Min</th>
-                <th>Justa</th>
-                <th>Bloco 1</th>
-                <th>Bloco 2</th>
-                <th>Zona</th>
-              </tr>
-            </thead>
-            <tbody class="minute-table-tbody"></tbody>
-          </table>
-        </div>
-
-        <!-- Botões de Ação -->
-        <div class="game-actions-row">
-          <button class="btn btn-secondary slot-enter-trade-btn">🎯 Abrir Posição</button>
-          <button class="btn btn-success slot-cashout-btn" title="Registrar fechamento no histórico">💰 Fechar (Cashout)</button>
-          <button class="btn btn-secondary slot-reset-btn" style="flex: 0.25;" title="Resetar Slot">🔄</button>
+        <!-- Botões Finais de Operação -->
+        <div class="hud-bottom-actions">
+          <button class="btn btn-secondary btn-sm hud-enter-trade-btn">🎯 Abrir Posição</button>
+          <button class="btn btn-success btn-sm hud-cashout-btn">💰 Fechar (Cashout)</button>
+          <button class="btn btn-secondary btn-sm hud-reset-slot-btn" style="flex: 0.2;" title="Resetar Slot">🔄</button>
         </div>
       </div>
     `;

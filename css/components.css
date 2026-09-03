@@ -1,16 +1,18 @@
 /**
- * Componentes de Interface - Projeto Back Under (Com Motor Minuto a Minuto & Slider)
+ * Estilos Modernos de Alta Visibilidade - HUD Cockpit Projeto Back Under
  */
 
-/* Header e Barra Superior */
+/* ========================================================
+   HEADER PRINCIPAL
+   ======================================================== */
 .app-header {
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(11, 17, 32, 0.95) 100%);
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.98) 0%, rgba(11, 17, 32, 0.98) 100%);
   border-bottom: 1px solid var(--border-subtle);
   backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
   z-index: 100;
-  padding: 0.75rem 1.5rem;
+  padding: 0.6rem 1.25rem;
 }
 
 .header-container {
@@ -20,97 +22,50 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .brand-wrapper {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.6rem;
 }
 
 .brand-icon {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
-  box-shadow: var(--shadow-glow-green);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 1.15rem;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
 }
 
 .brand-title {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #ffffff;
 }
 
 .brand-badge {
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 0.15rem 0.4rem;
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 0.1rem 0.35rem;
   border-radius: var(--radius-sm);
   background: rgba(16, 185, 129, 0.15);
   color: var(--color-green);
   border: 1px solid rgba(16, 185, 129, 0.3);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .header-controls {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-/* Caixa de Configuração Mestre de Red */
-.master-risk-box {
-  display: flex;
-  align-items: center;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-medium);
-  border-radius: var(--radius-md);
-  padding: 0.35rem 0.65rem;
-  gap: 0.5rem;
-}
-
-.master-risk-box:focus-within {
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-.master-risk-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-}
-
-.master-risk-input {
-  width: 90px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-size: 0.95rem;
-  font-weight: 700;
-  padding: 0.25rem 0.5rem;
-  text-align: right;
-}
-
-.master-risk-input:focus {
-  outline: none;
-  border-color: var(--color-yellow);
+  gap: 0.6rem;
 }
 
 /* Botões do Topo */
@@ -118,12 +73,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
+  gap: 0.35rem;
   font-family: var(--font-sans);
-  font-size: 0.8125rem;
-  font-weight: 600;
-  padding: 0.45rem 0.85rem;
-  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
   border: 1px solid transparent;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -136,32 +91,19 @@
   background: linear-gradient(135deg, var(--color-blue) 0%, #2563eb 100%);
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: var(--shadow-sm);
 }
 .btn-primary:hover {
   background: linear-gradient(135deg, #60a5fa 0%, var(--color-blue) 100%);
-  box-shadow: var(--shadow-glow-blue);
-  transform: translateY(-1px);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
 }
 
 .btn-success {
   background: linear-gradient(135deg, var(--color-green) 0%, #059669 100%);
   color: #ffffff;
-  box-shadow: var(--shadow-sm);
 }
 .btn-success:hover {
   background: linear-gradient(135deg, #34d399 0%, var(--color-green) 100%);
-  box-shadow: var(--shadow-glow-green);
-  transform: translateY(-1px);
-}
-
-.btn-danger {
-  background: linear-gradient(135deg, var(--color-red) 0%, #dc2626 100%);
-  color: #ffffff;
-}
-.btn-danger:hover {
-  background: linear-gradient(135deg, #f87171 0%, var(--color-red) 100%);
-  box-shadow: var(--shadow-glow-red);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
 }
 
 .btn-secondary {
@@ -188,109 +130,11 @@
 
 .btn-sm {
   padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
 }
 
 /* Seletor de visualização (1, 2, 4 jogos) */
 .view-toggle-group {
-  display: inline-flex;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 0.2rem;
-  gap: 0.2rem;
-}
-
-.view-toggle-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.35rem 0.65rem;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.view-toggle-btn.active {
-  background: var(--bg-card);
-  color: var(--text-primary);
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-medium);
-}
-
-/* ========================================================
-   CARD DO JOGO (SLOT INDIVIDUAL)
-   ======================================================== */
-.game-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
-  position: relative;
-}
-
-.game-card:hover {
-  border-color: var(--border-medium);
-}
-
-.game-card.active-trade {
-  border-color: rgba(16, 185, 129, 0.4);
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
-}
-
-.game-card-header {
-  background: linear-gradient(180deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.3) 100%);
-  border-bottom: 1px solid var(--border-subtle);
-  padding: 0.65rem 0.85rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.game-slot-badge {
-  font-size: 0.7rem;
-  font-weight: 800;
-  padding: 0.2rem 0.45rem;
-  border-radius: var(--radius-sm);
-  background: rgba(59, 130, 246, 0.15);
-  color: var(--color-blue);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-}
-
-.game-title-input {
-  flex: 1;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  font-weight: 700;
-  padding: 0.2rem 0.4rem;
-  transition: all var(--transition-fast);
-}
-
-.game-title-input:hover {
-  border-color: var(--border-subtle);
-}
-
-.game-title-input:focus {
-  outline: none;
-  background: var(--bg-input);
-  border-color: var(--border-active);
-}
-
-/* Seletor de Período (HT vs FT) */
-.period-toggle-group {
   display: inline-flex;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
@@ -299,13 +143,102 @@
   gap: 0.15rem;
 }
 
-.period-tab-btn {
+.view-toggle-btn {
   background: transparent;
   border: none;
   color: var(--text-muted);
   font-size: 0.7rem;
   font-weight: 700;
-  padding: 0.2rem 0.45rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.view-toggle-btn.active {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-medium);
+}
+
+/* ========================================================
+   CARD DO JOGO (HUD / COCKPIT)
+   ======================================================== */
+.game-card {
+  background: #0f172a;
+  border: 1.5px solid rgba(51, 65, 85, 0.8);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.game-card:hover {
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+.game-card.active-trade {
+  border-color: rgba(16, 185, 129, 0.8);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
+}
+
+/* Header do HUD */
+.hud-card-header {
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.7) 100%);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.game-slot-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-sm);
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--color-blue);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  white-space: nowrap;
+}
+
+.game-title-input {
+  flex: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  padding: 0.15rem 0.35rem;
+}
+
+.game-title-input:focus {
+  outline: none;
+  background: var(--bg-input);
+  border-color: var(--border-active);
+}
+
+.period-toggle-group {
+  display: inline-flex;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 0.1rem;
+  gap: 0.1rem;
+}
+
+.period-tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
   border-radius: 3px;
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -314,26 +247,24 @@
 .period-tab-btn.active {
   background: var(--color-blue);
   color: #ffffff;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
 }
 
-/* Cronômetro e Minuto */
 .game-timer-box {
   display: flex;
   align-items: center;
-  background: var(--bg-surface);
+  background: #090d16;
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 0.2rem 0.45rem;
-  gap: 0.3rem;
+  border-radius: var(--radius-sm);
+  padding: 0.15rem 0.35rem;
+  gap: 0.25rem;
 }
 
 .timer-display {
   font-family: var(--font-mono);
-  font-size: 0.85rem;
-  font-weight: 700;
+  font-size: 0.8rem;
+  font-weight: 800;
   color: var(--color-cyan);
-  min-width: 48px;
+  min-width: 44px;
   text-align: center;
 }
 
@@ -342,372 +273,307 @@
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
-  font-size: 0.75rem;
-  padding: 0.15rem 0.2rem;
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
+  font-size: 0.7rem;
+  padding: 0.1rem;
 }
 
-.timer-btn:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-/* Corpo do Slot */
-.game-card-body {
-  padding: 0.85rem;
+/* Corpo do HUD */
+.hud-card-body {
+  padding: 0.65rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.55rem;
   flex: 1;
 }
 
-/* GRID DE INPUTS PRINCIPAIS (CAMPOS DESTACADOS EM AMARELO) */
-.primary-inputs-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.65rem;
-}
-
-.input-group-yellow {
-  background: linear-gradient(180deg, rgba(254, 240, 138, 0.12) 0%, rgba(254, 240, 138, 0.04) 100%);
-  border: 1.5px solid rgba(250, 204, 21, 0.4);
-  border-radius: var(--radius-md);
-  padding: 0.5rem 0.65rem;
+/* Linha 1: Configuração e Sincronização */
+.hud-config-bar {
   display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  transition: all var(--transition-fast);
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
 }
 
-.input-group-yellow:focus-within {
+.hud-input-box-yellow {
+  background: rgba(250, 204, 21, 0.08);
+  border: 1px solid rgba(250, 204, 21, 0.35);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem 0.45rem;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 1;
+}
+
+.hud-input-box-yellow:focus-within {
   border-color: #facc15;
-  box-shadow: 0 0 12px rgba(250, 204, 21, 0.25);
-  background: linear-gradient(180deg, rgba(254, 240, 138, 0.18) 0%, rgba(254, 240, 138, 0.08) 100%);
+  box-shadow: 0 0 8px rgba(250, 204, 21, 0.2);
 }
 
-.input-label-yellow {
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: #fef08a;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.hud-input-box-compact {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.hud-sync-box {
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem 0.4rem;
   display: flex;
   align-items: center;
   gap: 0.3rem;
 }
 
-.input-control-yellow {
-  width: 100%;
-  background: var(--bg-input);
-  border: 1px solid rgba(250, 204, 21, 0.3);
-  border-radius: var(--radius-sm);
-  color: #ffffff;
-  font-family: var(--font-mono);
-  font-size: 1.1rem;
+.hud-input-label {
+  font-size: 0.62rem;
   font-weight: 800;
-  padding: 0.3rem 0.45rem;
-  text-align: right;
-  transition: all var(--transition-fast);
-}
-
-.input-control-yellow:focus {
-  outline: none;
-  border-color: #facc15;
-  background: #000000;
-}
-
-/* Slider de Minuto e Barra de Progresso */
-.minute-slider-wrapper {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 0.5rem 0.65rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.time-progress-bar {
-  width: 100%;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-  margin-top: 0.35rem;
-}
-
-.time-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--color-blue) 0%, var(--color-cyan) 100%);
-  border-radius: var(--radius-full);
-  transition: width 0.3s ease;
-}
-
-/* ========================================================
-   CARD DO MINUTO ATUAL (DECAIMENTO TEMPORAL)
-   ======================================================== */
-.minute-live-card {
-  background: linear-gradient(135deg, rgba(30, 58, 138, 0.35) 0%, rgba(15, 23, 42, 0.6) 100%);
-  border: 1px solid rgba(59, 130, 246, 0.35);
-  border-radius: var(--radius-md);
-  padding: 0.65rem 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.minute-live-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.minute-pill {
-  background: var(--color-blue);
-  color: #ffffff;
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  font-weight: 800;
-  padding: 0.15rem 0.45rem;
-  border-radius: var(--radius-sm);
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
-}
-
-.minute-justa-value {
-  font-family: var(--font-mono);
-  font-size: 1.3rem;
-  font-weight: 800;
-  color: #ffffff;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-}
-
-.minute-blocos-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.35rem;
-  align-items: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding-top: 0.35rem;
-}
-
-.bloco-item {
-  display: flex;
-  flex-direction: column;
-}
-
-.bloco-label {
-  font-size: 0.6rem;
-  font-weight: 600;
-  color: var(--text-muted);
   text-transform: uppercase;
-}
-
-.bloco-val {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--color-cyan);
-}
-
-/* Badges de Zona */
-.zone-badge {
-  font-size: 0.65rem;
-  font-weight: 800;
-  padding: 0.15rem 0.45rem;
-  border-radius: var(--radius-full);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
-.zone-rapida {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.3);
-}
-
-.zone-media {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.3);
-}
-
-.zone-lenta {
-  background: rgba(59, 130, 246, 0.15);
-  color: #60a5fa;
-  border: 1px solid rgba(59, 130, 246, 0.3);
-}
-
-/* Indicador de Valor Mercado vs Justa */
-.badge-valordiff {
-  padding: 0.35rem 0.55rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  font-family: var(--font-mono);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.badge-valordiff.val-good {
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  color: var(--color-green);
-}
-
-.badge-valordiff.val-bad {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: var(--color-red);
-}
-
-.badge-valordiff.val-fair {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-}
-
-/* ========================================================
-   SEÇÃO DE CASHOUT & HEDGE DO MINUTO
-   ======================================================== */
-.live-hedge-box {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 0.65rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.hedge-odd-input {
-  width: 85px;
+.hud-input-field {
   background: var(--bg-input);
-  border: 1px solid var(--border-medium);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  color: #ffffff;
   font-family: var(--font-mono);
-  font-size: 0.95rem;
-  font-weight: 700;
-  padding: 0.2rem 0.4rem;
-  text-align: right;
+  font-size: 0.85rem;
+  font-weight: 800;
+  padding: 0.15rem 0.25rem;
+  text-align: center;
 }
 
-.hedge-odd-input:focus {
+.hud-input-field:focus {
   outline: none;
   border-color: var(--color-cyan);
 }
 
-.stepper-row {
+.hud-initial-odd-input {
+  width: 58px;
+  color: #fef08a;
+  font-size: 0.95rem;
+}
+
+/* ========================================================
+   LINHA MESTRA DO MINUTO ATUAL (BANNER PRINCIPAL)
+   ======================================================== */
+.hud-main-minute-banner {
+  background: linear-gradient(135deg, rgba(30, 58, 138, 0.5) 0%, rgba(15, 23, 42, 0.85) 100%);
+  border: 1.5px solid rgba(59, 130, 246, 0.6);
+  border-radius: var(--radius-md);
+  padding: 0.55rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.15);
+}
+
+.hud-banner-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.hud-minute-badge {
+  background: var(--color-blue);
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 900;
+  padding: 0.25rem 0.55rem;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+.hud-step-mini-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 0.5rem;
+  padding: 0.1rem 0.25rem;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.hud-step-mini-btn:hover {
+  background: var(--color-blue);
+  color: #fff;
+}
+
+.hud-metric-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hud-metric-label {
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.hud-odd-justa {
+  font-family: var(--font-mono);
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+  line-height: 1.1;
+}
+
+.hud-live-odd-input {
+  width: 75px;
+  background: #000000;
+  border: 1.5px solid var(--color-cyan);
+  border-radius: 4px;
+  color: #38bdf8;
+  font-family: var(--font-mono);
+  font-size: 1.1rem;
+  font-weight: 800;
+  padding: 0.15rem 0.35rem;
+  text-align: center;
+  margin-top: 0.1rem;
+}
+.hud-live-odd-input:focus {
+  outline: none;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+
+.hud-diff-badge {
+  padding: 0.25rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  font-weight: 800;
   display: flex;
   align-items: center;
   gap: 0.25rem;
 }
-
-.step-btn {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
+.hud-diff-badge.diff-good {
+  background: rgba(16, 185, 129, 0.25);
+  border: 1px solid rgba(16, 185, 129, 0.6);
+  color: #34d399;
+}
+.hud-diff-badge.diff-bad {
+  background: rgba(239, 68, 68, 0.25);
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  color: #f87171;
+}
+.hud-diff-badge.diff-fair {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: var(--text-secondary);
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 0.15rem 0.35rem;
-  cursor: pointer;
-  transition: all var(--transition-fast);
 }
 
-.step-btn:hover {
-  background: var(--border-medium);
-  color: var(--text-primary);
-}
-
-.hedge-result-display {
+.hud-banner-bottom-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.35rem 0.55rem;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-mono);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 0.35rem;
+  gap: 0.5rem;
 }
 
-.hedge-result-display.green {
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.3);
-  color: var(--color-green);
-}
-
-.hedge-result-display.red {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: var(--color-red);
-}
-
-.hedge-result-display.neutral {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-secondary);
-}
-
-/* Painel de Resultados Automáticos (Stake, Lucro, Red) */
-.auto-results-panel {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 0.65rem;
-}
-
-.results-grid-3col {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.4rem;
-}
-
-.metric-pill {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  padding: 0.35rem 0.45rem;
+.hud-bloco-col {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
 }
 
-.metric-pill-title {
-  font-size: 0.6rem;
-  font-weight: 600;
+.hud-bloco-title {
+  font-size: 0.62rem;
   color: var(--text-muted);
+  font-weight: 700;
+}
+
+.hud-bloco-val {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--color-cyan);
+}
+
+.hud-speed-display {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+/* Badges de Zona */
+.zone-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-full);
   text-transform: uppercase;
 }
-
-.metric-pill-value {
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-top: 0.1rem;
+.zone-rapida {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+.zone-media {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+}
+.zone-lenta {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.4);
 }
 
-/* Botões de Ação do Jogo */
-.game-actions-row {
+/* Mini Fita de Contexto */
+.hud-mini-context-strip {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+.hud-context-active {
+  color: var(--color-yellow);
+  font-weight: 800;
+}
+
+/* Ações Rápidas */
+.hud-quick-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 0.4rem;
 }
 
-.game-actions-row .btn {
+.hud-bottom-actions {
+  display: flex;
+  gap: 0.35rem;
+}
+.hud-bottom-actions .btn {
   flex: 1;
 }
 
 /* ========================================================
-   MODAL / DRAWER DE PÊNDULOS E HISTÓRICO
+   MODAL DE PÊNDULOS
    ======================================================== */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(6px);
   z-index: 200;
   display: flex;
@@ -718,17 +584,14 @@
   visibility: hidden;
   transition: all var(--transition-normal);
 }
-
 .modal-overlay.open {
   opacity: 1;
   visibility: visible;
 }
-
 .modal-content {
   background: var(--bg-card);
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
   max-width: 900px;
   width: 100%;
   max-height: 85vh;
@@ -736,109 +599,42 @@
   flex-direction: column;
   overflow: hidden;
 }
-
 .modal-header {
-  padding: 1rem 1.25rem;
+  padding: 0.85rem 1.25rem;
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-
 .modal-body {
-  padding: 1.25rem;
+  padding: 1rem;
   overflow-y: auto;
   flex: 1;
 }
-
 .modal-close-btn {
   background: transparent;
   border: none;
   color: var(--text-secondary);
   font-size: 1.25rem;
   cursor: pointer;
-  padding: 0.25rem;
-  border-radius: var(--radius-sm);
 }
-
-.modal-close-btn:hover {
-  color: var(--text-primary);
-  background: var(--border-subtle);
-}
-
-/* Tabela de Pêndulos */
 .pendulo-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.8rem;
   text-align: left;
 }
-
 .pendulo-table th {
   background: var(--bg-surface);
   color: var(--text-secondary);
-  font-weight: 700;
-  text-transform: uppercase;
   font-size: 0.7rem;
-  padding: 0.6rem 0.75rem;
+  padding: 0.5rem 0.65rem;
   border-bottom: 1px solid var(--border-medium);
   position: sticky;
   top: 0;
 }
-
 .pendulo-table td {
-  padding: 0.5rem 0.75rem;
+  padding: 0.45rem 0.65rem;
   border-bottom: 1px solid var(--border-subtle);
   font-family: var(--font-mono);
-}
-
-.pendulo-table tr:hover td {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-/* Notificação Toast */
-.toast-container {
-  position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  z-index: 300;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.toast {
-  background: var(--bg-card);
-  border: 1px solid var(--border-medium);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  padding: 0.75rem 1rem;
-  color: var(--text-primary);
-  font-size: 0.85rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.toast.toast-success {
-  border-color: var(--color-green);
-  box-shadow: var(--shadow-glow-green);
-}
-
-.toast.toast-error {
-  border-color: var(--color-red);
-  box-shadow: var(--shadow-glow-red);
-}
-
-@keyframes slideInRight {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
 }
