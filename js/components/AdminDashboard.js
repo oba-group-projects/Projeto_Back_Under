@@ -1,5 +1,5 @@
 /**
- * Painel / Dashboard do Administrador
+ * Painel / Dashboard do Administrador - PRECIFICAÇÃO JUSTA BACK AO UNDER
  * - Gerenciamento de Usuários (Criar, Bloquear, Excluir)
  * - Monitor de Acessos e Auditoria em Tempo Real
  * - Links e Tabelas Mestre
@@ -25,7 +25,7 @@ export class AdminDashboard {
             <span style="font-size: 1.3rem;">👑</span>
             <div>
               <h3 style="font-size: 1.15rem; font-weight: 800; color: #ffffff; margin: 0;">PAINEL DO ADMINISTRADOR</h3>
-              <p style="font-size: 0.7rem; color: #93c5fd; margin: 0;">Controle de Usuários, Acessos em Tempo Real e Planilha Mestre</p>
+              <p style="font-size: 0.7rem; color: #93c5fd; margin: 0;">PRECIFICAÇÃO JUSTA BACK AO UNDER • Controle de Usuários e Acessos</p>
             </div>
           </div>
           <button id="closeAdminModalBtn" class="modal-close-btn">&times;</button>

@@ -1,5 +1,6 @@
 /**
- * Modal / Tela de Autenticação (Login)
+ * Modal / Tela de Autenticação (Login Profissional)
+ * Acesso exclusivo para Administrador e Assinantes Autorizados
  */
 import { authManager } from '../core/authManager.js';
 
@@ -18,9 +19,9 @@ export class LoginModal {
     this.overlay.innerHTML = `
       <div class="login-card">
         <div class="login-header">
-          <div class="brand-icon" style="margin: 0 auto 0.5rem auto; width: 44px; height: 44px; font-size: 1.3rem;">⚽</div>
-          <h2 style="font-size: 1.3rem; font-weight: 800; color: #ffffff; margin: 0;">PROJETO BACK UNDER</h2>
-          <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.25rem;">Cockpit de Trading Esportivo de Alta Performance</p>
+          <div class="brand-icon" style="margin: 0 auto 0.65rem auto; width: 48px; height: 48px; font-size: 1.4rem;">⚽</div>
+          <h2 style="font-size: 1.15rem; font-weight: 800; color: #ffffff; margin: 0; line-height: 1.3;">PRECIFICAÇÃO JUSTA<br><span style="color: #38bdf8;">BACK AO UNDER</span></h2>
+          <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.35rem;">Terminal de Trading Esportivo Profissional</p>
         </div>
 
         <form id="loginForm" class="login-form">
@@ -37,16 +38,15 @@ export class LoginModal {
           <div id="loginErrorMessage" class="login-error-msg" style="display: none;"></div>
 
           <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.65rem; font-size: 0.9rem; margin-top: 0.35rem;">
-            🔓 Entrar no Sistema
+            🔓 Entrar no Cockpit
           </button>
         </form>
 
-        <div class="login-quick-demo">
-          <span style="font-size: 0.65rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">Acesso Rápido para Testes:</span>
-          <div style="display: flex; gap: 0.4rem; margin-top: 0.35rem;">
-            <button id="quickLoginAdminBtn" class="btn btn-secondary btn-sm" style="flex: 1; border-color: #eab308; color: #fef08a;">👑 Administrador</button>
-            <button id="quickLoginTraderBtn" class="btn btn-secondary btn-sm" style="flex: 1; border-color: #38bdf8; color: #bae6fd;">👤 Trader Teste</button>
-          </div>
+        <div class="login-footer-info" style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 0.85rem; text-align: center;">
+          <p style="font-size: 0.7rem; color: var(--text-muted); margin: 0;">
+            🔒 Acesso restrito para usuários cadastrados.<br>
+            <span style="color: var(--text-secondary);">Dúvidas ou suporte: contate o Administrador.</span>
+          </p>
         </div>
       </div>
     `;
@@ -59,8 +59,6 @@ export class LoginModal {
     const emailInput = this.overlay.querySelector('#loginEmailInput');
     const passInput = this.overlay.querySelector('#loginPasswordInput');
     const errorMsg = this.overlay.querySelector('#loginErrorMessage');
-    const quickAdmin = this.overlay.querySelector('#quickLoginAdminBtn');
-    const quickTrader = this.overlay.querySelector('#quickLoginTraderBtn');
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -76,29 +74,11 @@ export class LoginModal {
         errorMsg.style.display = 'block';
       }
     });
-
-    quickAdmin.addEventListener('click', () => {
-      emailInput.value = 'admin@backunder.pro';
-      passInput.value = 'admin';
-      const res = authManager.login('admin@backunder.pro', 'admin');
-      if (res.success) {
-        this.hide();
-        if (this.onLoginSuccess) this.onLoginSuccess(res.user);
-      }
-    });
-
-    quickTrader.addEventListener('click', () => {
-      emailInput.value = 'trader@teste.com';
-      passInput.value = 'teste';
-      const res = authManager.login('trader@teste.com', 'teste');
-      if (res.success) {
-        this.hide();
-        if (this.onLoginSuccess) this.onLoginSuccess(res.user);
-      }
-    });
   }
 
   show() {
+    const errorMsg = this.overlay.querySelector('#loginErrorMessage');
+    if (errorMsg) errorMsg.style.display = 'none';
     this.overlay.classList.add('open');
   }
 
