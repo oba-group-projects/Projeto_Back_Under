@@ -227,8 +227,8 @@ export class AdminDashboard {
     tbody.innerHTML = pendingUsers.map(u => {
       const cleanWhats = (u.whatsapp || '').replace(/\D/g, '');
       const whatsFormatted = formatPhoneDisplay(u.whatsapp);
-      const whatsUrl = cleanWhats ? `https://wa.me/55${cleanWhats}?text=${encodeURIComponent(`Olá ${u.name}! Seu cadastro no Cockpit Precificação Justa Back ao Under foi aprovado com sucesso! Acesse em: https://obadoceria-gif.github.io/Projeto_Back_Under/`)}` : '#';
-      const mailtoUrl = `mailto:${u.email}?subject=${encodeURIComponent('Acesso ao Cockpit Precificação Justa Back ao Under')}&body=${encodeURIComponent(`Olá ${u.name},\n\nSeu cadastro no Cockpit Precificação Justa Back ao Under foi aprovado!\n\nAcesse o link: https://obadoceria-gif.github.io/Projeto_Back_Under/\nSeu E-mail: ${u.email}\n\nBons trades!`)}`;
+      const whatsUrl = cleanWhats ? `https://wa.me/55${cleanWhats}?text=${encodeURIComponent(`Olá ${u.name}! Seu cadastro no Cockpit Precificação Justa Back ao Under foi aprovado com sucesso! Acesse em: https://bora-group-projects.github.io/Projeto_Back_Under/`)}` : '#';
+      const mailtoUrl = `mailto:${u.email}?subject=${encodeURIComponent('Acesso ao Cockpit Precificação Justa Back ao Under')}&body=${encodeURIComponent(`Olá ${u.name},\n\nSeu cadastro no Cockpit Precificação Justa Back ao Under foi aprovado!\n\nAcesse o link: https://bora-group-projects.github.io/Projeto_Back_Under/\nSeu E-mail: ${u.email}\n\nBons trades!`)}`;
 
       return `
         <tr>
