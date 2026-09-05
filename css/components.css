@@ -1051,6 +1051,14 @@ input[type=number] {
   gap: 0.5rem;
 }
 
+.period-start-time {
+  align-self: center;
+  color: #bfdbfe;
+  font-size: 0.62rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .event-recalc-title {
   font-size: 0.62rem;
   font-weight: 800;

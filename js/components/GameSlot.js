@@ -23,6 +23,7 @@ export class GameSlot {
      this.state = {
        gameName: `Jogo ${slotId}`,
        period: 'HT', // 'HT' | 'FT'
+      periodStartTimes: this.loadPeriodStartTimes(),
        initialOdd: 3.35,
       currentOddBase: 3.35,
       currentOddBaseMinute: null,
@@ -66,6 +67,42 @@ export class GameSlot {
       return saved ? JSON.parse(saved) : [];
     } catch (error) {
       return [];
+    }
+  }
+
+  loadPeriodStartTimes() {
+    try {
+      const saved = localStorage.getItem(`projeto_back_under_period_start_slot_${this.slotId}`);
+      return saved ? JSON.parse(saved) : { HT: null, FT: null };
+    } catch (error) {
+      return { HT: null, FT: null };
+    }
+  }
+
+  savePeriodStartTimes() {
+    try {
+      localStorage.setItem(`projeto_back_under_period_start_slot_${this.slotId}`, JSON.stringify(this.state.periodStartTimes));
+    } catch (error) {
+      console.warn('Não foi possível salvar os horários de início.', error);
+    }
+  }
+
+  formatPeriodStartTime(value) {
+    if (!value) return 'não registrado';
+    return new Date(value).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  }
+
+  registerPeriodStart(minute) {
+    const startOffsetMinutes = Math.max(0, Number(minute) - (this.state.period === 'HT' ? 1 : 46));
+    this.state.periodStartTimes[this.state.period] = new Date(Date.now() - startOffsetMinutes * 60000).toISOString();
+    this.savePeriodStartTimes();
+    this.updatePeriodStartUI();
+  }
+
+  updatePeriodStartUI() {
+    const startDisplay = this.container.querySelector('.period-start-time');
+    if (startDisplay) {
+      startDisplay.textContent = `${this.state.period}: ${this.formatPeriodStartTime(this.state.periodStartTimes[this.state.period])}`;
     }
   }
 
@@ -170,6 +207,7 @@ export class GameSlot {
      this.state.liveOddCurrentMinute = '';
      this.state.liveCorrections = {};
      this.state.timerSeconds = 0;
+    this.updatePeriodStartUI();
      this.state.isSimulating = false;
      this.pauseTimer();
      this.recomputeCurve();
@@ -312,6 +350,7 @@ export class GameSlot {
      const minStart = isHT ? 1 : 46;
      const min = parseInt(this.state.tvMinuteInput, 10) || this.state.currentMinute;
      this.state.timerSeconds = (min - minStart) * 60;
+    this.registerPeriodStart(min);
     this.activateAddedMinutesIfReached(min);
      this.state.isSimulating = false;
     this.state.liveMinute = min;
@@ -730,6 +769,7 @@ export class GameSlot {
           <button class="timer-btn timer-play-pause-btn" title="Iniciar / Pausar">▶️</button>
           <button class="timer-btn timer-reset-btn" title="Zerar">🔄</button>
         </div>
+        <span class="period-start-time" title="Horário estimado de início do período">${this.state.period}: ${this.formatPeriodStartTime(this.state.periodStartTimes[this.state.period])}</span>
       </div>
 
       <div class="hud-card-body">
