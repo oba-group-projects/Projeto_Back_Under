@@ -64,8 +64,27 @@ assert(ftCurve.length === 50, `Total de minutos no FT: esperado 50 (45+5), obtid
 assert(ftCurve[0].minute === 46, `Primeiro minuto do FT é 46, obtido ${ftCurve[0].minute}`);
 assert(ftCurve[0].oddJusta === 5.10, `Odd no minuto 46 é 5.10, obtido ${ftCurve[0].oddJusta}`);
 
-// Teste 3: Correção de Gol
-console.log('\n--- 3. Teste de Salto de Gol (Regra x2.5) ---');
+// Teste 3: Troca de período preserva os limites e reinicia a curva corretamente
+console.log('\n--- 3. Teste de Troca de Período e Acréscimos ---');
+const htComAcr = calculateMinuteCurve({ period: 'HT', initialOdd: 3.35, addedMinutes: 4 });
+const ftSemAcr = calculateMinuteCurve({ period: 'FT', initialOdd: 5.10, addedMinutes: 0 });
+assert(htComAcr.at(-1).minute === 49, `HT com +4 termina no minuto 49, obtido ${htComAcr.at(-1).minute}`);
+assert(ftSemAcr[0].minute === 46, `FT reinicia no minuto 46, obtido ${ftSemAcr[0].minute}`);
+assert(ftSemAcr[0].oddJusta === 5.10, `Troca para FT preserva a odd inicial 5.10, obtido ${ftSemAcr[0].oddJusta}`);
+
+// Teste 4: Gol a favor e contra em HT e FT
+console.log('\n--- 4. Teste de Gol em HT e FT ---');
+const golHtFavor = applyGoalOddShift(getMinuteMetrics(htCurve, 30).oddJusta, true);
+const golHtContra = applyGoalOddShift(getMinuteMetrics(htCurve, 30).oddJusta, false);
+const golFtFavor = applyGoalOddShift(getMinuteMetrics(ftCurve, 60).oddJusta, true);
+const golFtContra = applyGoalOddShift(getMinuteMetrics(ftCurve, 60).oddJusta, false);
+assert(golHtFavor > getMinuteMetrics(htCurve, 30).oddJusta, `Gol a favor no HT aumenta a odd (${golHtFavor})`);
+assert(golHtContra < getMinuteMetrics(htCurve, 30).oddJusta, `Gol contra no HT reduz a odd (${golHtContra})`);
+assert(golFtFavor > getMinuteMetrics(ftCurve, 60).oddJusta, `Gol a favor no FT aumenta a odd (${golFtFavor})`);
+assert(golFtContra < getMinuteMetrics(ftCurve, 60).oddJusta, `Gol contra no FT reduz a odd (${golFtContra})`);
+
+// Teste 5: Correção de Gol
+console.log('\n--- 5. Teste de Salto de Gol (Regra x2.5) ---');
 const golFav = applyGoalOddShift(3.00, true);
 assert(golFav === 7.60 || golFav === 7.40 || golFav === 7.50, `Gol a favor de odd 3.00 saltou para ~7.50 (obtido ${golFav})`);
 
