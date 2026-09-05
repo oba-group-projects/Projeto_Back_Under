@@ -1076,6 +1076,54 @@ input[type=number] {
   color: var(--text-secondary);
 }
 
+.event-log-panel {
+  margin-top: 0.45rem;
+  border: 1px solid rgba(96, 165, 250, 0.24);
+  border-radius: var(--radius-sm);
+  background: rgba(15, 23, 42, 0.72);
+  overflow: hidden;
+}
+
+.event-log-title {
+  padding: 0.35rem 0.55rem;
+  color: #bfdbfe;
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.event-log-scroll {
+  overflow-x: auto;
+}
+
+.event-log-table {
+  width: 100%;
+  min-width: 440px;
+  border-collapse: collapse;
+  font-size: 0.58rem;
+}
+
+.event-log-table th,
+.event-log-table td {
+  padding: 0.3rem 0.4rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.event-log-table th:first-child,
+.event-log-table td:first-child {
+  text-align: left;
+}
+
+.event-log-table th {
+  color: var(--text-muted);
+  font-weight: 800;
+}
+
+.event-log-table td {
+  color: var(--text-primary);
+}
+
 /* ========================================================
    TELA DE LOGIN E CADASTRO MODERNA
    ======================================================== */

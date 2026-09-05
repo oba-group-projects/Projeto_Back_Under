@@ -25,6 +25,7 @@ export class GameSlot {
        period: 'HT', // 'HT' | 'FT'
        initialOdd: 3.35,
        addedMinutes: 2,
+      addedMinutesActive: false,
        pendingAddedMinutes: null,
        tvMinuteInput: 1,
        currentMinute: 1,
@@ -34,7 +35,7 @@ export class GameSlot {
        liveCorrections: {},
        timerPaused: false,
        isSimulating: false,
-       sheetLog: [],
+      sheetLog: this.loadSheetLog(),
        lastSheetRow: null,
        
        // Velocidade do tempo
@@ -56,11 +57,50 @@ export class GameSlot {
     this.recalculate();
   }
 
+  loadSheetLog() {
+    try {
+      const saved = localStorage.getItem(`projeto_back_under_events_slot_${this.slotId}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  saveSheetLog() {
+    try {
+      localStorage.setItem(`projeto_back_under_events_slot_${this.slotId}`, JSON.stringify(this.state.sheetLog));
+    } catch (error) {
+      console.warn('Não foi possível salvar o registro de eventos.', error);
+    }
+  }
+
+  getNominalEndMinute() {
+    return this.state.period === 'HT' ? 45 : 90;
+  }
+
+  getEffectiveAddedMinutes(referenceMinute = this.state.liveMinute) {
+    const additionsAreInView = this.state.isSimulating && this.state.projectedMinute >= this.getNominalEndMinute();
+    return this.state.addedMinutesActive || additionsAreInView ? this.state.addedMinutes : 0;
+  }
+
+  getMaxMinute(referenceMinute = this.state.liveMinute) {
+    return this.getNominalEndMinute() + this.getEffectiveAddedMinutes(referenceMinute);
+  }
+
+  activateAddedMinutesIfReached(minute) {
+    if (!this.state.addedMinutesActive && minute >= this.getNominalEndMinute()) {
+      this.state.addedMinutesActive = this.state.addedMinutes > 0;
+      this.recomputeCurve();
+      return true;
+    }
+    return false;
+  }
+
   recomputeCurve() {
     this.state.minuteCurve = calculateMinuteCurve({
       period: this.state.period,
       initialOdd: this.state.initialOdd,
-      addedMinutes: this.state.addedMinutes,
+      addedMinutes: this.getEffectiveAddedMinutes(),
       liveCorrections: this.state.liveCorrections
     });
     this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
@@ -81,6 +121,7 @@ export class GameSlot {
      this.state.tvMinuteInput = startMin;
      this.state.initialOdd = period === 'HT' ? 3.35 : 5.10;
      this.state.addedMinutes = period === 'HT' ? 2 : 5;
+    this.state.addedMinutesActive = false;
      this.state.pendingAddedMinutes = null;
      this.state.liveOddCurrentMinute = '';
      this.state.liveCorrections = {};
@@ -121,6 +162,7 @@ export class GameSlot {
      if (this.state.pendingAddedMinutes !== null) {
        this.state.addedMinutes = this.state.pendingAddedMinutes;
        this.state.pendingAddedMinutes = null;
+       this.state.addedMinutesActive = this.state.liveMinute >= this.getNominalEndMinute();
        this.recomputeCurve();
        this.recalculate();
        this.render();
@@ -151,7 +193,7 @@ export class GameSlot {
   getLiveGameMinute() {
     const isHT = this.state.period === 'HT';
     const minStart = isHT ? 1 : 46;
-    const maxMin = isHT ? (45 + this.state.addedMinutes) : (90 + this.state.addedMinutes);
+    const maxMin = this.getMaxMinute();
     const m = minStart + Math.floor(this.state.timerSeconds / 60);
     return Math.max(minStart, Math.min(maxMin, m));
   }
@@ -224,6 +266,7 @@ export class GameSlot {
      const minStart = isHT ? 1 : 46;
      const min = parseInt(this.state.tvMinuteInput, 10) || this.state.currentMinute;
      this.state.timerSeconds = (min - minStart) * 60;
+    this.activateAddedMinutesIfReached(min);
      this.state.isSimulating = false;
      this.state.currentMinute = min;
      this.state.timerPaused = true;
@@ -266,7 +309,25 @@ export class GameSlot {
 
       this.state.sheetLog.unshift(row);
       this.state.lastSheetRow = row;
+      this.saveSheetLog();
+      this.renderEventLog();
     }
+  }
+
+  renderEventLog() {
+    const eventLogBody = this.container.querySelector('.event-log-body');
+    if (!eventLogBody) return;
+
+    eventLogBody.innerHTML = this.state.sheetLog.slice(0, 8).map(row => `
+      <tr>
+        <td>${row.period} ${row.minute}'</td>
+        <td>${row.oldOdd === null ? '-' : row.oldOdd.toFixed(2)}</td>
+        <td>${row.newOdd.toFixed(2)}</td>
+        <td>${row.fairOddAfterUpdate.toFixed(2)}</td>
+        <td>${row.bloco1 ? `${row.bloco1.topo.toFixed(2)} / ${row.bloco1.fundo.toFixed(2)}` : '-'}</td>
+        <td>${row.bloco2 ? `${row.bloco2.topo.toFixed(2)} / ${row.bloco2.fundo.toFixed(2)}` : '-'}</td>
+      </tr>
+    `).join('');
   }
 
   recalculate() {
@@ -375,7 +436,15 @@ export class GameSlot {
        }
 
        const isHT = this.state.period === 'HT';
-       const maxMin = isHT ? (45 + this.state.addedMinutes) : (90 + this.state.addedMinutes);
+       const nominalEndMinute = this.getNominalEndMinute();
+       const nominalEndSeconds = (nominalEndMinute - (isHT ? 1 : 46)) * 60;
+
+       if (!this.state.addedMinutesActive && this.state.timerSeconds >= nominalEndSeconds && this.state.addedMinutes > 0) {
+         this.state.addedMinutesActive = true;
+         this.recomputeCurve();
+       }
+
+       const maxMin = this.getMaxMinute();
        const maxSeconds = (maxMin - (isHT ? 1 : 46)) * 60;
 
        if (this.state.timerSeconds >= maxSeconds) {
@@ -400,6 +469,7 @@ export class GameSlot {
            this.recalculate();
          }
        } else {
+         this.updateUI();
          this.updateSimulationUI();
        }
      }, 1000);
@@ -424,7 +494,7 @@ export class GameSlot {
     if (timerDisplay) {
       const isHT = this.state.period === 'HT';
       const minStart = isHT ? 1 : 46;
-      const maxMin = isHT ? (45 + this.state.addedMinutes) : (90 + this.state.addedMinutes);
+      const maxMin = this.getMaxMinute();
       const liveMin = this.getLiveGameMinute();
       const effectiveMinute = this.state.isSimulating ? this.state.projectedMinute : Math.min(maxMin, liveMin);
       const minutes = effectiveMinute;
@@ -564,6 +634,8 @@ export class GameSlot {
         if (e.key === 'Enter') this.applyEventOverride(eventMinInput.value, eventOddInput.value);
       });
     }
+
+    this.renderEventLog();
 
      // Timer buttons
      const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
@@ -764,6 +836,25 @@ export class GameSlot {
             </div>
 
             <button class="btn btn-success btn-sm event-apply-btn" title="Aplicar e Recalcular Curva">✔️ Recalcular</button>
+          </div>
+        </div>
+
+        <div class="event-log-panel">
+          <div class="event-log-title">📋 EVENTOS RECALCULADOS</div>
+          <div class="event-log-scroll">
+            <table class="event-log-table">
+              <thead>
+                <tr>
+                  <th>Tempo</th>
+                  <th>Anterior</th>
+                  <th>Nova odd</th>
+                  <th>Justa</th>
+                  <th>Bloco 1</th>
+                  <th>Bloco 2</th>
+                </tr>
+              </thead>
+              <tbody class="event-log-body"></tbody>
+            </table>
           </div>
         </div>
 
