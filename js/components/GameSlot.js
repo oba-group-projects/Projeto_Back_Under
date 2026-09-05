@@ -92,6 +92,10 @@ export class GameSlot {
     return new Date(value).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   }
 
+  getDisplayMinute(minute) {
+    return Math.max(0, Number(minute) - 1);
+  }
+
   registerPeriodStart(minute) {
     const startOffsetMinutes = Math.max(0, Number(minute) - (this.state.period === 'HT' ? 1 : 46));
     this.state.periodStartTimes[this.state.period] = new Date(Date.now() - startOffsetMinutes * 60000).toISOString();
@@ -250,6 +254,11 @@ export class GameSlot {
        this.state.addedMinutesActive = this.state.liveMinute >= this.getNominalEndMinute();
        this.recomputeCurve();
        this.recalculate();
+       if (!this.state.currentMetrics) {
+         this.state.currentMinute = this.state.liveMinute;
+         this.recomputeCurve();
+         this.recalculate();
+       }
        this.render();
        this.bindEvents();
      }
@@ -265,14 +274,17 @@ export class GameSlot {
     const isHT = this.state.period === 'HT';
     const minStart = isHT ? 1 : 46;
     const maxMin = isHT ? (45 + this.state.addedMinutes) : (90 + this.state.addedMinutes);
-    const val = parseInt(mins, 10);
-    this.state.tvMinuteInput = Math.max(minStart, Math.min(maxMin, isNaN(val) ? minStart : val));
+    const displayMinStart = this.getDisplayMinute(minStart);
+    const displayMax = this.getDisplayMinute(maxMin);
+    const displayValue = parseInt(mins, 10);
+    const safeDisplay = Math.max(displayMinStart, Math.min(displayMax, isNaN(displayValue) ? displayMinStart : displayValue));
+    this.state.tvMinuteInput = safeDisplay + 1;
     const tvInput = this.container.querySelector('.hud-tv-min-input');
-    if (tvInput) tvInput.value = this.state.tvMinuteInput;
+    if (tvInput) tvInput.value = this.getDisplayMinute(this.state.tvMinuteInput);
   }
 
   adjustTVMinute(delta) {
-    this.setTVMinute((parseInt(this.state.tvMinuteInput, 10) || this.state.currentMinute) + delta);
+    this.setTVMinute(this.getDisplayMinute(this.state.tvMinuteInput) + delta);
   }
 
   getLiveGameMinute() {
@@ -302,10 +314,10 @@ export class GameSlot {
     if (liveInput) liveInput.value = this.state.liveOddCurrentMinute;
 
     const tvMinInput = this.container.querySelector('.hud-tv-min-input');
-    if (tvMinInput) tvMinInput.value = newMin;
+    if (tvMinInput) tvMinInput.value = this.getDisplayMinute(newMin);
 
     const eventMinInput = this.container.querySelector('.event-min-input');
-    if (eventMinInput) eventMinInput.value = newMin;
+    if (eventMinInput) eventMinInput.value = this.getDisplayMinute(newMin);
 
     this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
     this.recalculate();
@@ -586,7 +598,7 @@ export class GameSlot {
       const minStart = isHT ? 1 : 46;
       const maxMin = this.getMaxMinute();
       const liveMin = this.getLiveGameMinute();
-      const minutes = Math.min(maxMin, liveMin);
+      const minutes = this.getDisplayMinute(Math.min(maxMin, liveMin));
       const seconds = this.state.timerSeconds % 60;
       timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}'`;
     }
@@ -736,6 +748,7 @@ export class GameSlot {
      if (playPauseBtn) {
        playPauseBtn.addEventListener('click', () => {
          if (this.state.timerPaused) {
+           this.registerPeriodStart(this.state.liveMinute);
            this.state.timerPaused = false;
            this.startTimer();
          } else {
@@ -762,14 +775,14 @@ export class GameSlot {
         <div class="period-toggle-group">
           <button class="period-tab-btn ${isHT ? 'active' : ''}" data-period="HT">1ºT (HT)</button>
           <button class="period-tab-btn ${!isHT ? 'active' : ''}" data-period="FT">2ºT (FT)</button>
+          <span class="period-start-time" title="Horário estimado de início do período">${this.state.period}: ${this.formatPeriodStartTime(this.state.periodStartTimes[this.state.period])}</span>
         </div>
 
         <div class="game-timer-box">
-          <span class="timer-display">${isHT ? '01:00' : '46:00'}'</span>
+          <span class="timer-display">${isHT ? '00:00' : '45:00'}'</span>
           <button class="timer-btn timer-play-pause-btn" title="Iniciar / Pausar">▶️</button>
           <button class="timer-btn timer-reset-btn" title="Zerar">🔄</button>
         </div>
-        <span class="period-start-time" title="Horário estimado de início do período">${this.state.period}: ${this.formatPeriodStartTime(this.state.periodStartTimes[this.state.period])}</span>
       </div>
 
       <div class="hud-card-body">
@@ -804,7 +817,7 @@ export class GameSlot {
             <span class="hud-cell-label">📺 MINUTO TV:</span>
             <div class="hud-cell-input-row">
               <button class="hud-mini-stepper-btn hud-tv-minus-btn" title="Minuto Anterior">-</button>
-              <input type="number" class="hud-yellow-field hud-tv-min-input" value="${this.state.tvMinuteInput}">
+              <input type="number" class="hud-yellow-field hud-tv-min-input" value="${this.getDisplayMinute(this.state.tvMinuteInput)}">
               <button class="hud-mini-stepper-btn hud-tv-plus-btn" title="Próximo Minuto">+</button>
               <button class="btn btn-primary btn-sm hud-sync-btn" title="Sincronizar Minuto e Iniciar Cronômetro">⚡ Sync</button>
             </div>
@@ -833,8 +846,8 @@ export class GameSlot {
                 <button class="hud-live-return-btn" style="display: none;" title="Voltar ao tempo real do jogo">⚡ AO VIVO</button>
               </div>
               <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem; font-size: 0.68rem; font-weight: 700; color: #dbeafe;">
-                <span class="hud-live-minute-label">AO VIVO: ${this.state.liveMinute}'</span>
-                <span class="hud-projected-minute-label">PROJEÇÃO: ${this.state.projectedMinute}'</span>
+                <span class="hud-live-minute-label">AO VIVO: ${this.getDisplayMinute(this.state.liveMinute)}'</span>
+                <span class="hud-projected-minute-label">PROJEÇÃO: ${this.getDisplayMinute(this.state.projectedMinute)}'</span>
               </div>
             </div>
 
