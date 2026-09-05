@@ -87,6 +87,19 @@ export class GameSlot {
     return this.getNominalEndMinute() + this.getEffectiveAddedMinutes(referenceMinute);
   }
 
+  getMinuteMetricsFor(minute) {
+    const targetMinute = Number(minute);
+    const curve = targetMinute >= this.getNominalEndMinute() && !this.state.addedMinutesActive
+      ? calculateMinuteCurve({
+          period: this.state.period,
+          initialOdd: this.state.initialOdd,
+          addedMinutes: this.state.addedMinutes,
+          liveCorrections: this.state.liveCorrections
+        })
+      : this.state.minuteCurve;
+    return getMinuteMetrics(curve, targetMinute);
+  }
+
   activateAddedMinutesIfReached(minute) {
     if (!this.state.addedMinutesActive && minute >= this.getNominalEndMinute()) {
       this.state.addedMinutesActive = this.state.addedMinutes > 0;
@@ -236,12 +249,12 @@ export class GameSlot {
      this.state.projectedMinute = newMin;
      this.state.currentMinute = newMin;
      this.state.isSimulating = (newMin !== this.getLiveGameMinute());
-     this.state.timerPaused = true;
+     this.recomputeCurve();
      this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
      this.recalculate();
      this.updateTimerDisplay();
      const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
-     if (playPauseBtn) playPauseBtn.textContent = '▶️';
+     if (playPauseBtn) playPauseBtn.textContent = this.state.timerPaused ? '▶️' : '⏸️';
    }
 
   adjustCurrentMinute(delta) {
@@ -701,7 +714,7 @@ export class GameSlot {
                <button class="hud-mini-stepper-btn hud-added-minus-btn" title="Diminuir Acréscimo">-</button>
                <input type="number" class="hud-yellow-field hud-added-min-input" value="${this.state.pendingAddedMinutes !== null ? this.state.pendingAddedMinutes : this.state.addedMinutes}">
                <button class="hud-mini-stepper-btn hud-added-plus-btn" title="Aumentar Acréscimo">+</button>
-               <button class="btn btn-warning btn-sm hud-added-sync-btn" title="Sincronizar Acréscimos" style="display: ${this.state.pendingAddedMinutes !== null ? 'inline-flex' : 'none'}; padding: 2px 6px; font-size: 0.7rem;">🔒 Sync</button>
+               <button class="btn btn-warning btn-sm hud-added-sync-btn" title="Sincronizar Acréscimos" style="display: inline-flex; padding: 2px 6px; font-size: 0.7rem;">🔒 Sync</button>
              </div>
            </div>
 

@@ -4,7 +4,7 @@
  * - Dashboard do Administrador e Modal de Meu Perfil (Edição e Senha Forte)
  * - Gestão dos Slots 1 a 4 com Layouts Centralizados (1, 2, 3 e 4 Jogos)
  */
-import { GameSlot } from './components/GameSlot.js?v=2.5';
+import { GameSlot } from './components/GameSlot.js?v=2.6';
 import { PenduloModal } from './components/PenduloModal.js?v=2.5';
 import { LoginModal } from './components/LoginModal.js?v=2.5';
 import { AdminDashboard } from './components/AdminDashboard.js?v=2.5';
