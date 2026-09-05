@@ -25,6 +25,7 @@ export class GameSlot {
        period: 'HT', // 'HT' | 'FT'
        initialOdd: 3.35,
       currentOddBase: 3.35,
+      currentOddBaseMinute: null,
        addedMinutes: 2,
       addedMinutesActive: false,
        pendingAddedMinutes: null,
@@ -81,7 +82,10 @@ export class GameSlot {
     this.state.sheetLog.forEach(row => {
       this.state.liveCorrections[row.minute] = row.newOdd;
     });
-    if (latestEvent) this.state.currentOddBase = latestEvent.newOdd;
+    if (latestEvent) {
+      this.state.currentOddBase = latestEvent.newOdd;
+      this.state.currentOddBaseMinute = latestEvent.minute;
+    }
   }
 
   clearEvents() {
@@ -89,6 +93,7 @@ export class GameSlot {
     this.state.lastSheetRow = null;
     this.state.liveCorrections = {};
     this.state.currentOddBase = this.state.initialOdd;
+    this.state.currentOddBaseMinute = null;
     this.recomputeCurve();
     this.recalculate();
     this.saveSheetLog();
@@ -132,14 +137,13 @@ export class GameSlot {
   }
 
   recomputeCurve() {
-    const latestEvent = this.state.sheetLog[0];
     this.state.minuteCurve = calculateMinuteCurve({
       period: this.state.period,
       initialOdd: this.state.initialOdd,
       addedMinutes: this.getEffectiveAddedMinutes(),
       liveCorrections: this.state.liveCorrections,
-      baseMinute: latestEvent ? latestEvent.minute : null,
-      baseOdd: latestEvent ? this.state.currentOddBase : null
+      baseMinute: this.state.currentOddBaseMinute,
+      baseOdd: this.state.currentOddBaseMinute === null ? null : this.state.currentOddBase
     });
     this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
 
@@ -159,6 +163,7 @@ export class GameSlot {
      this.state.tvMinuteInput = startMin;
      this.state.initialOdd = period === 'HT' ? 3.35 : 5.10;
     this.state.currentOddBase = this.state.initialOdd;
+    this.state.currentOddBaseMinute = null;
      this.state.addedMinutes = period === 'HT' ? 2 : 5;
     this.state.addedMinutesActive = false;
      this.state.pendingAddedMinutes = null;
@@ -178,6 +183,7 @@ export class GameSlot {
     if (!isNaN(val) && val >= 1.01) {
       this.state.initialOdd = val;
       this.state.currentOddBase = val;
+      this.state.currentOddBaseMinute = null;
       this.state.liveCorrections = {};
       const oddInput = this.container.querySelector('.hud-initial-odd-input');
       if (oddInput) oddInput.value = val.toFixed(2);
@@ -308,6 +314,8 @@ export class GameSlot {
      this.state.timerSeconds = (min - minStart) * 60;
     this.activateAddedMinutesIfReached(min);
      this.state.isSimulating = false;
+    this.state.liveMinute = min;
+    this.state.projectedMinute = min;
      this.state.currentMinute = min;
     this.state.timerPaused = false;
      this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
@@ -323,6 +331,7 @@ export class GameSlot {
       const oldOdd = this.state.liveCorrections[targetMin] ?? this.getMinuteMetricsFor(targetMin)?.oddJusta ?? null;
       this.state.liveCorrections[targetMin] = parsedOdd;
       this.state.currentOddBase = parsedOdd;
+      this.state.currentOddBaseMinute = targetMin;
       if (targetMin === this.state.liveMinute) {
         this.state.liveOddCurrentMinute = parsedOdd.toFixed(2);
         const liveInput = this.container.querySelector('.hud-live-odd-input');
@@ -372,7 +381,8 @@ export class GameSlot {
   }
 
   recalculate() {
-    this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
+    const metricsMinute = this.state.isSimulating ? this.state.projectedMinute : this.state.liveMinute;
+    this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, metricsMinute);
     const cm = this.state.currentMetrics;
     if (!cm) return;
 
@@ -427,8 +437,8 @@ export class GameSlot {
     const bloco2Fundo = this.container.querySelector('.bloco2-fundo-val');
 
     if (minuteBadge) minuteBadge.textContent = `${displayMinute}'`;
-    if (liveMinuteLabel) liveMinuteLabel.textContent = `LIVE: ${this.state.liveMinute}'`;
-    if (projectedMinuteLabel) projectedMinuteLabel.textContent = `PROJ: ${this.state.projectedMinute}'`;
+    if (liveMinuteLabel) liveMinuteLabel.textContent = `AO VIVO: ${this.state.liveMinute}'`;
+    if (projectedMinuteLabel) projectedMinuteLabel.textContent = `PROJEÇÃO: ${this.state.projectedMinute}'`;
     if (oddJustaDisplay) oddJustaDisplay.textContent = cm.oddJusta.toFixed(2);
 
     if (bloco1Topo) bloco1Topo.textContent = cm.topo1.toFixed(2);
