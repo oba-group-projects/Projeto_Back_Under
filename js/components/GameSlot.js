@@ -51,6 +51,7 @@ export class GameSlot {
        timerRunning: false
      };
 
+    this.hydrateEventCorrections();
     this.timerInterval = null;
     this.recomputeCurve();
     this.render();
@@ -73,6 +74,26 @@ export class GameSlot {
     } catch (error) {
       console.warn('Não foi possível salvar o registro de eventos.', error);
     }
+  }
+
+  hydrateEventCorrections() {
+    const latestEvent = this.state.sheetLog[0];
+    this.state.sheetLog.forEach(row => {
+      this.state.liveCorrections[row.minute] = row.newOdd;
+    });
+    if (latestEvent) this.state.currentOddBase = latestEvent.newOdd;
+  }
+
+  clearEvents() {
+    this.state.sheetLog = [];
+    this.state.lastSheetRow = null;
+    this.state.liveCorrections = {};
+    this.state.currentOddBase = this.state.initialOdd;
+    this.recomputeCurve();
+    this.recalculate();
+    this.saveSheetLog();
+    this.render();
+    this.bindEvents();
   }
 
   getNominalEndMinute() {
@@ -643,6 +664,7 @@ export class GameSlot {
     const eventMinInput = this.container.querySelector('.event-min-input');
     const eventOddInput = this.container.querySelector('.event-odd-input');
     const eventApplyBtn = this.container.querySelector('.event-apply-btn');
+    const eventClearBtn = this.container.querySelector('.event-clear-btn');
 
     if (eventApplyBtn && eventOddInput && eventMinInput) {
       eventApplyBtn.addEventListener('click', () => {
@@ -651,6 +673,9 @@ export class GameSlot {
       eventOddInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') this.applyEventOverride(eventMinInput.value, eventOddInput.value);
       });
+    }
+    if (eventClearBtn) {
+      eventClearBtn.addEventListener('click', () => this.clearEvents());
     }
 
     this.renderEventLog();
@@ -854,6 +879,7 @@ export class GameSlot {
             </div>
 
             <button class="btn btn-success btn-sm event-apply-btn" title="Aplicar e Recalcular Curva">✔️ Recalcular</button>
+            <button class="btn btn-secondary btn-sm event-clear-btn" title="Limpar eventos e voltar à odd inicial">🧹 Limpar</button>
           </div>
         </div>
 
