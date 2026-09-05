@@ -13,6 +13,8 @@ import { normalizeOdd } from './oddsCalculator.js';
  * @param {object} params
  * @param {'HT' | 'FT'} params.period - 'HT' (1º tempo 1-45') ou 'FT' (2º tempo 46-90')
  * @param {number} params.initialOdd - Odd inicial no minuto de abertura
+ * @param {number} params.baseMinute - Minuto que passa a usar a nova odd base
+ * @param {number} params.baseOdd - Odd base a partir de baseMinute
  * @param {number} params.addedMinutes - Minutos de acréscimo previstos (ex: 2 para HT, 5 para FT)
  * @param {object} params.liveCorrections - Dicionário de correções manuais { [minuto]: oddReal }
  * @returns {Array<object>} Array com cada minuto e suas métricas calculadas
@@ -21,7 +23,9 @@ export function calculateMinuteCurve({
   period = 'HT',
   initialOdd = 3.35,
   addedMinutes = 2,
-  liveCorrections = {}
+  liveCorrections = {},
+  baseMinute = null,
+  baseOdd = null
 }) {
   const isHT = period === 'HT';
   const startMinute = isHT ? 1 : 46;
@@ -40,7 +44,9 @@ export function calculateMinuteCurve({
     let oddJusta;
 
     // Se houver correção manual neste minuto
-    if (liveCorrections[minute] !== undefined && liveCorrections[minute] !== null && liveCorrections[minute] > 1.0) {
+    if (baseMinute === minute && Number(baseOdd) >= 1.01) {
+      oddJusta = Number(baseOdd);
+    } else if (liveCorrections[minute] !== undefined && liveCorrections[minute] !== null && liveCorrections[minute] > 1.0) {
       oddJusta = Number(liveCorrections[minute]);
     } else if (minute === startMinute) {
       oddJusta = prevOdd;

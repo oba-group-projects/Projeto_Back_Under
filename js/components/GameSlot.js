@@ -132,11 +132,14 @@ export class GameSlot {
   }
 
   recomputeCurve() {
+    const latestEvent = this.state.sheetLog[0];
     this.state.minuteCurve = calculateMinuteCurve({
       period: this.state.period,
       initialOdd: this.state.initialOdd,
       addedMinutes: this.getEffectiveAddedMinutes(),
-      liveCorrections: this.state.liveCorrections
+      liveCorrections: this.state.liveCorrections,
+      baseMinute: latestEvent ? latestEvent.minute : null,
+      baseOdd: latestEvent ? this.state.currentOddBase : null
     });
     this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
 

@@ -89,7 +89,9 @@ const curvaComEvento = calculateMinuteCurve({
   period: 'HT',
   initialOdd: 3.35,
   addedMinutes: 2,
-  liveCorrections: { 30: 4.00 }
+  liveCorrections: { 30: 4.00 },
+  baseMinute: 30,
+  baseOdd: 4.00
 });
 assert(getMinuteMetrics(curvaComEvento, 30).oddJusta === 4, `Odd do evento no minuto 30 é 4.00, obtido ${getMinuteMetrics(curvaComEvento, 30).oddJusta}`);
 assert(getMinuteMetrics(curvaComEvento, 31).oddJusta > getMinuteMetrics(htCurve, 31).oddJusta, `Minutos seguintes partem da nova odd do evento (${getMinuteMetrics(curvaComEvento, 31).oddJusta})`);
