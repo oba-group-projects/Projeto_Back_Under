@@ -34,7 +34,7 @@ export class GameSlot {
        projectedMinute: 1,
        liveOddCurrentMinute: '',
        liveCorrections: {},
-       timerPaused: false,
+      timerPaused: true,
        isSimulating: false,
       sheetLog: this.loadSheetLog(),
        lastSheetRow: null,
@@ -307,7 +307,7 @@ export class GameSlot {
     this.activateAddedMinutesIfReached(min);
      this.state.isSimulating = false;
      this.state.currentMinute = min;
-     this.state.timerPaused = true;
+    this.state.timerPaused = false;
      this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
      this.updateTimerDisplay();
      this.startTimer();
@@ -535,8 +535,7 @@ export class GameSlot {
       const minStart = isHT ? 1 : 46;
       const maxMin = this.getMaxMinute();
       const liveMin = this.getLiveGameMinute();
-      const effectiveMinute = this.state.isSimulating ? this.state.projectedMinute : Math.min(maxMin, liveMin);
-      const minutes = effectiveMinute;
+      const minutes = Math.min(maxMin, liveMin);
       const seconds = this.state.timerSeconds % 60;
       timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}'`;
     }
