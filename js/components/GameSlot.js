@@ -272,10 +272,9 @@ export class GameSlot {
      const newMin = Math.max(minStart, Math.min(maxMin, parseInt(targetMin, 10) || minStart));
      
      this.state.projectedMinute = newMin;
-     this.state.currentMinute = newMin;
      this.state.isSimulating = (newMin !== this.getLiveGameMinute());
      this.recomputeCurve();
-     this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
+    this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.projectedMinute);
      this.recalculate();
      this.updateTimerDisplay();
      const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
@@ -283,7 +282,7 @@ export class GameSlot {
    }
 
   adjustCurrentMinute(delta) {
-    this.setSimulatedMinute(this.state.currentMinute + delta);
+    this.setSimulatedMinute(this.state.projectedMinute + delta);
   }
 
    returnToLiveMinute() {
@@ -315,13 +314,13 @@ export class GameSlot {
    }
 
   applyEventOverride(minute, newOdd) {
-    const targetMin = parseInt(minute, 10) || this.state.currentMinute;
+    const targetMin = parseInt(minute, 10) || this.state.liveMinute;
     const parsedOdd = parseFloat(newOdd);
     if (!isNaN(parsedOdd) && parsedOdd >= 1.01) {
       const oldOdd = this.state.liveCorrections[targetMin] ?? this.getMinuteMetricsFor(targetMin)?.oddJusta ?? null;
       this.state.liveCorrections[targetMin] = parsedOdd;
       this.state.currentOddBase = parsedOdd;
-      if (targetMin === this.state.currentMinute) {
+      if (targetMin === this.state.liveMinute) {
         this.state.liveOddCurrentMinute = parsedOdd.toFixed(2);
         const liveInput = this.container.querySelector('.hud-live-odd-input');
         if (liveInput) liveInput.value = this.state.liveOddCurrentMinute;
@@ -384,8 +383,8 @@ export class GameSlot {
     const liveReturnBtn = this.container.querySelector('.hud-live-return-btn');
     const liveMin = this.getLiveGameMinute();
 
-    if (this.state.isSimulating && this.state.currentMinute !== liveMin) {
-      const delta = this.state.currentMinute - liveMin;
+    if (this.state.isSimulating && this.state.projectedMinute !== liveMin) {
+      const delta = this.state.projectedMinute - liveMin;
       const sign = delta > 0 ? `+${delta}` : `${delta}`;
       if (minuteBadge) minuteBadge.classList.add('simulating-active');
       if (simTag) {
@@ -631,9 +630,9 @@ export class GameSlot {
         this.state.liveOddCurrentMinute = e.target.value.trim();
         const val = parseFloat(e.target.value);
         if (!isNaN(val) && val > 1.0) {
-          this.state.liveCorrections[this.state.currentMinute] = val;
+          this.state.liveCorrections[this.state.liveMinute] = val;
         } else {
-          delete this.state.liveCorrections[this.state.currentMinute];
+          delete this.state.liveCorrections[this.state.liveMinute];
         }
         this.recalculate();
       });
@@ -641,7 +640,7 @@ export class GameSlot {
         if (e.key === 'Enter') {
           const val = parseFloat(e.target.value);
           if (!isNaN(val) && val > 1.0) {
-            this.applyEventOverride(this.state.currentMinute, val);
+            this.applyEventOverride(this.state.liveMinute, val);
           }
         }
       });
@@ -769,7 +768,7 @@ export class GameSlot {
             <!-- Coluna 1: Minuto Atual / Simulação -->
             <div class="hud-minute-hero-col">
               <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 0.3rem;">
-                <span class="hud-metric-label">MINUTO</span>
+                  <span class="hud-metric-label">MINUTO</span>
                 <span class="hud-sim-tag" style="display: none;">🔮 PROJEÇÃO</span>
               </div>
               <div style="display: flex; align-items: center; gap: 0.35rem; margin-top: 0.15rem; flex-wrap: wrap;">
@@ -781,8 +780,8 @@ export class GameSlot {
                 <button class="hud-live-return-btn" style="display: none;" title="Voltar ao tempo real do jogo">⚡ AO VIVO</button>
               </div>
               <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem; font-size: 0.68rem; font-weight: 700; color: #dbeafe;">
-                <span class="hud-live-minute-label">LIVE: ${this.state.liveMinute}'</span>
-                <span class="hud-projected-minute-label">PROJ: ${this.state.projectedMinute}'</span>
+                <span class="hud-live-minute-label">AO VIVO: ${this.state.liveMinute}'</span>
+                <span class="hud-projected-minute-label">PROJEÇÃO: ${this.state.projectedMinute}'</span>
               </div>
             </div>
 
@@ -869,7 +868,7 @@ export class GameSlot {
           <div class="event-recalc-inputs">
             <div class="event-input-wrapper">
               <span class="event-mini-label">Minuto:</span>
-              <input type="number" class="hud-yellow-field event-min-input" value="${this.state.currentMinute}" style="width: 48px;">
+              <input type="number" class="hud-yellow-field event-min-input" value="${this.state.liveMinute}" style="width: 48px;">
             </div>
 
             <div class="event-input-wrapper">
