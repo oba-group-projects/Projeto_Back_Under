@@ -142,6 +142,22 @@ export class GameSlot {
     this.bindEvents();
   }
 
+  startNewGame() {
+    this.clearEvents();
+    this.state.periodStartTimes = { HT: null, FT: null };
+    this.savePeriodStartTimes();
+    this.state.tvMinuteInput = 1;
+    this.state.currentMinute = 1;
+    this.state.liveMinute = 1;
+    this.state.projectedMinute = 1;
+    this.state.timerSeconds = 0;
+    this.state.addedMinutes = 2;
+    this.state.addedMinutesActive = false;
+    this.state.pendingAddedMinutes = null;
+    this.state.isSimulating = false;
+    this.setPeriod('HT');
+  }
+
   getNominalEndMinute() {
     return this.state.period === 'HT' ? 45 : 90;
   }
@@ -257,10 +273,10 @@ export class GameSlot {
        if (!this.state.currentMetrics) {
          this.state.currentMinute = this.state.liveMinute;
          this.recomputeCurve();
-         this.recalculate();
        }
        this.render();
        this.bindEvents();
+       this.recalculate();
      }
    }
 
@@ -745,6 +761,7 @@ export class GameSlot {
      // Timer buttons
      const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
      const resetTimerBtn = this.container.querySelector('.timer-reset-btn');
+    const newGameBtn = this.container.querySelector('.new-game-btn');
      if (playPauseBtn) {
        playPauseBtn.addEventListener('click', () => {
          if (this.state.timerPaused) {
@@ -759,6 +776,11 @@ export class GameSlot {
      if (resetTimerBtn) {
        resetTimerBtn.addEventListener('click', () => this.resetTimer());
      }
+    if (newGameBtn) {
+      newGameBtn.addEventListener('click', () => {
+        if (confirm('Iniciar novo jogo e limpar eventos deste slot?')) this.startNewGame();
+      });
+    }
   }
 
   render() {
@@ -782,6 +804,7 @@ export class GameSlot {
           <span class="timer-display">${isHT ? '00:00' : '45:00'}'</span>
           <button class="timer-btn timer-play-pause-btn" title="Iniciar / Pausar">▶️</button>
           <button class="timer-btn timer-reset-btn" title="Zerar">🔄</button>
+          <button class="timer-btn new-game-btn" title="Novo jogo e limpar eventos">🆕</button>
         </div>
       </div>
 
