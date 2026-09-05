@@ -83,8 +83,19 @@ assert(golHtContra < getMinuteMetrics(htCurve, 30).oddJusta, `Gol contra no HT r
 assert(golFtFavor > getMinuteMetrics(ftCurve, 60).oddJusta, `Gol a favor no FT aumenta a odd (${golFtFavor})`);
 assert(golFtContra < getMinuteMetrics(ftCurve, 60).oddJusta, `Gol contra no FT reduz a odd (${golFtContra})`);
 
-// Teste 5: Correção de Gol
-console.log('\n--- 5. Teste de Salto de Gol (Regra x2.5) ---');
+// Teste 5: Evento vira a base dos minutos seguintes
+console.log('\n--- 5. Teste de Reprecificação Após Evento ---');
+const curvaComEvento = calculateMinuteCurve({
+  period: 'HT',
+  initialOdd: 3.35,
+  addedMinutes: 2,
+  liveCorrections: { 30: 4.00 }
+});
+assert(getMinuteMetrics(curvaComEvento, 30).oddJusta === 4, `Odd do evento no minuto 30 é 4.00, obtido ${getMinuteMetrics(curvaComEvento, 30).oddJusta}`);
+assert(getMinuteMetrics(curvaComEvento, 31).oddJusta > getMinuteMetrics(htCurve, 31).oddJusta, `Minutos seguintes partem da nova odd do evento (${getMinuteMetrics(curvaComEvento, 31).oddJusta})`);
+
+// Teste 6: Correção de Gol
+console.log('\n--- 6. Teste de Salto de Gol (Regra x2.5) ---');
 const golFav = applyGoalOddShift(3.00, true);
 assert(golFav === 7.60 || golFav === 7.40 || golFav === 7.50, `Gol a favor de odd 3.00 saltou para ~7.50 (obtido ${golFav})`);
 

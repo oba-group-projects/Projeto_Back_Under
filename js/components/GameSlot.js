@@ -24,6 +24,7 @@ export class GameSlot {
        gameName: `Jogo ${slotId}`,
        period: 'HT', // 'HT' | 'FT'
        initialOdd: 3.35,
+      currentOddBase: 3.35,
        addedMinutes: 2,
       addedMinutesActive: false,
        pendingAddedMinutes: null,
@@ -133,6 +134,7 @@ export class GameSlot {
      this.state.projectedMinute = startMin;
      this.state.tvMinuteInput = startMin;
      this.state.initialOdd = period === 'HT' ? 3.35 : 5.10;
+    this.state.currentOddBase = this.state.initialOdd;
      this.state.addedMinutes = period === 'HT' ? 2 : 5;
     this.state.addedMinutesActive = false;
      this.state.pendingAddedMinutes = null;
@@ -151,6 +153,8 @@ export class GameSlot {
     const val = Number(odd);
     if (!isNaN(val) && val >= 1.01) {
       this.state.initialOdd = val;
+      this.state.currentOddBase = val;
+      this.state.liveCorrections = {};
       const oddInput = this.container.querySelector('.hud-initial-odd-input');
       if (oddInput) oddInput.value = val.toFixed(2);
       this.recomputeCurve();
@@ -295,6 +299,7 @@ export class GameSlot {
     if (!isNaN(parsedOdd) && parsedOdd >= 1.01) {
       const oldOdd = this.state.liveCorrections[targetMin] ?? this.getMinuteMetricsFor(targetMin)?.oddJusta ?? null;
       this.state.liveCorrections[targetMin] = parsedOdd;
+      this.state.currentOddBase = parsedOdd;
       if (targetMin === this.state.currentMinute) {
         this.state.liveOddCurrentMinute = parsedOdd.toFixed(2);
         const liveInput = this.container.querySelector('.hud-live-odd-input');
