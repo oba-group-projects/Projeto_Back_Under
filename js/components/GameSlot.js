@@ -19,28 +19,33 @@ export class GameSlot {
     this.onTradeCompleted = onTradeCompleted;
     this.onOpenPendulos = onOpenPendulos;
 
-    // Estado do Slot
-    this.state = {
-      gameName: `Jogo ${slotId}`,
-      period: 'HT', // 'HT' | 'FT'
-      initialOdd: 3.35,
-      addedMinutes: 2,
-      tvMinuteInput: 1,
-      currentMinute: 1,
-      liveOddCurrentMinute: '', // odd informada no minuto atual
-      liveCorrections: {}, // overrides por minuto
-      
-      // Velocidade do tempo
-      ticksPorMinuto: 0,
-      pctPorMinuto: 0,
-      
-      // Métricas calculadas
-      minuteCurve: [],
-      currentMetrics: null,
-      
-      timerSeconds: 0,
-      timerRunning: false
-    };
+     // Estado do Slot
+     this.state = {
+       gameName: `Jogo ${slotId}`,
+       period: 'HT', // 'HT' | 'FT'
+       initialOdd: 3.35,
+       addedMinutes: 2,
+       pendingAddedMinutes: null,
+       tvMinuteInput: 1,
+       currentMinute: 1,
+       liveMinute: 1,
+       projectedMinute: 1,
+       liveOddCurrentMinute: '',
+       liveCorrections: {},
+       timerPaused: false,
+       isSimulating: false,
+       
+       // Velocidade do tempo
+       ticksPorMinuto: 0,
+       pctPorMinuto: 0,
+       
+       // Métricas calculadas
+       minuteCurve: [],
+       currentMetrics: null,
+       
+       timerSeconds: 0,
+       timerRunning: false
+     };
 
     this.timerInterval = null;
     this.recomputeCurve();
@@ -65,22 +70,26 @@ export class GameSlot {
     this.state.pctPorMinuto = Number(((Math.pow(1.01 / this.state.initialOdd, 1 / totalMin) - 1) * 100).toFixed(2));
   }
 
-  setPeriod(period) {
-    this.state.period = period;
-    const startMin = period === 'HT' ? 1 : 46;
-    this.state.currentMinute = startMin;
-    this.state.tvMinuteInput = startMin;
-    this.state.initialOdd = period === 'HT' ? 3.35 : 5.10;
-    this.state.addedMinutes = period === 'HT' ? 2 : 5;
-    this.state.liveOddCurrentMinute = '';
-    this.state.liveCorrections = {};
-    this.state.timerSeconds = 0;
-    this.pauseTimer();
-    this.recomputeCurve();
-    this.render();
-    this.bindEvents();
-    this.recalculate();
-  }
+   setPeriod(period) {
+     this.state.period = period;
+     const startMin = period === 'HT' ? 1 : 46;
+     this.state.currentMinute = startMin;
+     this.state.liveMinute = startMin;
+     this.state.projectedMinute = startMin;
+     this.state.tvMinuteInput = startMin;
+     this.state.initialOdd = period === 'HT' ? 3.35 : 5.10;
+     this.state.addedMinutes = period === 'HT' ? 2 : 5;
+     this.state.pendingAddedMinutes = null;
+     this.state.liveOddCurrentMinute = '';
+     this.state.liveCorrections = {};
+     this.state.timerSeconds = 0;
+     this.state.isSimulating = false;
+     this.pauseTimer();
+     this.recomputeCurve();
+     this.render();
+     this.bindEvents();
+     this.recalculate();
+   }
 
   setInitialOdd(odd) {
     const val = Number(odd);
@@ -98,18 +107,30 @@ export class GameSlot {
     this.setInitialOdd(newOdd);
   }
 
-  setAddedMinutes(mins) {
-    const val = parseInt(mins, 10);
-    this.state.addedMinutes = isNaN(val) || val < 0 ? 0 : val;
-    const addedInput = this.container.querySelector('.hud-added-min-input');
-    if (addedInput) addedInput.value = this.state.addedMinutes;
-    this.recomputeCurve();
-    this.recalculate();
-  }
+   setAddedMinutes(mins) {
+     const val = parseInt(mins, 10);
+     const pending = isNaN(val) || val < 0 ? 0 : val;
+     this.state.pendingAddedMinutes = pending;
+     const addedInput = this.container.querySelector('.hud-added-min-input');
+     if (addedInput) addedInput.value = pending;
+   }
 
-  adjustAddedMinutes(delta) {
-    this.setAddedMinutes(this.state.addedMinutes + delta);
-  }
+   syncAddedMinutes() {
+     if (this.state.pendingAddedMinutes !== null) {
+       this.state.addedMinutes = this.state.pendingAddedMinutes;
+       this.state.pendingAddedMinutes = null;
+       this.recomputeCurve();
+       this.recalculate();
+       this.render();
+       this.bindEvents();
+     }
+   }
+
+   adjustAddedMinutes(delta) {
+     const currentVal = this.state.pendingAddedMinutes !== null ? this.state.pendingAddedMinutes : this.state.addedMinutes;
+     const newVal = currentVal + delta;
+     this.setAddedMinutes(newVal);
+   }
 
   setTVMinute(mins) {
     const isHT = this.state.period === 'HT';
@@ -125,6 +146,14 @@ export class GameSlot {
     this.setTVMinute((parseInt(this.state.tvMinuteInput, 10) || this.state.currentMinute) + delta);
   }
 
+  getLiveGameMinute() {
+    const isHT = this.state.period === 'HT';
+    const minStart = isHT ? 1 : 46;
+    const maxMin = isHT ? (45 + this.state.addedMinutes) : (90 + this.state.addedMinutes);
+    const m = minStart + Math.floor(this.state.timerSeconds / 60);
+    return Math.max(minStart, Math.min(maxMin, m));
+  }
+
   setMinute(min) {
     const isHT = this.state.period === 'HT';
     const minStart = isHT ? 1 : 46;
@@ -133,7 +162,10 @@ export class GameSlot {
     
     // Ao mudar o minuto, atualiza os campos
     this.state.currentMinute = newMin;
+    this.state.liveMinute = newMin;
+    this.state.projectedMinute = newMin;
     this.state.tvMinuteInput = newMin;
+    this.state.isSimulating = false;
     this.state.liveOddCurrentMinute = this.state.liveCorrections[newMin] ? this.state.liveCorrections[newMin].toString() : '';
     this.state.timerSeconds = (newMin - minStart) * 60;
     
@@ -151,15 +183,53 @@ export class GameSlot {
     this.updateTimerDisplay();
   }
 
+   setSimulatedMinute(targetMin) {
+     const isHT = this.state.period === 'HT';
+     const minStart = isHT ? 1 : 46;
+     const maxMin = isHT ? (45 + this.state.addedMinutes) : (90 + this.state.addedMinutes);
+     const newMin = Math.max(minStart, Math.min(maxMin, parseInt(targetMin, 10) || minStart));
+     
+     this.state.projectedMinute = newMin;
+     this.state.currentMinute = newMin;
+     this.state.isSimulating = (newMin !== this.getLiveGameMinute());
+     this.state.timerPaused = true;
+     this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
+     this.recalculate();
+     this.updateTimerDisplay();
+     const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
+     if (playPauseBtn) playPauseBtn.textContent = '▶️';
+   }
+
   adjustCurrentMinute(delta) {
-    this.setMinute(this.state.currentMinute + delta);
+    this.setSimulatedMinute(this.state.currentMinute + delta);
   }
 
-  syncFromTV() {
-    const min = parseInt(this.state.tvMinuteInput, 10) || this.state.currentMinute;
-    this.setMinute(min);
-    this.startTimer();
-  }
+   returnToLiveMinute() {
+     this.state.isSimulating = false;
+     this.state.timerPaused = false;
+     this.state.liveMinute = this.getLiveGameMinute();
+     this.state.projectedMinute = this.state.liveMinute;
+     this.state.currentMinute = this.state.liveMinute;
+     this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
+     this.recalculate();
+     this.updateTimerDisplay();
+     const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
+     if (playPauseBtn) playPauseBtn.textContent = '⏸️';
+   }
+
+   syncFromTV() {
+     const isHT = this.state.period === 'HT';
+     const minStart = isHT ? 1 : 46;
+     const min = parseInt(this.state.tvMinuteInput, 10) || this.state.currentMinute;
+     this.state.timerSeconds = (min - minStart) * 60;
+     this.state.isSimulating = false;
+     this.state.currentMinute = min;
+     this.state.timerPaused = true;
+     this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
+     this.updateTimerDisplay();
+     this.startTimer();
+     this.recalculate();
+   }
 
   applyEventOverride(minute, newOdd) {
     const targetMin = parseInt(minute, 10) || this.state.currentMinute;
@@ -182,6 +252,33 @@ export class GameSlot {
     if (!cm) return;
 
     this.updateUI();
+    this.updateSimulationUI();
+  }
+
+  updateSimulationUI() {
+    const minuteBadge = this.container.querySelector('.hud-minute-hero-badge');
+    const simTag = this.container.querySelector('.hud-sim-tag');
+    const liveReturnBtn = this.container.querySelector('.hud-live-return-btn');
+    const liveMin = this.getLiveGameMinute();
+
+    if (this.state.isSimulating && this.state.currentMinute !== liveMin) {
+      const delta = this.state.currentMinute - liveMin;
+      const sign = delta > 0 ? `+${delta}` : `${delta}`;
+      if (minuteBadge) minuteBadge.classList.add('simulating-active');
+      if (simTag) {
+        simTag.style.display = 'inline-block';
+        simTag.textContent = `🔮 PROJEÇÃO (${sign}m)`;
+      }
+      if (liveReturnBtn) {
+        liveReturnBtn.style.display = 'inline-flex';
+        liveReturnBtn.innerHTML = `⚡ AO VIVO (${liveMin}')`;
+      }
+    } else {
+      this.state.isSimulating = false;
+      if (minuteBadge) minuteBadge.classList.remove('simulating-active');
+      if (simTag) simTag.style.display = 'none';
+      if (liveReturnBtn) liveReturnBtn.style.display = 'none';
+    }
   }
 
   updateUI() {
@@ -236,34 +333,56 @@ export class GameSlot {
     }
   }
 
-  startTimer() {
-    if (this.timerInterval) clearInterval(this.timerInterval);
-    this.state.timerRunning = true;
-    const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
-    if (playPauseBtn) playPauseBtn.textContent = '⏸️';
+   startTimer() {
+     if (this.timerInterval) clearInterval(this.timerInterval);
+     this.state.timerRunning = true;
+     const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
+     if (playPauseBtn) playPauseBtn.textContent = this.state.timerPaused ? '▶️' : '⏸️';
 
-    this.timerInterval = setInterval(() => {
-      this.state.timerSeconds++;
-      this.updateTimerDisplay();
+     this.timerInterval = setInterval(() => {
+       if (this.state.timerPaused) {
+         this.updateTimerDisplay();
+         return;
+       }
 
-      // Ao completar 60s, avança o minuto
-      const isHT = this.state.period === 'HT';
-      const baseMin = isHT ? 1 : 46;
-      const calcMinute = baseMin + Math.floor(this.state.timerSeconds / 60);
-      const maxMin = isHT ? (45 + this.state.addedMinutes) : (90 + this.state.addedMinutes);
+       const isHT = this.state.period === 'HT';
+       const maxMin = isHT ? (45 + this.state.addedMinutes) : (90 + this.state.addedMinutes);
+       const maxSeconds = (maxMin - (isHT ? 1 : 46)) * 60;
 
-      if (calcMinute !== this.state.currentMinute && calcMinute <= maxMin) {
-        this.setMinute(calcMinute);
-      }
-    }, 1000);
-  }
+       if (this.state.timerSeconds >= maxSeconds) {
+         this.state.timerSeconds = maxSeconds;
+         this.state.liveMinute = maxMin;
+         this.state.currentMinute = maxMin;
+         this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
+         this.recalculate();
+         this.updateTimerDisplay();
+         this.pauseTimer();
+         return;
+       }
 
-  pauseTimer() {
-    if (this.timerInterval) clearInterval(this.timerInterval);
-    this.state.timerRunning = false;
-    const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
-    if (playPauseBtn) playPauseBtn.textContent = '▶️';
-  }
+       this.state.timerSeconds++;
+       this.state.liveMinute = this.getLiveGameMinute();
+       this.updateTimerDisplay();
+
+       if (!this.state.isSimulating) {
+         if (this.state.liveMinute !== this.state.currentMinute && this.state.liveMinute <= maxMin) {
+           this.state.currentMinute = this.state.liveMinute;
+           this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
+           this.recalculate();
+         }
+       } else {
+         this.updateSimulationUI();
+       }
+     }, 1000);
+   }
+
+   pauseTimer() {
+     if (this.timerInterval) clearInterval(this.timerInterval);
+     this.state.timerRunning = false;
+     this.state.timerPaused = true;
+     const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
+     if (playPauseBtn) playPauseBtn.textContent = '▶️';
+   }
 
   resetTimer() {
     this.pauseTimer();
@@ -276,7 +395,10 @@ export class GameSlot {
     if (timerDisplay) {
       const isHT = this.state.period === 'HT';
       const minStart = isHT ? 1 : 46;
-      const minutes = minStart + Math.floor(this.state.timerSeconds / 60);
+      const maxMin = isHT ? (45 + this.state.addedMinutes) : (90 + this.state.addedMinutes);
+      const liveMin = this.getLiveGameMinute();
+      const effectiveMinute = this.state.isSimulating ? this.state.projectedMinute : Math.min(maxMin, liveMin);
+      const minutes = effectiveMinute;
       const seconds = this.state.timerSeconds % 60;
       timerDisplay.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}'`;
     }
@@ -321,23 +443,27 @@ export class GameSlot {
       oddPlusBtn.addEventListener('click', () => this.adjustInitialOdd(1));
     }
 
-    // Acréscimos (Input + Steppers + / -)
-    const addedMinutesInput = this.container.querySelector('.hud-added-min-input');
-    const addedMinusBtn = this.container.querySelector('.hud-added-minus-btn');
-    const addedPlusBtn = this.container.querySelector('.hud-added-plus-btn');
+     // Acréscimos (Input + Steppers + Botão Sync de Validação)
+     const addedMinutesInput = this.container.querySelector('.hud-added-min-input');
+     const addedMinusBtn = this.container.querySelector('.hud-added-minus-btn');
+     const addedPlusBtn = this.container.querySelector('.hud-added-plus-btn');
+     const addedSyncBtn = this.container.querySelector('.hud-added-sync-btn');
 
-    if (addedMinutesInput) {
-      addedMinutesInput.addEventListener('change', (e) => this.setAddedMinutes(e.target.value));
-      addedMinutesInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') this.setAddedMinutes(e.target.value);
-      });
-    }
-    if (addedMinusBtn) {
-      addedMinusBtn.addEventListener('click', () => this.adjustAddedMinutes(-1));
-    }
-    if (addedPlusBtn) {
-      addedPlusBtn.addEventListener('click', () => this.adjustAddedMinutes(1));
-    }
+     if (addedMinutesInput) {
+       addedMinutesInput.addEventListener('change', (e) => this.setAddedMinutes(e.target.value));
+       addedMinutesInput.addEventListener('keydown', (e) => {
+         if (e.key === 'Enter') this.setAddedMinutes(e.target.value);
+       });
+     }
+     if (addedPlusBtn) {
+       addedPlusBtn.addEventListener('click', () => this.adjustAddedMinutes(1));
+     }
+     if (addedMinusBtn) {
+       addedMinusBtn.addEventListener('click', () => this.adjustAddedMinutes(-1));
+     }
+     if (addedSyncBtn) {
+       addedSyncBtn.addEventListener('click', () => this.syncAddedMinutes());
+     }
 
     // Sincronização Minuto na TV (Input + Steppers + / - + Botão Sync)
     const tvMinInput = this.container.querySelector('.hud-tv-min-input');
@@ -390,6 +516,12 @@ export class GameSlot {
     if (btnMinMinus) btnMinMinus.addEventListener('click', () => this.adjustCurrentMinute(-1));
     if (btnMinPlus) btnMinPlus.addEventListener('click', () => this.adjustCurrentMinute(1));
 
+    // Botão Voltar ao Tempo Real
+    const liveReturnBtn = this.container.querySelector('.hud-live-return-btn');
+    if (liveReturnBtn) {
+      liveReturnBtn.addEventListener('click', () => this.returnToLiveMinute());
+    }
+
     // Módulo de Eventos de Jogo / Retorno
     const eventMinInput = this.container.querySelector('.event-min-input');
     const eventOddInput = this.container.querySelector('.event-odd-input');
@@ -404,18 +536,22 @@ export class GameSlot {
       });
     }
 
-    // Timer buttons
-    const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
-    const resetTimerBtn = this.container.querySelector('.timer-reset-btn');
-    if (playPauseBtn) {
-      playPauseBtn.addEventListener('click', () => {
-        if (this.state.timerRunning) this.pauseTimer();
-        else this.startTimer();
-      });
-    }
-    if (resetTimerBtn) {
-      resetTimerBtn.addEventListener('click', () => this.resetTimer());
-    }
+     // Timer buttons
+     const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
+     const resetTimerBtn = this.container.querySelector('.timer-reset-btn');
+     if (playPauseBtn) {
+       playPauseBtn.addEventListener('click', () => {
+         if (this.state.timerPaused) {
+           this.state.timerPaused = false;
+           this.startTimer();
+         } else {
+           this.pauseTimer();
+         }
+       });
+     }
+     if (resetTimerBtn) {
+       resetTimerBtn.addEventListener('click', () => this.resetTimer());
+     }
   }
 
   render() {
@@ -457,15 +593,16 @@ export class GameSlot {
             </div>
           </div>
 
-          <!-- Acréscimos -->
-          <div class="hud-input-cell-yellow" style="flex: 0.75;">
-            <span class="hud-cell-label">➕ ACR:</span>
-            <div class="hud-cell-input-row">
-              <button class="hud-mini-stepper-btn hud-added-minus-btn" title="Diminuir Acréscimo">-</button>
-              <input type="number" class="hud-yellow-field hud-added-min-input" value="${this.state.addedMinutes}">
-              <button class="hud-mini-stepper-btn hud-added-plus-btn" title="Aumentar Acréscimo">+</button>
-            </div>
-          </div>
+           <!-- Acréscimos (com botão Sync de validação) -->
+           <div class="hud-input-cell-yellow" style="flex: 0.75;">
+             <span class="hud-cell-label">➕ ACR:</span>
+             <div class="hud-cell-input-row">
+               <button class="hud-mini-stepper-btn hud-added-minus-btn" title="Diminuir Acréscimo">-</button>
+               <input type="number" class="hud-yellow-field hud-added-min-input" value="${this.state.pendingAddedMinutes !== null ? this.state.pendingAddedMinutes : this.state.addedMinutes}">
+               <button class="hud-mini-stepper-btn hud-added-plus-btn" title="Aumentar Acréscimo">+</button>
+               <button class="btn btn-warning btn-sm hud-added-sync-btn" title="Sincronizar Acréscimos" style="display: ${this.state.pendingAddedMinutes !== null ? 'inline-flex' : 'none'}; padding: 2px 6px; font-size: 0.7rem;">🔒 Sync</button>
+             </div>
+           </div>
 
           <!-- Minuto TV e Sincronização (Espaçoso) -->
           <div class="hud-input-cell-yellow hud-tv-cell" style="flex: 1.3;">
@@ -486,15 +623,19 @@ export class GameSlot {
           <!-- Cabeçalho do Painel: Minuto Gigante, Coluna Central Odd Justa com Fundo Destacado, e Odd Live + Zona -->
           <div class="hud-hero-metrics-grid">
             
-            <!-- Coluna 1: Minuto Atual Gigante -->
+            <!-- Coluna 1: Minuto Atual / Simulação -->
             <div class="hud-minute-hero-col">
-              <span class="hud-metric-label">MINUTO</span>
-              <div style="display: flex; align-items: center; gap: 0.35rem; margin-top: 0.15rem;">
+              <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 0.3rem;">
+                <span class="hud-metric-label">MINUTO</span>
+                <span class="hud-sim-tag" style="display: none;">🔮 PROJEÇÃO</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.35rem; margin-top: 0.15rem; flex-wrap: wrap;">
                 <span class="hud-minute-hero-badge">${this.state.currentMinute}'</span>
                 <div style="display: flex; flex-direction: column; gap: 2px;">
-                  <button class="hud-step-mini-btn hud-min-plus" title="+1 minuto">▲</button>
-                  <button class="hud-step-mini-btn hud-min-minus" title="-1 minuto">▼</button>
+                  <button class="hud-step-mini-btn hud-min-plus" title="Projetar +1 minuto">▲</button>
+                  <button class="hud-step-mini-btn hud-min-minus" title="Projetar -1 minuto">▼</button>
                 </div>
+                <button class="hud-live-return-btn" style="display: none;" title="Voltar ao tempo real do jogo">⚡ AO VIVO</button>
               </div>
             </div>
 

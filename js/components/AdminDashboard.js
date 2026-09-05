@@ -126,7 +126,7 @@ export class AdminDashboard {
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
               <div>
                 <h4 style="font-size: 0.9rem; font-weight: 800; color: #fef08a; margin: 0;">🎨 Módulo de Customização & Identidade Visual</h4>
-                <p style="font-size: 0.7rem; color: var(--text-muted); margin: 0.15rem 0 0 0;">Defina as cores, tipografia e dados de suporte oficiais para todos os traders.</p>
+                <p style="font-size: 0.7rem; color: var(--text-muted); margin: 0.15rem 0 0 0;">Defina o ambiente, cores, tipografia e dados de suporte oficiais para todos os traders.</p>
               </div>
               <div style="display: flex; gap: 0.4rem;">
                 <button type="button" id="btnResetTheme" class="btn btn-secondary btn-sm" style="font-size: 0.72rem;">↺ Restaurar Padrões</button>
@@ -136,6 +136,46 @@ export class AdminDashboard {
 
             <div class="admin-customizer-grid">
               
+              <!-- CARD 0: AMBIENTE GLOBAL & CONTRASTE -->
+              <div class="admin-customizer-card">
+                <div class="admin-customizer-card-header">
+                  <span>🌍</span>
+                  <h5 class="admin-customizer-title">AMBIENTE GLOBAL DO COCKPIT</h5>
+                </div>
+                <div style="display: flex; gap: 0.5rem;" id="themeEnvOptions">
+                  <label class="admin-font-choice-label active" style="flex: 1;" data-env="dark">
+                    <input type="radio" name="adminColorTheme" value="dark" checked>
+                    <span>🌙 Escuro (OLED)</span>
+                  </label>
+                  <label class="admin-font-choice-label" style="flex: 1;" data-env="slate">
+                    <input type="radio" name="adminColorTheme" value="slate">
+                    <span>🌑 Neutro (Slate)</span>
+                  </label>
+                  <label class="admin-font-choice-label" style="flex: 1;" data-env="light">
+                    <input type="radio" name="adminColorTheme" value="light">
+                    <span>☀️ Claro (Planilha)</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- CARD 0.5: EFEITOS DE GLOW / BRILHO -->
+              <div class="admin-customizer-card">
+                <div class="admin-customizer-card-header">
+                  <span>✨</span>
+                  <h5 class="admin-customizer-title">EFEITOS NEON & BRILHO (GLOW)</h5>
+                </div>
+                <div style="display: flex; gap: 0.5rem;" id="themeGlowOptions">
+                  <label class="admin-font-choice-label active" style="flex: 1;" data-glow="true">
+                    <input type="radio" name="adminGlowFx" value="true" checked>
+                    <span>✨ Neon Glow (Ativo)</span>
+                  </label>
+                  <label class="admin-font-choice-label" style="flex: 1;" data-glow="false">
+                    <input type="radio" name="adminGlowFx" value="false">
+                    <span>🔲 Minimalista (Sem Brilho)</span>
+                  </label>
+                </div>
+              </div>
+
               <!-- CARD 1: TIPOGRAFIA OFICIAL -->
               <div class="admin-customizer-card">
                 <div class="admin-customizer-card-header">
@@ -377,6 +417,34 @@ export class AdminDashboard {
   }
 
   bindCustomizerEvents() {
+    // 0. Ambiente Global (Radios)
+    const envLabels = this.overlay.querySelectorAll('#themeEnvOptions .admin-font-choice-label');
+    envLabels.forEach(label => {
+      label.addEventListener('click', () => {
+        const radio = label.querySelector('input');
+        if (radio) {
+          radio.checked = true;
+          envLabels.forEach(l => l.classList.remove('active'));
+          label.classList.add('active');
+          themeManager.applyTheme({ ...this.getCustomizerFormValues(), colorTheme: radio.value });
+        }
+      });
+    });
+
+    // 0.5. Efeitos Glow (Radios)
+    const glowLabels = this.overlay.querySelectorAll('#themeGlowOptions .admin-font-choice-label');
+    glowLabels.forEach(label => {
+      label.addEventListener('click', () => {
+        const radio = label.querySelector('input');
+        if (radio) {
+          radio.checked = true;
+          glowLabels.forEach(l => l.classList.remove('active'));
+          label.classList.add('active');
+          themeManager.applyTheme({ ...this.getCustomizerFormValues(), glowFx: radio.value === 'true' });
+        }
+      });
+    });
+
     // 1. Tipografia (Radios)
     const fontLabels = this.overlay.querySelectorAll('#themeFontOptions .admin-font-choice-label');
     fontLabels.forEach(label => {
@@ -458,10 +526,14 @@ export class AdminDashboard {
   }
 
   getCustomizerFormValues() {
+    const selectedEnv = this.overlay.querySelector('input[name="adminColorTheme"]:checked')?.value || 'dark';
+    const selectedGlow = this.overlay.querySelector('input[name="adminGlowFx"]:checked')?.value !== 'false';
     const selectedFont = this.overlay.querySelector('input[name="adminFontTheme"]:checked')?.value || 'calibri';
     const selectedScale = this.overlay.querySelector('input[name="adminHudScale"]:checked')?.value || 'normal';
 
     return {
+      colorTheme: selectedEnv,
+      glowFx: selectedGlow,
       fontTheme: selectedFont,
       hudScale: selectedScale,
       slot1Color: this.overlay.querySelector('#themeTextSlot1')?.value || '#1e3a8a',
@@ -479,6 +551,23 @@ export class AdminDashboard {
 
   renderCustomizer() {
     const theme = themeManager.getTheme();
+
+    // 0. Ambiente Global
+    const envRadio = this.overlay.querySelector(`input[name="adminColorTheme"][value="${theme.colorTheme || 'dark'}"]`);
+    if (envRadio) {
+      envRadio.checked = true;
+      this.overlay.querySelectorAll('#themeEnvOptions .admin-font-choice-label').forEach(l => l.classList.remove('active'));
+      envRadio.closest('.admin-font-choice-label')?.classList.add('active');
+    }
+
+    // 0.5. Efeitos Glow
+    const glowVal = theme.glowFx !== false ? 'true' : 'false';
+    const glowRadio = this.overlay.querySelector(`input[name="adminGlowFx"][value="${glowVal}"]`);
+    if (glowRadio) {
+      glowRadio.checked = true;
+      this.overlay.querySelectorAll('#themeGlowOptions .admin-font-choice-label').forEach(l => l.classList.remove('active'));
+      glowRadio.closest('.admin-font-choice-label')?.classList.add('active');
+    }
 
     // 1. Tipografia
     const fontRadio = this.overlay.querySelector(`input[name="adminFontTheme"][value="${theme.fontTheme || 'calibri'}"]`);

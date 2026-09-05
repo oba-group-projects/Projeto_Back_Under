@@ -145,3 +145,108 @@ body.font-theme-inter, body.font-theme-inter * { font-family: var(--font-inter);
 .font-mono, .timer-display, .hud-minute-hero-badge, .bloco1-topo-val, .bloco1-fundo-val, .bloco2-topo-val, .bloco2-fundo-val, .hud-odd-justa-hero {
   font-family: var(--font-mono) !important;
 }
+
+/* ========================================================
+   AMBIENTES GLOBAIS DE CONTRASTE (ESCURECIDO, NEUTRO E CLARO)
+   ======================================================== */
+
+/* 1. MODO ESCURO PROFUNDO (OLED) - Padrão */
+body.theme-dark {
+  --bg-app: #030712;
+  --bg-surface: #0b1120;
+  --bg-card: #090e1a;
+  --bg-card-hover: #111827;
+  --border-subtle: #1e293b;
+  --border-medium: #334155;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --bg-glass: rgba(15, 23, 42, 0.85);
+  background-color: #030712;
+}
+
+/* 2. MODO NEUTRO / SLATE (BLOOMBERG TERMINAL) */
+body.theme-slate {
+  --bg-app: #0f172a;
+  --bg-surface: #1e293b;
+  --bg-card: #1e293b;
+  --bg-card-hover: #334155;
+  --border-subtle: #334155;
+  --border-medium: #475569;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --bg-glass: rgba(30, 41, 59, 0.9);
+  background-color: #0f172a;
+}
+body.theme-slate .game-card {
+  background: #131c2e;
+  border-color: #334155;
+}
+
+/* 3. MODO CLARO / LIGHT (PLANILHA PRO) */
+body.theme-light {
+  --bg-app: #f1f5f9;
+  --bg-surface: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --border-subtle: #cbd5e1;
+  --border-medium: #94a3b8;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --bg-glass: rgba(255, 255, 255, 0.95);
+  --bg-input: #ffffff;
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+body.theme-light .app-header {
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+body.theme-light .brand-title {
+  color: #0f172a;
+}
+body.theme-light .game-card {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+body.theme-light .hud-main-minute-banner {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+body.theme-light .game-title-input {
+  color: #0f172a;
+  border-bottom-color: #94a3b8;
+}
+body.theme-light .hud-minute-hero-badge {
+  background: #0284c7;
+  color: #ffffff;
+}
+body.theme-light .hud-hero-metric-box {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+body.theme-light .hud-odd-justa-hero {
+  color: #0f172a;
+  text-shadow: none;
+}
+body.theme-light .hud-config-bar {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+body.theme-light .modal-content {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+/* ========================================================
+   EFEITOS NEON / GLOW
+   ======================================================== */
+body.glow-fx-off *, body.glow-fx-off .hud-odd-justa-hero, body.glow-fx-off .timer-display {
+  text-shadow: none !important;
+  box-shadow: none !important;
+}

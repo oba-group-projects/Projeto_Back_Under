@@ -69,40 +69,98 @@ export const BLOCOS_JUSTO_2 = [
 
 /**
  * Encontra o bloco correspondente na tabela BLOCOS JUSTO 1
+ * Usa interpolação linear entre entries adjacentes para granularidade total
  * @param {number} odd 
  */
 export function lookupBloco1(odd) {
   if (!odd || odd < 1.14) {
     return { topo: Number((odd + 0.02).toFixed(2)), fundo: Math.max(1.01, Number((odd - 0.02).toFixed(2))), pctBloco: 0, ticks: 0 };
   }
-  let closest = BLOCOS_JUSTO_1[0];
-  let minDiff = Infinity;
-  for (const item of BLOCOS_JUSTO_1) {
-    const diff = Math.abs(item.justo - odd);
-    if (diff < minDiff) {
-      minDiff = diff;
-      closest = item;
+
+  const sorted = [...BLOCOS_JUSTO_1].sort((a, b) => b.justo - a.justo);
+  const top = sorted[0];
+  const bottom = sorted[sorted.length - 1];
+
+  if (odd >= top.justo) return { ...top };
+
+  if (odd <= bottom.justo) {
+    const delta = bottom.topo - bottom.fundo;
+    return {
+      topo: Number((odd + delta / 2).toFixed(2)),
+      fundo: Number((odd - delta / 2).toFixed(2)),
+      pctBloco: Number((bottom.pctBloco * Math.max(0.3, odd / bottom.justo)).toFixed(2)),
+      ticks: Math.max(1, Math.round(bottom.ticks * odd / bottom.justo))
+    };
+  }
+
+  let lower = sorted[0];
+  let upper = sorted[0];
+
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const current = sorted[i];
+    const next = sorted[i + 1];
+    if (odd >= next.justo && odd <= current.justo) {
+      lower = next;
+      upper = current;
+      break;
     }
   }
-  return closest;
+
+  const range = upper.justo - lower.justo || 0.0001;
+  const t = (upper.justo - odd) / range;
+  return {
+    topo: Number((upper.topo + t * (lower.topo - upper.topo)).toFixed(2)),
+    fundo: Number((upper.fundo + t * (lower.fundo - upper.fundo)).toFixed(2)),
+    pctBloco: Number((upper.pctBloco + t * (lower.pctBloco - upper.pctBloco)).toFixed(2)),
+    ticks: Math.round(upper.ticks + t * (lower.ticks - upper.ticks))
+  };
 }
 
 /**
  * Encontra o bloco correspondente na tabela BLOCOS JUSTO 2
+ * Usa interpolação linear entre entries adjacentes para granularidade total
  * @param {number} odd 
  */
 export function lookupBloco2(odd) {
   if (!odd || odd < 1.14) {
     return { topo: Number((odd + 0.02).toFixed(2)), fundo: Math.max(1.01, Number((odd - 0.02).toFixed(2))), pctBloco: 0, ticks: 0 };
   }
-  let closest = BLOCOS_JUSTO_2[0];
-  let minDiff = Infinity;
-  for (const item of BLOCOS_JUSTO_2) {
-    const diff = Math.abs(item.justo - odd);
-    if (diff < minDiff) {
-      minDiff = diff;
-      closest = item;
+
+  const sorted = [...BLOCOS_JUSTO_2].sort((a, b) => b.justo - a.justo);
+  const top = sorted[0];
+  const bottom = sorted[sorted.length - 1];
+
+  if (odd >= top.justo) return { ...top };
+
+  if (odd <= bottom.justo) {
+    const delta = bottom.topo - bottom.fundo;
+    return {
+      topo: Number((odd + delta / 2).toFixed(2)),
+      fundo: Number((odd - delta / 2).toFixed(2)),
+      pctBloco: Number((bottom.pctBloco * Math.max(0.3, odd / bottom.justo)).toFixed(2)),
+      ticks: Math.max(1, Math.round(bottom.ticks * odd / bottom.justo))
+    };
+  }
+
+  let lower = sorted[0];
+  let upper = sorted[0];
+
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const current = sorted[i];
+    const next = sorted[i + 1];
+    if (odd >= next.justo && odd <= current.justo) {
+      lower = next;
+      upper = current;
+      break;
     }
   }
-  return closest;
+
+  const range = upper.justo - lower.justo || 0.0001;
+  const t = (upper.justo - odd) / range;
+  return {
+    topo: Number((upper.topo + t * (lower.topo - upper.topo)).toFixed(2)),
+    fundo: Number((upper.fundo + t * (lower.fundo - upper.fundo)).toFixed(2)),
+    pctBloco: Number((upper.pctBloco + t * (lower.pctBloco - upper.pctBloco)).toFixed(2)),
+    ticks: Math.round(upper.ticks + t * (lower.ticks - upper.ticks))
+  };
 }

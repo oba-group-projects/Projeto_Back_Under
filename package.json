@@ -5,8 +5,11 @@
   "main": "js/app.js",
   "type": "module",
   "scripts": {
+    "fix": "node logic_fix_demo.js",
+    "validate": "node test/test-minute-decay.js",
     "test": "node test/test-calculations.js",
-    "start": "npx serve ."
+    "start": "npx serve .",
+    "dev": "npx serve ."
   },
   "repository": {
     "type": "git",

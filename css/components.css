@@ -642,6 +642,52 @@ input[type=number] {
   background: var(--color-blue);
 }
 
+/* ========================================================
+   SIMULADOR DE MINUTOS FUTUROS (PROJEÇÃO TEMPORAL)
+   ======================================================== */
+.hud-sim-tag {
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid #f59e0b;
+  border-radius: 3px;
+  padding: 0.08rem 0.3rem;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.hud-minute-hero-badge.simulating-active {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+  border: 1.5px solid #fbbf24 !important;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.65) !important;
+  color: #ffffff !important;
+}
+
+.hud-live-return-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #ffffff;
+  border: 1px solid #f87171;
+  border-radius: 4px;
+  font-size: 0.62rem;
+  font-weight: 900;
+  padding: 0.22rem 0.45rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.hud-live-return-btn:hover {
+  transform: scale(1.05);
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
 /* Coluna 2 Central: Card Destacado com Odd Justa + Diferença % Concisa */
 .hud-odd-justa-card-container {
   display: flex;
