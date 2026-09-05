@@ -34,6 +34,8 @@ export class GameSlot {
        liveCorrections: {},
        timerPaused: false,
        isSimulating: false,
+       sheetLog: [],
+       lastSheetRow: null,
        
        // Velocidade do tempo
        ticksPorMinuto: 0,
@@ -235,6 +237,7 @@ export class GameSlot {
     const targetMin = parseInt(minute, 10) || this.state.currentMinute;
     const parsedOdd = parseFloat(newOdd);
     if (!isNaN(parsedOdd) && parsedOdd >= 1.01) {
+      const oldOdd = this.state.liveCorrections[targetMin] ?? this.getMinuteMetricsFor(targetMin)?.oddJusta ?? null;
       this.state.liveCorrections[targetMin] = parsedOdd;
       if (targetMin === this.state.currentMinute) {
         this.state.liveOddCurrentMinute = parsedOdd.toFixed(2);
@@ -243,6 +246,26 @@ export class GameSlot {
       }
       this.recomputeCurve();
       this.recalculate();
+
+      const row = {
+        minute: targetMin,
+        period: this.state.period,
+        oldOdd: oldOdd !== null ? Number(oldOdd.toFixed(2)) : null,
+        newOdd: Number(parsedOdd.toFixed(2)),
+        fairOddAfterUpdate: Number(this.getMinuteMetricsFor(targetMin).oddJusta.toFixed(2)),
+        bloco1: this.getMinuteMetricsFor(targetMin).topo1 && this.getMinuteMetricsFor(targetMin).fundo1 ? {
+          topo: Number(this.getMinuteMetricsFor(targetMin).topo1.toFixed(2)),
+          fundo: Number(this.getMinuteMetricsFor(targetMin).fundo1.toFixed(2))
+        } : null,
+        bloco2: this.getMinuteMetricsFor(targetMin).topo2 && this.getMinuteMetricsFor(targetMin).fundo2 ? {
+          topo: Number(this.getMinuteMetricsFor(targetMin).topo2.toFixed(2)),
+          fundo: Number(this.getMinuteMetricsFor(targetMin).fundo2.toFixed(2))
+        } : null,
+        ts: new Date().toISOString()
+      };
+
+      this.state.sheetLog.unshift(row);
+      this.state.lastSheetRow = row;
     }
   }
 
@@ -285,11 +308,15 @@ export class GameSlot {
     const cm = this.state.currentMetrics;
     if (!cm) return;
 
+    const displayMinute = this.state.isSimulating ? this.state.projectedMinute : this.state.liveMinute;
+
     // Minuto e Odd Justa
     const minuteBadge = this.container.querySelector('.hud-minute-hero-badge');
     const oddJustaDisplay = this.container.querySelector('.hud-odd-justa-hero');
     const zoneBadge = this.container.querySelector('.hud-zone-badge');
     const valueDiffBadge = this.container.querySelector('.hud-diff-badge');
+    const liveMinuteLabel = this.container.querySelector('.hud-live-minute-label');
+    const projectedMinuteLabel = this.container.querySelector('.hud-projected-minute-label');
 
     // Blocos Grandes
     const bloco1Topo = this.container.querySelector('.bloco1-topo-val');
@@ -297,7 +324,9 @@ export class GameSlot {
     const bloco2Topo = this.container.querySelector('.bloco2-topo-val');
     const bloco2Fundo = this.container.querySelector('.bloco2-fundo-val');
 
-    if (minuteBadge) minuteBadge.textContent = `${cm.minute}'`;
+    if (minuteBadge) minuteBadge.textContent = `${displayMinute}'`;
+    if (liveMinuteLabel) liveMinuteLabel.textContent = `LIVE: ${this.state.liveMinute}'`;
+    if (projectedMinuteLabel) projectedMinuteLabel.textContent = `PROJ: ${this.state.projectedMinute}'`;
     if (oddJustaDisplay) oddJustaDisplay.textContent = cm.oddJusta.toFixed(2);
 
     if (bloco1Topo) bloco1Topo.textContent = cm.topo1.toFixed(2);
@@ -630,12 +659,16 @@ export class GameSlot {
                 <span class="hud-sim-tag" style="display: none;">🔮 PROJEÇÃO</span>
               </div>
               <div style="display: flex; align-items: center; gap: 0.35rem; margin-top: 0.15rem; flex-wrap: wrap;">
-                <span class="hud-minute-hero-badge">${this.state.currentMinute}'</span>
+                <span class="hud-minute-hero-badge">${this.state.isSimulating ? this.state.projectedMinute : this.state.liveMinute}'</span>
                 <div style="display: flex; flex-direction: column; gap: 2px;">
                   <button class="hud-step-mini-btn hud-min-plus" title="Projetar +1 minuto">▲</button>
                   <button class="hud-step-mini-btn hud-min-minus" title="Projetar -1 minuto">▼</button>
                 </div>
                 <button class="hud-live-return-btn" style="display: none;" title="Voltar ao tempo real do jogo">⚡ AO VIVO</button>
+              </div>
+              <div style="display: flex; gap: 0.5rem; margin-top: 0.35rem; font-size: 0.68rem; font-weight: 700; color: #dbeafe;">
+                <span class="hud-live-minute-label">LIVE: ${this.state.liveMinute}'</span>
+                <span class="hud-projected-minute-label">PROJ: ${this.state.projectedMinute}'</span>
               </div>
             </div>
 

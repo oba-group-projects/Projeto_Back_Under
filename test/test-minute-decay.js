@@ -44,6 +44,14 @@ console.log('Minuto 47 (Fim):', min47);
 assert(min47.oddJusta <= min45.oddJusta, `Odd no minuto 47 (${min47.oddJusta}) <= minuto 45 (${min45.oddJusta})`);
 assert(min47.oddJusta <= 1.05, `Odd no fim do tempo está próxima de 1.01 (obtido ${min47.oddJusta})`);
 
+// Cenário extra: relógio real e projeção futura devem ser independentes
+assert(getMinuteMetrics(htCurve, 30).oddJusta > 1.6, `Odd justa no minuto 30 continua acima de 1.60 (obtido ${getMinuteMetrics(htCurve, 30).oddJusta})`);
+assert(getMinuteMetrics(htCurve, 40).oddJusta > 1.2 && getMinuteMetrics(htCurve, 40).oddJusta < 1.6, `Odd justa no minuto 40 está dentro da faixa esperada (obtido ${getMinuteMetrics(htCurve, 40).oddJusta})`);
+
+// Cenário extra: blocos justos continuam funcionando abaixo de 1.60
+const blocoAbaixo160 = getMinuteMetrics(htCurve, 47);
+assert(blocoAbaixo160.topo1 > 1.00 && blocoAbaixo160.fundo1 > 1.00, `Blocos justos abaixo de 1.60 continuam processados (topo1=${blocoAbaixo160.topo1}, fundo1=${blocoAbaixo160.fundo1})`);
+
 // Teste 2: Curva FT com Odd Inicial 5.10 e Acréscimos = 5
 console.log('\n--- 2. Teste de Decaimento FT (Odd Inicial 5.10, +5 min) ---');
 const ftCurve = calculateMinuteCurve({
@@ -63,6 +71,11 @@ assert(golFav === 7.60 || golFav === 7.40 || golFav === 7.50, `Gol a favor de od
 
 const golContra = applyGoalOddShift(5.00, false);
 assert(golContra === 2.00, `Gol contra de odd 5.00 caiu para 2.00 (obtido ${golContra})`);
+
+// Cenário extra: múltiplos acréscimos não quebram a curva máxima do período
+const curveComAcr = calculateMinuteCurve({ period: 'FT', initialOdd: 5.10, addedMinutes: 7 });
+assert(curveComAcr.length === 52, `FT com +7 acrescimos deve ter 52 minutos (45+7), obtido ${curveComAcr.length}`);
+assert(curveComAcr[curveComAcr.length - 1].minute === 97, `Último minuto do FT com +7 acrescimos deve ser 97, obtido ${curveComAcr[curveComAcr.length - 1].minute}`);
 
 console.log('\n==================================================');
 console.log(`📊 RESULTADO DOS TESTES: ${passed} PASSOU | ${failed} FALHOU`);
