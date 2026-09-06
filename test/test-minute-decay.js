@@ -28,6 +28,7 @@ const htCurve = calculateMinuteCurve({
 assert(htCurve.length === 47, `Total de minutos no HT: esperado 47 (45+2), obtido ${htCurve.length}`);
 assert(htCurve[0].minute === 1, `Primeiro minuto é 1, obtido ${htCurve[0].minute}`);
 assert(htCurve[0].oddJusta === 3.35, `Odd no minuto 1 é 3.35, obtido ${htCurve[0].oddJusta}`);
+assert(htCurve[0].oddJusta === getMinuteMetrics(htCurve, 1).oddJusta, `Abertura visual 0' usa a odd inicial da curva`);
 
 // Minuto 10
 const min10 = getMinuteMetrics(htCurve, 10);
@@ -63,6 +64,7 @@ const ftCurve = calculateMinuteCurve({
 assert(ftCurve.length === 50, `Total de minutos no FT: esperado 50 (45+5), obtido ${ftCurve.length}`);
 assert(ftCurve[0].minute === 46, `Primeiro minuto do FT é 46, obtido ${ftCurve[0].minute}`);
 assert(ftCurve[0].oddJusta === 5.10, `Odd no minuto 46 é 5.10, obtido ${ftCurve[0].oddJusta}`);
+assert(ftCurve[0].oddJusta === getMinuteMetrics(ftCurve, 46).oddJusta, `Abertura visual 45' usa a odd inicial da curva FT`);
 
 // Teste 3: Troca de período preserva os limites e reinicia a curva corretamente
 console.log('\n--- 3. Teste de Troca de Período e Acréscimos ---');

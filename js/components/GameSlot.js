@@ -96,6 +96,11 @@ export class GameSlot {
     return Math.max(0, Number(minute) - 1);
   }
 
+  getInternalMinute(displayMinute) {
+    const value = Number(displayMinute);
+    return Number.isFinite(value) ? value + 1 : this.state.liveMinute;
+  }
+
   registerPeriodStart(minute) {
     const startOffsetMinutes = Math.max(0, Number(minute) - (this.state.period === 'HT' ? 1 : 46));
     this.state.periodStartTimes[this.state.period] = new Date(Date.now() - startOffsetMinutes * 60000).toISOString();
@@ -392,7 +397,8 @@ export class GameSlot {
    }
 
   applyEventOverride(minute, newOdd) {
-    const targetMin = parseInt(minute, 10) || this.state.liveMinute;
+    const parsedDisplayMinute = parseInt(minute, 10);
+    const targetMin = Number.isNaN(parsedDisplayMinute) ? this.state.liveMinute : this.getInternalMinute(parsedDisplayMinute);
     const parsedOdd = parseFloat(newOdd);
     if (!isNaN(parsedOdd) && parsedOdd >= 1.01) {
       const oldOdd = this.state.liveCorrections[targetMin] ?? this.getMinuteMetricsFor(targetMin)?.oddJusta ?? null;
@@ -402,6 +408,11 @@ export class GameSlot {
         eventOdd: parsedOdd,
         addedMinutes: this.state.addedMinutes
       });
+      if (openingOdd !== null) {
+        this.state.initialOdd = openingOdd;
+        const initialOddInput = this.container.querySelector('.hud-initial-odd-input');
+        if (initialOddInput) initialOddInput.value = openingOdd.toFixed(2);
+      }
       this.state.liveCorrections[targetMin] = parsedOdd;
       this.state.currentOddBase = parsedOdd;
       this.state.currentOddBaseMinute = targetMin;
@@ -444,7 +455,7 @@ export class GameSlot {
 
     eventLogBody.innerHTML = this.state.sheetLog.slice(0, 8).map(row => `
       <tr>
-        <td>${row.period} ${row.minute}'</td>
+        <td>${row.period} ${this.getDisplayMinute(row.minute)}'</td>
         <td>${row.oldOdd === null ? '-' : row.oldOdd.toFixed(2)}</td>
         <td>${row.newOdd.toFixed(2)}</td>
         <td>${row.openingOdd ? row.openingOdd.toFixed(2) : '-'}</td>
@@ -481,7 +492,7 @@ export class GameSlot {
       }
       if (liveReturnBtn) {
         liveReturnBtn.style.display = 'inline-flex';
-        liveReturnBtn.innerHTML = `⚡ AO VIVO (${liveMin}')`;
+        liveReturnBtn.innerHTML = `⚡ AO VIVO (${this.getDisplayMinute(liveMin)}')`;
       }
     } else {
       this.state.isSimulating = false;
@@ -495,7 +506,7 @@ export class GameSlot {
     const cm = this.state.currentMetrics;
     if (!cm) return;
 
-    const displayMinute = this.state.isSimulating ? this.state.projectedMinute : this.state.liveMinute;
+    const displayMinute = this.getDisplayMinute(this.state.isSimulating ? this.state.projectedMinute : this.state.liveMinute);
 
     // Minuto e Odd Justa
     const minuteBadge = this.container.querySelector('.hud-minute-hero-badge');
@@ -728,7 +739,7 @@ export class GameSlot {
         if (e.key === 'Enter') {
           const val = parseFloat(e.target.value);
           if (!isNaN(val) && val > 1.0) {
-            this.applyEventOverride(this.state.liveMinute, val);
+            this.applyEventOverride(this.getDisplayMinute(this.state.liveMinute), val);
           }
         }
       });
@@ -965,7 +976,7 @@ export class GameSlot {
           <div class="event-recalc-inputs">
             <div class="event-input-wrapper">
               <span class="event-mini-label">Minuto:</span>
-              <input type="number" class="hud-yellow-field event-min-input" value="${this.state.liveMinute}" style="width: 48px;">
+              <input type="number" class="hud-yellow-field event-min-input" value="${this.getDisplayMinute(this.state.liveMinute)}" style="width: 48px;">
             </div>
 
             <div class="event-input-wrapper">
