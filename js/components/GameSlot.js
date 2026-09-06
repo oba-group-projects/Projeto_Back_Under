@@ -34,6 +34,7 @@ export class GameSlot {
        currentMinute: 1,
        liveMinute: 1,
        projectedMinute: 1,
+      projectionOffset: 0,
        liveOddCurrentMinute: '',
        liveCorrections: {},
       timerPaused: true,
@@ -176,6 +177,10 @@ export class GameSlot {
     return this.getNominalEndMinute() + this.getEffectiveAddedMinutes(referenceMinute);
   }
 
+  getProjectionMaxMinute() {
+    return this.state.period === 'HT' ? 46 : 93;
+  }
+
   getMinuteMetricsFor(minute) {
     const targetMinute = Number(minute);
     const curve = targetMinute >= this.getNominalEndMinute() && !this.state.addedMinutesActive
@@ -222,6 +227,7 @@ export class GameSlot {
      this.state.currentMinute = startMin;
      this.state.liveMinute = startMin;
      this.state.projectedMinute = startMin;
+    this.state.projectionOffset = 0;
      this.state.tvMinuteInput = startMin;
      this.state.initialOdd = period === 'HT' ? 3.35 : 5.10;
     this.state.currentOddBase = this.state.initialOdd;
@@ -326,6 +332,7 @@ export class GameSlot {
     this.state.currentMinute = newMin;
     this.state.liveMinute = newMin;
     this.state.projectedMinute = newMin;
+    this.state.projectionOffset = 0;
     this.state.tvMinuteInput = newMin;
     this.state.isSimulating = false;
     this.state.liveOddCurrentMinute = this.state.liveCorrections[newMin] ? this.state.liveCorrections[newMin].toString() : '';
@@ -348,10 +355,13 @@ export class GameSlot {
    setSimulatedMinute(targetMin) {
      const isHT = this.state.period === 'HT';
      const minStart = isHT ? 1 : 46;
-     const maxMin = isHT ? (45 + this.state.addedMinutes) : (90 + this.state.addedMinutes);
-     const newMin = Math.max(minStart, Math.min(maxMin, parseInt(targetMin, 10) || minStart));
+     const maxMin = this.getProjectionMaxMinute();
+     const requestedMinute = parseInt(targetMin, 10) || this.state.liveMinute;
+     const requestedOffset = requestedMinute - this.state.liveMinute;
+     const newMin = Math.max(minStart, Math.min(maxMin, this.state.liveMinute + requestedOffset));
      
      this.state.projectedMinute = newMin;
+     this.state.projectionOffset = newMin - this.state.liveMinute;
      this.state.isSimulating = (newMin !== this.getLiveGameMinute());
      this.recomputeCurve();
     this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.projectedMinute);
@@ -370,6 +380,7 @@ export class GameSlot {
      this.state.timerPaused = false;
      this.state.liveMinute = this.getLiveGameMinute();
      this.state.projectedMinute = this.state.liveMinute;
+    this.state.projectionOffset = 0;
      this.state.currentMinute = this.state.liveMinute;
      this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
      this.recalculate();
@@ -388,6 +399,7 @@ export class GameSlot {
      this.state.isSimulating = false;
     this.state.liveMinute = min;
     this.state.projectedMinute = min;
+    this.state.projectionOffset = 0;
      this.state.currentMinute = min;
     this.state.timerPaused = false;
      this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
@@ -395,6 +407,59 @@ export class GameSlot {
      this.startTimer();
      this.recalculate();
    }
+
+  applyEventOverride(minute, newOdd) {
+    const parsedDisplayMinute = parseInt(minute, 10);
+    const targetMin = Number.isNaN(parsedDisplayMinute) ? this.state.liveMinute : this.getInternalMinute(parsedDisplayMinute);
+    const parsedOdd = parseFloat(newOdd);
+    if (!isNaN(parsedOdd) && parsedOdd >= 1.01) {
+      const oldOdd = this.state.liveCorrections[targetMin] ?? this.getMinuteMetricsFor(targetMin)?.oddJusta ?? null;
+      const openingOdd = calibrateOpeningOdd({
+        period: this.state.period,
+        eventMinute: targetMin,
+        eventOdd: parsedOdd,
+        addedMinutes: this.state.addedMinutes
+      });
+      if (openingOdd !== null) {
+        this.state.initialOdd = openingOdd;
+        const initialOddInput = this.container.querySelector('.hud-initial-odd-input');
+        if (initialOddInput) initialOddInput.value = openingOdd.toFixed(2);
+      }
+      this.state.liveCorrections[targetMin] = parsedOdd;
+      this.state.currentOddBase = parsedOdd;
+      this.state.currentOddBaseMinute = targetMin;
+      if (targetMin === this.state.liveMinute) {
+        this.state.liveOddCurrentMinute = parsedOdd.toFixed(2);
+        const liveInput = this.container.querySelector('.hud-live-odd-input');
+        if (liveInput) liveInput.value = this.state.liveOddCurrentMinute;
+      }
+      this.recomputeCurve();
+      this.recalculate();
+
+      const row = {
+        minute: targetMin,
+        period: this.state.period,
+        oldOdd: oldOdd !== null ? Number(oldOdd.toFixed(2)) : null,
+        newOdd: Number(parsedOdd.toFixed(2)),
+        openingOdd,
+        fairOddAfterUpdate: Number(this.getMinuteMetricsFor(targetMin).oddJusta.toFixed(2)),
+        bloco1: this.getMinuteMetricsFor(targetMin).topo1 && this.getMinuteMetricsFor(targetMin).fundo1 ? {
+          topo: Number(this.getMinuteMetricsFor(targetMin).topo1.toFixed(2)),
+          fundo: Number(this.getMinuteMetricsFor(targetMin).fundo1.toFixed(2))
+        } : null,
+        bloco2: this.getMinuteMetricsFor(targetMin).topo2 && this.getMinuteMetricsFor(targetMin).fundo2 ? {
+          topo: Number(this.getMinuteMetricsFor(targetMin).topo2.toFixed(2)),
+          fundo: Number(this.getMinuteMetricsFor(targetMin).fundo2.toFixed(2))
+        } : null,
+        ts: new Date().toISOString()
+      };
+
+      this.state.sheetLog.unshift(row);
+      this.state.lastSheetRow = row;
+      this.saveSheetLog();
+      this.renderEventLog();
+    }
+  }
 
   applyEventOverride(minute, newOdd) {
     const parsedDisplayMinute = parseInt(minute, 10);
@@ -597,6 +662,13 @@ export class GameSlot {
 
        this.state.timerSeconds++;
        this.state.liveMinute = this.getLiveGameMinute();
+       if (this.state.isSimulating) {
+         const projectionMax = this.getProjectionMaxMinute();
+         this.state.projectedMinute = Math.max(
+           this.state.period === 'HT' ? 1 : 46,
+           Math.min(projectionMax, this.state.liveMinute + this.state.projectionOffset)
+         );
+       }
        this.updateTimerDisplay();
 
        if (!this.state.isSimulating) {

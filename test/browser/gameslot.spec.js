@@ -63,3 +63,15 @@ test('registra evento e mostra abertura estimada', async ({ page }) => {
   await expect(eventCells.nth(3)).not.toHaveText('0.00');
   await expect(slot.locator('.hud-initial-odd-input')).not.toHaveValue('3.35');
 });
+
+test('limita a projeção em 46 no HT e 93 no FT', async ({ page }) => {
+  const slot = page.locator('#slotCard1');
+  for (let click = 0; click < 60; click++) await slot.locator('.hud-min-plus').click();
+  await expect.poll(() => page.evaluate(() => window.app.slots[0].state.projectedMinute)).toBe(46);
+  await expect(slot.locator('.hud-odd-justa-hero')).not.toHaveText('0.00');
+
+  await slot.locator('.period-tab-btn[data-period="FT"]').click();
+  for (let click = 0; click < 60; click++) await slot.locator('.hud-min-plus').click();
+  await expect.poll(() => page.evaluate(() => window.app.slots[0].state.projectedMinute)).toBe(93);
+  await expect(slot.locator('.hud-odd-justa-hero')).not.toHaveText('0.00');
+});
