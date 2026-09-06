@@ -523,8 +523,8 @@ export class GameSlot {
     const bloco2Fundo = this.container.querySelector('.bloco2-fundo-val');
 
     if (minuteBadge) minuteBadge.textContent = `${displayMinute}'`;
-    if (liveMinuteLabel) liveMinuteLabel.textContent = `AO VIVO: ${this.state.liveMinute}'`;
-    if (projectedMinuteLabel) projectedMinuteLabel.textContent = `PROJEÇÃO: ${this.state.projectedMinute}'`;
+    if (liveMinuteLabel) liveMinuteLabel.textContent = `AO VIVO: ${this.getDisplayMinute(this.state.liveMinute)}'`;
+    if (projectedMinuteLabel) projectedMinuteLabel.textContent = `PROJEÇÃO: ${this.getDisplayMinute(this.state.projectedMinute)}'`;
     if (oddJustaDisplay) oddJustaDisplay.textContent = cm.oddJusta.toFixed(2);
 
     if (bloco1Topo) bloco1Topo.textContent = cm.topo1.toFixed(2);
@@ -880,7 +880,7 @@ export class GameSlot {
                 <span class="hud-sim-tag" style="display: none;">🔮 PROJEÇÃO</span>
               </div>
               <div style="display: flex; align-items: center; gap: 0.35rem; margin-top: 0.15rem; flex-wrap: wrap;">
-                <span class="hud-minute-hero-badge">${this.state.isSimulating ? this.state.projectedMinute : this.state.liveMinute}'</span>
+                <span class="hud-minute-hero-badge">${this.getDisplayMinute(this.state.isSimulating ? this.state.projectedMinute : this.state.liveMinute)}'</span>
                 <div style="display: flex; flex-direction: column; gap: 2px;">
                   <button class="hud-step-mini-btn hud-min-plus" title="Projetar +1 minuto">▲</button>
                   <button class="hud-step-mini-btn hud-min-minus" title="Projetar -1 minuto">▼</button>

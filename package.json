@@ -8,6 +8,7 @@
     "fix": "node logic_fix_demo.js",
     "validate": "node test/test-minute-decay.js",
     "test": "node test/test-calculations.js",
+    "test:browser": "playwright test",
     "start": "npx serve .",
     "dev": "npx serve ."
   },
@@ -23,5 +24,8 @@
     "stake-management"
   ],
   "author": "Projeto Back Under",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
+  }
 }

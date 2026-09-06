@@ -36,6 +36,12 @@ jobs:
       - name: Run validation tests
         run: npm run validate
 
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser regression tests
+        run: npm run test:browser
+
   deploy:
     needs: validate
     runs-on: ubuntu-latest
