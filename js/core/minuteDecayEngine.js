@@ -16,6 +16,7 @@ import { normalizeOdd } from './oddsCalculator.js';
  * @param {number} params.baseMinute - Minuto que passa a usar a nova odd base
  * @param {number} params.baseOdd - Odd base a partir de baseMinute
  * @param {number} params.addedMinutes - Minutos de acréscimo previstos (ex: 2 para HT, 5 para FT)
+ * @param {number|null} params.curveEndMinute - Limite absoluto da curva, quando definido pelo GameSlot
  * @param {object} params.liveCorrections - Dicionário de correções manuais { [minuto]: oddReal }
  * @returns {Array<object>} Array com cada minuto e suas métricas calculadas
  */
@@ -25,13 +26,18 @@ export function calculateMinuteCurve({
   addedMinutes = 2,
   liveCorrections = {},
   baseMinute = null,
-  baseOdd = null
+  baseOdd = null,
+  curveEndMinute = null
 }) {
   const isHT = period === 'HT';
   const startMinute = isHT ? 1 : 46;
   const nominalMinutes = 45;
-  const totalPeriodMinutes = nominalMinutes + (Number(addedMinutes) || 0);
-  const endMinute = isHT ? totalPeriodMinutes : (45 + totalPeriodMinutes);
+  const totalPeriodMinutes = curveEndMinute === null
+    ? nominalMinutes + (Number(addedMinutes) || 0)
+    : (isHT ? Number(curveEndMinute) : Number(curveEndMinute) - 45);
+  const endMinute = curveEndMinute === null
+    ? (isHT ? totalPeriodMinutes : (45 + totalPeriodMinutes))
+    : Number(curveEndMinute);
 
   const curve = [];
   let prevOdd = Number(initialOdd) || 2.00;

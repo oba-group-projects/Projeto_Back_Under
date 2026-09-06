@@ -29,6 +29,7 @@ export class GameSlot {
       currentOddBaseMinute: null,
        addedMinutes: 2,
       addedMinutesActive: false,
+      addedMinutesSynced: false,
        pendingAddedMinutes: null,
        tvMinuteInput: 1,
        currentMinute: 1,
@@ -173,6 +174,11 @@ export class GameSlot {
     return this.state.addedMinutesActive || additionsAreInView ? this.state.addedMinutes : 0;
   }
 
+  getCurveEndMinute() {
+    if (this.state.addedMinutesSynced) return this.getNominalEndMinute() + this.state.addedMinutes;
+    return this.getProjectionMaxMinute();
+  }
+
   getMaxMinute(referenceMinute = this.state.liveMinute) {
     return this.getNominalEndMinute() + this.getEffectiveAddedMinutes(referenceMinute);
   }
@@ -188,7 +194,8 @@ export class GameSlot {
           period: this.state.period,
           initialOdd: this.state.initialOdd,
           addedMinutes: this.state.addedMinutes,
-          liveCorrections: this.state.liveCorrections
+          liveCorrections: this.state.liveCorrections,
+          curveEndMinute: this.getCurveEndMinute()
         })
       : this.state.minuteCurve;
     return getMinuteMetrics(curve, targetMinute);
@@ -208,6 +215,7 @@ export class GameSlot {
       period: this.state.period,
       initialOdd: this.state.initialOdd,
       addedMinutes: this.getEffectiveAddedMinutes(),
+      curveEndMinute: this.getCurveEndMinute(),
       liveCorrections: this.state.liveCorrections,
       baseMinute: this.state.currentOddBaseMinute,
       baseOdd: this.state.currentOddBaseMinute === null ? null : this.state.currentOddBase
@@ -234,6 +242,7 @@ export class GameSlot {
     this.state.currentOddBaseMinute = null;
      this.state.addedMinutes = period === 'HT' ? 2 : 5;
     this.state.addedMinutesActive = false;
+    this.state.addedMinutesSynced = false;
      this.state.pendingAddedMinutes = null;
      this.state.liveOddCurrentMinute = '';
      this.state.liveCorrections = {};
@@ -278,6 +287,7 @@ export class GameSlot {
      if (this.state.pendingAddedMinutes !== null) {
        this.state.addedMinutes = this.state.pendingAddedMinutes;
        this.state.pendingAddedMinutes = null;
+      this.state.addedMinutesSynced = true;
        this.state.addedMinutesActive = this.state.liveMinute >= this.getNominalEndMinute();
        this.recomputeCurve();
        this.recalculate();
