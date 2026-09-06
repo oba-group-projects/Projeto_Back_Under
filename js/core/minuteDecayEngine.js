@@ -35,6 +35,11 @@ export function calculateMinuteCurve({
 
   const curve = [];
   let prevOdd = Number(initialOdd) || 2.00;
+  const openingBase = Math.max(1.01, prevOdd);
+  const startBaseMinute = baseMinute === null ? startMinute : Number(baseMinute);
+  const eventBase = baseMinute !== null && Number(baseOdd) >= 1.01 ? Number(baseOdd) : openingBase;
+  const eventRemainingMinutes = Math.max(1, (totalPeriodMinutes - 1) - (startBaseMinute - startMinute));
+  const decayRate = 1 - (1.01 / eventBase);
 
   for (let minute = startMinute; minute <= endMinute; minute++) {
     const elapsed = isHT ? minute : (minute - 45);
@@ -51,17 +56,9 @@ export function calculateMinuteCurve({
     } else if (minute === startMinute) {
       oddJusta = prevOdd;
     } else {
-      // Fórmula da Planilha:
-      // IF(B_prev >= 2, B_prev * (1 + (POWER(1.01/B_prev, 1/timeRemaining) - 1)), LadderLookup)
-      if (prevOdd >= 2.00) {
-        const decayFactor = Math.pow(1.01 / prevOdd, 1 / timeRemaining) - 1;
-        oddJusta = prevOdd * (1 + decayFactor);
-      } else {
-        const ladderItem = findClosestLadder(prevOdd);
-        const currentTicks = ladderItem.tickIndex;
-        const newTicks = currentTicks - ((currentTicks - 1) / timeRemaining);
-        oddJusta = getOddByTicks(newTicks);
-      }
+      const elapsedFromBase = Math.max(0, minute - startBaseMinute);
+      const progress = Math.min(1, elapsedFromBase / eventRemainingMinutes);
+      oddJusta = eventBase * (1 - (progress * decayRate));
     }
 
     oddJusta = Math.max(1.01, oddJusta);
