@@ -115,6 +115,33 @@ export function getMinuteMetrics(curve, currentMinute) {
 }
 
 /**
+ * Estima a odd de abertura que produziria a odd informada no minuto do evento.
+ * A busca usa a mesma curva do motor e ignora a correção do próprio evento.
+ */
+export function calibrateOpeningOdd({ period = 'HT', eventMinute, eventOdd, addedMinutes = 0 }) {
+  const targetMinute = Number(eventMinute);
+  const targetOdd = Number(eventOdd);
+  if (!Number.isFinite(targetMinute) || !Number.isFinite(targetOdd) || targetOdd < 1.01) return null;
+
+  let lower = 1.01;
+  let upper = 1000;
+  for (let attempt = 0; attempt < 60; attempt++) {
+    const candidate = (lower + upper) / 2;
+    const curve = calculateMinuteCurve({
+      period,
+      initialOdd: candidate,
+      addedMinutes,
+      liveCorrections: {}
+    });
+    const candidateOdd = getMinuteMetrics(curve, targetMinute)?.oddJusta ?? candidate;
+    if (candidateOdd < targetOdd) lower = candidate;
+    else upper = candidate;
+  }
+
+  return Number(((lower + upper) / 2).toFixed(2));
+}
+
+/**
  * Aplica o salto de odd decorrente de um gol a favor ou contra (Regra x2.5 da planilha)
  * @param {number} currentOdd 
  * @param {boolean} isFavor - true = Gol a Favor (Odd sobe x2.5), false = Gol Contra (Odd cai /2.5)

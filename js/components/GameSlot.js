@@ -7,7 +7,7 @@
  * - Zona centralizada abaixo do campo de Odd Live
  * - Remoção dos botões de spinner do navegador
  */
-import { calculateMinuteCurve, getMinuteMetrics } from '../core/minuteDecayEngine.js';
+import { calculateMinuteCurve, getMinuteMetrics, calibrateOpeningOdd } from '../core/minuteDecayEngine.js';
 import { moveOddTicks } from '../core/oddsCalculator.js';
 import { findClosestLadder } from '../core/ladderData.js';
 
@@ -396,6 +396,12 @@ export class GameSlot {
     const parsedOdd = parseFloat(newOdd);
     if (!isNaN(parsedOdd) && parsedOdd >= 1.01) {
       const oldOdd = this.state.liveCorrections[targetMin] ?? this.getMinuteMetricsFor(targetMin)?.oddJusta ?? null;
+      const openingOdd = calibrateOpeningOdd({
+        period: this.state.period,
+        eventMinute: targetMin,
+        eventOdd: parsedOdd,
+        addedMinutes: this.state.addedMinutes
+      });
       this.state.liveCorrections[targetMin] = parsedOdd;
       this.state.currentOddBase = parsedOdd;
       this.state.currentOddBaseMinute = targetMin;
@@ -412,6 +418,7 @@ export class GameSlot {
         period: this.state.period,
         oldOdd: oldOdd !== null ? Number(oldOdd.toFixed(2)) : null,
         newOdd: Number(parsedOdd.toFixed(2)),
+        openingOdd,
         fairOddAfterUpdate: Number(this.getMinuteMetricsFor(targetMin).oddJusta.toFixed(2)),
         bloco1: this.getMinuteMetricsFor(targetMin).topo1 && this.getMinuteMetricsFor(targetMin).fundo1 ? {
           topo: Number(this.getMinuteMetricsFor(targetMin).topo1.toFixed(2)),
@@ -440,6 +447,7 @@ export class GameSlot {
         <td>${row.period} ${row.minute}'</td>
         <td>${row.oldOdd === null ? '-' : row.oldOdd.toFixed(2)}</td>
         <td>${row.newOdd.toFixed(2)}</td>
+        <td>${row.openingOdd ? row.openingOdd.toFixed(2) : '-'}</td>
         <td>${row.fairOddAfterUpdate.toFixed(2)}</td>
         <td>${row.bloco1 ? `${row.bloco1.topo.toFixed(2)} / ${row.bloco1.fundo.toFixed(2)}` : '-'}</td>
         <td>${row.bloco2 ? `${row.bloco2.topo.toFixed(2)} / ${row.bloco2.fundo.toFixed(2)}` : '-'}</td>
@@ -979,6 +987,7 @@ export class GameSlot {
                   <th>Tempo</th>
                   <th>Anterior</th>
                   <th>Nova odd</th>
+                  <th>Abertura estimada</th>
                   <th>Justa</th>
                   <th>Bloco 1</th>
                   <th>Bloco 2</th>

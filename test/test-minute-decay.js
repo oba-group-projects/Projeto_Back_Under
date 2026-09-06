@@ -1,4 +1,4 @@
-import { calculateMinuteCurve, getMinuteMetrics, applyGoalOddShift } from '../js/core/minuteDecayEngine.js';
+import { calculateMinuteCurve, getMinuteMetrics, applyGoalOddShift, calibrateOpeningOdd } from '../js/core/minuteDecayEngine.js';
 
 let passed = 0;
 let failed = 0;
@@ -95,6 +95,10 @@ const curvaComEvento = calculateMinuteCurve({
 });
 assert(getMinuteMetrics(curvaComEvento, 30).oddJusta === 4, `Odd do evento no minuto 30 é 4.00, obtido ${getMinuteMetrics(curvaComEvento, 30).oddJusta}`);
 assert(getMinuteMetrics(curvaComEvento, 31).oddJusta > getMinuteMetrics(htCurve, 31).oddJusta, `Minutos seguintes partem da nova odd do evento (${getMinuteMetrics(curvaComEvento, 31).oddJusta})`);
+const aberturaCalibrada = calibrateOpeningOdd({ period: 'HT', eventMinute: 13, eventOdd: 1.5, addedMinutes: 2 });
+const curvaCalibrada = calculateMinuteCurve({ period: 'HT', initialOdd: aberturaCalibrada, addedMinutes: 2 });
+assert(aberturaCalibrada > 1.5, `Abertura estimada fica acima da odd do evento (${aberturaCalibrada})`);
+assert(Math.abs(getMinuteMetrics(curvaCalibrada, 13).oddJusta - 1.5) <= 0.05, `Abertura calibrada reproduz a odd do minuto 13 (${getMinuteMetrics(curvaCalibrada, 13).oddJusta})`);
 
 // Teste 6: Correção de Gol
 console.log('\n--- 6. Teste de Salto de Gol (Regra x2.5) ---');
