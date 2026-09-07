@@ -471,59 +471,6 @@ export class GameSlot {
     }
   }
 
-  applyEventOverride(minute, newOdd) {
-    const parsedDisplayMinute = parseInt(minute, 10);
-    const targetMin = Number.isNaN(parsedDisplayMinute) ? this.state.liveMinute : this.getInternalMinute(parsedDisplayMinute);
-    const parsedOdd = parseFloat(newOdd);
-    if (!isNaN(parsedOdd) && parsedOdd >= 1.01) {
-      const oldOdd = this.state.liveCorrections[targetMin] ?? this.getMinuteMetricsFor(targetMin)?.oddJusta ?? null;
-      const openingOdd = calibrateOpeningOdd({
-        period: this.state.period,
-        eventMinute: targetMin,
-        eventOdd: parsedOdd,
-        addedMinutes: this.state.addedMinutes
-      });
-      if (openingOdd !== null) {
-        this.state.initialOdd = openingOdd;
-        const initialOddInput = this.container.querySelector('.hud-initial-odd-input');
-        if (initialOddInput) initialOddInput.value = openingOdd.toFixed(2);
-      }
-      this.state.liveCorrections[targetMin] = parsedOdd;
-      this.state.currentOddBase = parsedOdd;
-      this.state.currentOddBaseMinute = targetMin;
-      if (targetMin === this.state.liveMinute) {
-        this.state.liveOddCurrentMinute = parsedOdd.toFixed(2);
-        const liveInput = this.container.querySelector('.hud-live-odd-input');
-        if (liveInput) liveInput.value = this.state.liveOddCurrentMinute;
-      }
-      this.recomputeCurve();
-      this.recalculate();
-
-      const row = {
-        minute: targetMin,
-        period: this.state.period,
-        oldOdd: oldOdd !== null ? Number(oldOdd.toFixed(2)) : null,
-        newOdd: Number(parsedOdd.toFixed(2)),
-        openingOdd,
-        fairOddAfterUpdate: Number(this.getMinuteMetricsFor(targetMin).oddJusta.toFixed(2)),
-        bloco1: this.getMinuteMetricsFor(targetMin).topo1 && this.getMinuteMetricsFor(targetMin).fundo1 ? {
-          topo: Number(this.getMinuteMetricsFor(targetMin).topo1.toFixed(2)),
-          fundo: Number(this.getMinuteMetricsFor(targetMin).fundo1.toFixed(2))
-        } : null,
-        bloco2: this.getMinuteMetricsFor(targetMin).topo2 && this.getMinuteMetricsFor(targetMin).fundo2 ? {
-          topo: Number(this.getMinuteMetricsFor(targetMin).topo2.toFixed(2)),
-          fundo: Number(this.getMinuteMetricsFor(targetMin).fundo2.toFixed(2))
-        } : null,
-        ts: new Date().toISOString()
-      };
-
-      this.state.sheetLog.unshift(row);
-      this.state.lastSheetRow = row;
-      this.saveSheetLog();
-      this.renderEventLog();
-    }
-  }
-
   renderEventLog() {
     const eventLogBody = this.container.querySelector('.event-log-body');
     if (!eventLogBody) return;

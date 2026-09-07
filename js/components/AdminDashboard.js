@@ -4,8 +4,21 @@
  * - Atalhos Rápidos para WhatsApp Direto e Envio de E-mail
  * - Monitor de Acessos e Auditoria em Tempo Real
  */
-import { authManager } from '../core/authManager.js?v=2.5';
-import { themeManager, DEFAULT_THEME } from '../core/themeManager.js?v=2.5';
+import { authManager } from '../core/authManager.js';
+import { themeManager, DEFAULT_THEME } from '../core/themeManager.js';
+
+const APP_URL = 'https://oba-group-projects.github.io/Projeto_Back_Under/';
+
+// Dados de usuário vêm do formulário público de cadastro; precisam ser
+// escapados antes de entrar em innerHTML para evitar XSS no painel admin.
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 function formatPhoneDisplay(raw) {
   if (!raw) return '-';
@@ -632,31 +645,31 @@ export class AdminDashboard {
     tbody.innerHTML = pendingUsers.map(u => {
       const cleanWhats = (u.whatsapp || '').replace(/\D/g, '');
       const whatsFormatted = formatPhoneDisplay(u.whatsapp);
-      const whatsUrl = cleanWhats ? `https://wa.me/55${cleanWhats}?text=${encodeURIComponent(`Olá ${u.name}! Seu cadastro no Cockpit Precificação Justa Back ao Under foi aprovado com sucesso! Acesse em: https://bora-group-projects.github.io/Projeto_Back_Under/`)}` : '#';
-      const mailtoUrl = `mailto:${u.email}?subject=${encodeURIComponent('Acesso ao Cockpit Precificação Justa Back ao Under')}&body=${encodeURIComponent(`Olá ${u.name},\n\nSeu cadastro no Cockpit Precificação Justa Back ao Under foi aprovado!\n\nAcesse o link: https://bora-group-projects.github.io/Projeto_Back_Under/\nSeu E-mail: ${u.email}\n\nBons trades!`)}`;
+      const whatsUrl = cleanWhats ? `https://wa.me/55${cleanWhats}?text=${encodeURIComponent(`Olá ${u.name}! Seu cadastro no Cockpit Precificação Justa Back ao Under foi aprovado com sucesso! Acesse em: ${APP_URL}`)}` : '#';
+      const mailtoUrl = `mailto:${encodeURIComponent(u.email)}?subject=${encodeURIComponent('Acesso ao Cockpit Precificação Justa Back ao Under')}&body=${encodeURIComponent(`Olá ${u.name},\n\nSeu cadastro no Cockpit Precificação Justa Back ao Under foi aprovado!\n\nAcesse o link: ${APP_URL}\nSeu E-mail: ${u.email}\n\nBons trades!`)}`;
 
       return `
         <tr>
-          <td style="font-weight: 700; color: #ffffff;">${u.name}</td>
+          <td style="font-weight: 700; color: #ffffff;">${escapeHtml(u.name)}</td>
           <td>
             ${cleanWhats ? `
-              <a href="${whatsUrl}" target="_blank" rel="noopener noreferrer" class="admin-contact-link whats-link" title="Clique para abrir no WhatsApp">
-                📲 ${whatsFormatted}
+              <a href="${escapeHtml(whatsUrl)}" target="_blank" rel="noopener noreferrer" class="admin-contact-link whats-link" title="Clique para abrir no WhatsApp">
+                📲 ${escapeHtml(whatsFormatted)}
               </a>
             ` : '-'}
           </td>
-          <td style="color: var(--text-secondary);">${u.city || '-'}</td>
+          <td style="color: var(--text-secondary);">${escapeHtml(u.city || '-')}</td>
           <td>
-            <a href="${mailtoUrl}" class="admin-contact-link email-link" title="Clique para enviar um e-mail">
-              ✉️ ${u.email}
+            <a href="${escapeHtml(mailtoUrl)}" class="admin-contact-link email-link" title="Clique para enviar um e-mail">
+              ✉️ ${escapeHtml(u.email)}
             </a>
           </td>
           <td style="color: var(--text-muted);">${new Date(u.createdAt).toLocaleString('pt-BR')}</td>
           <td style="text-align: center; white-space: nowrap;">
-            <button class="btn btn-success btn-sm admin-approve-btn" data-user-id="${u.id}" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">
+            <button class="btn btn-success btn-sm admin-approve-btn" data-user-id="${escapeHtml(u.id)}" style="padding: 0.2rem 0.5rem; font-size: 0.7rem;">
               ✔️ Aprovar
             </button>
-            <button class="btn btn-danger btn-sm admin-reject-btn" data-user-id="${u.id}" style="padding: 0.2rem 0.5rem; font-size: 0.7rem; margin-left: 0.2rem;">
+            <button class="btn btn-danger btn-sm admin-reject-btn" data-user-id="${escapeHtml(u.id)}" style="padding: 0.2rem 0.5rem; font-size: 0.7rem; margin-left: 0.2rem;">
               ❌ Recusar
             </button>
           </td>
@@ -698,33 +711,33 @@ export class AdminDashboard {
       const cleanWhats = (u.whatsapp || '').replace(/\D/g, '');
       const whatsFormatted = formatPhoneDisplay(u.whatsapp);
       const whatsUrl = cleanWhats ? `https://wa.me/55${cleanWhats}?text=${encodeURIComponent(`Olá ${u.name}! Tudo bem?`)}` : '#';
-      const mailtoUrl = `mailto:${u.email}?subject=${encodeURIComponent('Suporte Precificação Justa Back ao Under')}`;
+      const mailtoUrl = `mailto:${encodeURIComponent(u.email)}?subject=${encodeURIComponent('Suporte Precificação Justa Back ao Under')}`;
 
       return `
         <tr>
-          <td style="font-weight: 700; color: #ffffff;">${u.name}</td>
+          <td style="font-weight: 700; color: #ffffff;">${escapeHtml(u.name)}</td>
           <td>
             ${cleanWhats ? `
-              <a href="${whatsUrl}" target="_blank" rel="noopener noreferrer" class="admin-contact-link whats-link" title="Clique para abrir no WhatsApp">
-                📲 ${whatsFormatted}
+              <a href="${escapeHtml(whatsUrl)}" target="_blank" rel="noopener noreferrer" class="admin-contact-link whats-link" title="Clique para abrir no WhatsApp">
+                📲 ${escapeHtml(whatsFormatted)}
               </a>
             ` : '-'}
           </td>
-          <td style="color: var(--text-secondary); font-size: 0.7rem;">${u.city || '-'}</td>
+          <td style="color: var(--text-secondary); font-size: 0.7rem;">${escapeHtml(u.city || '-')}</td>
           <td>
-            <a href="${mailtoUrl}" class="admin-contact-link email-link" title="Clique para enviar um e-mail">
-              ✉️ ${u.email}
+            <a href="${escapeHtml(mailtoUrl)}" class="admin-contact-link email-link" title="Clique para enviar um e-mail">
+              ✉️ ${escapeHtml(u.email)}
             </a>
           </td>
-          <td><span style="font-size: 0.65rem; font-weight: 800; padding: 0.15rem 0.4rem; border-radius: 3px; background: ${u.role === 'admin' ? 'rgba(234, 179, 8, 0.2); color: #fef08a;' : 'rgba(56, 189, 248, 0.2); color: #bae6fd;'}">${u.role.toUpperCase()}</span></td>
+          <td><span style="font-size: 0.65rem; font-weight: 800; padding: 0.15rem 0.4rem; border-radius: 3px; background: ${u.role === 'admin' ? 'rgba(234, 179, 8, 0.2); color: #fef08a;' : 'rgba(56, 189, 248, 0.2); color: #bae6fd;'}">${escapeHtml(String(u.role).toUpperCase())}</span></td>
           <td><span style="font-size: 0.65rem; font-weight: 800; padding: 0.15rem 0.4rem; border-radius: 3px; background: ${isActive ? 'rgba(16, 185, 129, 0.2); color: #34d399;' : 'rgba(239, 68, 68, 0.2); color: #f87171;'}">${isActive ? '🟢 ATIVO' : '🔴 BLOQUEADO'}</span></td>
           <td style="color: var(--text-secondary); font-size: 0.7rem;">${u.lastLogin ? new Date(u.lastLogin).toLocaleString('pt-BR') : 'Nunca'}</td>
           <td>
             ${!isMasterAdmin ? `
-              <button class="btn btn-secondary btn-sm admin-toggle-user-btn" data-user-id="${u.id}" style="padding: 0.15rem 0.4rem; font-size: 0.65rem;">
+              <button class="btn btn-secondary btn-sm admin-toggle-user-btn" data-user-id="${escapeHtml(u.id)}" style="padding: 0.15rem 0.4rem; font-size: 0.65rem;">
                 ${isActive ? '🔒 Bloquear' : '🔓 Liberar'}
               </button>
-              <button class="btn btn-danger btn-sm admin-delete-user-btn" data-user-id="${u.id}" style="padding: 0.15rem 0.4rem; font-size: 0.65rem; margin-left: 0.2rem;">
+              <button class="btn btn-danger btn-sm admin-delete-user-btn" data-user-id="${escapeHtml(u.id)}" style="padding: 0.15rem 0.4rem; font-size: 0.65rem; margin-left: 0.2rem;">
                 🗑️
               </button>
             ` : '<span style="color: var(--text-muted); font-size: 0.65rem;">Master</span>'}
@@ -765,12 +778,12 @@ export class AdminDashboard {
 
     tbody.innerHTML = logs.map(l => `
       <tr>
-        <td style="color: var(--text-muted);">${l.dateFormatted}</td>
-        <td style="font-weight: 700; color: #ffffff;">${l.name} <span style="font-size: 0.65rem; color: var(--text-secondary);">(${l.email})</span></td>
-        <td style="color: var(--color-cyan); font-family: var(--font-mono);">${l.ip}</td>
-        <td style="color: var(--text-secondary); font-size: 0.7rem;">${l.device}</td>
+        <td style="color: var(--text-muted);">${escapeHtml(l.dateFormatted)}</td>
+        <td style="font-weight: 700; color: #ffffff;">${escapeHtml(l.name)} <span style="font-size: 0.65rem; color: var(--text-secondary);">(${escapeHtml(l.email)})</span></td>
+        <td style="color: var(--color-cyan); font-family: var(--font-mono);">${escapeHtml(l.ip)}</td>
+        <td style="color: var(--text-secondary); font-size: 0.7rem;">${escapeHtml(l.device)}</td>
         <td><span style="font-size: 0.65rem; font-weight: 800; padding: 0.15rem 0.4rem; border-radius: 3px; background: ${l.success ? 'rgba(16, 185, 129, 0.2); color: #34d399;' : 'rgba(239, 68, 68, 0.2); color: #f87171;'}">${l.success ? 'AUTORIZADO' : 'NEGADO'}</span></td>
-        <td style="color: var(--text-muted); font-size: 0.7rem;">${l.reason || '-'}</td>
+        <td style="color: var(--text-muted); font-size: 0.7rem;">${escapeHtml(l.reason || '-')}</td>
       </tr>
     `).join('');
   }

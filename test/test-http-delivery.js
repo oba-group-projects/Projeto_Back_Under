@@ -1,5 +1,7 @@
 import http from 'http';
 
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+
 const filesToTest = [
   '/',
   '/index.html',
@@ -14,17 +16,21 @@ const filesToTest = [
   '/js/components/AdminDashboard.js',
   '/js/components/UserProfileModal.js',
   '/js/core/authManager.js',
+  '/js/core/themeManager.js',
+  '/js/core/minuteDecayEngine.js',
+  '/js/core/ladderData.js',
+  '/js/core/blocosData.js',
   '/js/core/oddsCalculator.js',
   '/js/core/pendulosData.js',
   '/js/core/stakeManager.js',
   '/js/core/hedgeEngine.js'
 ];
 
-console.log('Validating HTTP server asset delivery...');
+console.log(`Validating HTTP server asset delivery at ${BASE_URL}...`);
 
 function testUrl(urlPath) {
-  return new Promise((resolve, reject) => {
-    http.get(`http://localhost:8080${urlPath}`, (res) => {
+  return new Promise((resolve) => {
+    http.get(`${BASE_URL}${urlPath}`, (res) => {
       let data = '';
       res.on('data', chunk => { data += chunk; });
       res.on('end', () => {
