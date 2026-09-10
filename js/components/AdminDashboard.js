@@ -18,6 +18,17 @@ function formatPhoneDisplay(raw) {
   return raw;
 }
 
+// Função de escape HTML para prevenir XSS em dados de usuários
+function htmlEscape(str) {
+  if (typeof str !== 'string') return String(str);
+  return str
+    .replace(/&/g, '&')
+    .replace(/</g, '<')
+    .replace(/>/g, '>')
+    .replace(/"/g, '"')
+    .replace(/'/g, '&#039;');
+}
+
 export class AdminDashboard {
   constructor(onUserUpdated) {
     this.onUserUpdated = onUserUpdated;
@@ -374,17 +385,22 @@ export class AdminDashboard {
 
     // Alternador de Abas
     const tabButtons = this.overlay.querySelectorAll('.admin-tab-btn');
-    tabButtons.forEach(btn => {
+    tabButtons.forEach((btn) => {
       btn.addEventListener('click', () => {
         const tab = btn.getAttribute('data-admin-tab');
-        tabButtons.forEach(b => b.classList.remove('active'));
+        tabButtons.forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
 
-        this.overlay.querySelector('#adminTabPending').style.display = tab === 'pending' ? 'block' : 'none';
-        this.overlay.querySelector('#adminTabUsers').style.display = tab === 'users' ? 'block' : 'none';
-        this.overlay.querySelector('#adminTabCustomizer').style.display = tab === 'customizer' ? 'block' : 'none';
-        this.overlay.querySelector('#adminTabLogs').style.display = tab === 'logs' ? 'block' : 'none';
-        this.overlay.querySelector('#adminTabSheets').style.display = tab === 'sheets' ? 'block' : 'none';
+        this.overlay.querySelector('#adminTabPending').style.display =
+          tab === 'pending' ? 'block' : 'none';
+        this.overlay.querySelector('#adminTabUsers').style.display =
+          tab === 'users' ? 'block' : 'none';
+        this.overlay.querySelector('#adminTabCustomizer').style.display =
+          tab === 'customizer' ? 'block' : 'none';
+        this.overlay.querySelector('#adminTabLogs').style.display =
+          tab === 'logs' ? 'block' : 'none';
+        this.overlay.querySelector('#adminTabSheets').style.display =
+          tab === 'sheets' ? 'block' : 'none';
 
         if (tab === 'pending') this.renderPending();
         if (tab === 'users') this.renderUsers();
@@ -404,7 +420,14 @@ export class AdminDashboard {
       const pass = this.overlay.querySelector('#newUserPassword').value;
       const role = this.overlay.querySelector('#newUserRole').value;
 
-      const res = authManager.createUser({ name, whatsapp: whats, city, email, password: pass, role });
+      const res = authManager.createUser({
+        name,
+        whatsapp: whats,
+        city,
+        email,
+        password: pass,
+        role,
+      });
       if (res.success) {
         form.reset();
         this.renderUsers();
@@ -419,12 +442,12 @@ export class AdminDashboard {
   bindCustomizerEvents() {
     // 0. Ambiente Global (Radios)
     const envLabels = this.overlay.querySelectorAll('#themeEnvOptions .admin-font-choice-label');
-    envLabels.forEach(label => {
+    envLabels.forEach((label) => {
       label.addEventListener('click', () => {
         const radio = label.querySelector('input');
         if (radio) {
           radio.checked = true;
-          envLabels.forEach(l => l.classList.remove('active'));
+          envLabels.forEach((l) => l.classList.remove('active'));
           label.classList.add('active');
           themeManager.applyTheme({ ...this.getCustomizerFormValues(), colorTheme: radio.value });
         }
@@ -433,26 +456,29 @@ export class AdminDashboard {
 
     // 0.5. Efeitos Glow (Radios)
     const glowLabels = this.overlay.querySelectorAll('#themeGlowOptions .admin-font-choice-label');
-    glowLabels.forEach(label => {
+    glowLabels.forEach((label) => {
       label.addEventListener('click', () => {
         const radio = label.querySelector('input');
         if (radio) {
           radio.checked = true;
-          glowLabels.forEach(l => l.classList.remove('active'));
+          glowLabels.forEach((l) => l.classList.remove('active'));
           label.classList.add('active');
-          themeManager.applyTheme({ ...this.getCustomizerFormValues(), glowFx: radio.value === 'true' });
+          themeManager.applyTheme({
+            ...this.getCustomizerFormValues(),
+            glowFx: radio.value === 'true',
+          });
         }
       });
     });
 
     // 1. Tipografia (Radios)
     const fontLabels = this.overlay.querySelectorAll('#themeFontOptions .admin-font-choice-label');
-    fontLabels.forEach(label => {
+    fontLabels.forEach((label) => {
       label.addEventListener('click', () => {
         const radio = label.querySelector('input');
         if (radio) {
           radio.checked = true;
-          fontLabels.forEach(l => l.classList.remove('active'));
+          fontLabels.forEach((l) => l.classList.remove('active'));
           label.classList.add('active');
           themeManager.applyTheme({ ...this.getCustomizerFormValues(), fontTheme: radio.value });
         }
@@ -460,13 +486,15 @@ export class AdminDashboard {
     });
 
     // 2. Escala / Zoom (Radios)
-    const scaleLabels = this.overlay.querySelectorAll('#themeScaleOptions .admin-font-choice-label');
-    scaleLabels.forEach(label => {
+    const scaleLabels = this.overlay.querySelectorAll(
+      '#themeScaleOptions .admin-font-choice-label'
+    );
+    scaleLabels.forEach((label) => {
       label.addEventListener('click', () => {
         const radio = label.querySelector('input');
         if (radio) {
           radio.checked = true;
-          scaleLabels.forEach(l => l.classList.remove('active'));
+          scaleLabels.forEach((l) => l.classList.remove('active'));
           label.classList.add('active');
           themeManager.applyTheme({ ...this.getCustomizerFormValues(), hudScale: radio.value });
         }
@@ -482,7 +510,7 @@ export class AdminDashboard {
       { picker: 'themeColorTopoBg', text: 'themeTextTopoBg' },
       { picker: 'themeColorTopoText', text: 'themeTextTopoText' },
       { picker: 'themeColorFundoBg', text: 'themeTextFundoBg' },
-      { picker: 'themeColorFundoText', text: 'themeTextFundoText' }
+      { picker: 'themeColorFundoText', text: 'themeTextFundoText' },
     ];
 
     pairs.forEach(({ picker, text }) => {
@@ -526,10 +554,14 @@ export class AdminDashboard {
   }
 
   getCustomizerFormValues() {
-    const selectedEnv = this.overlay.querySelector('input[name="adminColorTheme"]:checked')?.value || 'dark';
-    const selectedGlow = this.overlay.querySelector('input[name="adminGlowFx"]:checked')?.value !== 'false';
-    const selectedFont = this.overlay.querySelector('input[name="adminFontTheme"]:checked')?.value || 'calibri';
-    const selectedScale = this.overlay.querySelector('input[name="adminHudScale"]:checked')?.value || 'normal';
+    const selectedEnv =
+      this.overlay.querySelector('input[name="adminColorTheme"]:checked')?.value || 'dark';
+    const selectedGlow =
+      this.overlay.querySelector('input[name="adminGlowFx"]:checked')?.value !== 'false';
+    const selectedFont =
+      this.overlay.querySelector('input[name="adminFontTheme"]:checked')?.value || 'calibri';
+    const selectedScale =
+      this.overlay.querySelector('input[name="adminHudScale"]:checked')?.value || 'normal';
 
     return {
       colorTheme: selectedEnv,
@@ -545,7 +577,9 @@ export class AdminDashboard {
       fundoBg: this.overlay.querySelector('#themeTextFundoBg')?.value || '#ffe4e6',
       fundoText: this.overlay.querySelector('#themeTextFundoText')?.value || '#be123c',
       supportWhatsApp: this.overlay.querySelector('#themeSupportWhats')?.value || '51996069505',
-      supportMsg: this.overlay.querySelector('#themeSupportMsg')?.value || 'Olá! Gostaria de suporte/liberação de acesso no Cockpit Precificação Justa Back ao Under.'
+      supportMsg:
+        this.overlay.querySelector('#themeSupportMsg')?.value ||
+        'Olá! Gostaria de suporte/liberação de acesso no Cockpit Precificação Justa Back ao Under.',
     };
   }
 
@@ -553,10 +587,14 @@ export class AdminDashboard {
     const theme = themeManager.getTheme();
 
     // 0. Ambiente Global
-    const envRadio = this.overlay.querySelector(`input[name="adminColorTheme"][value="${theme.colorTheme || 'dark'}"]`);
+    const envRadio = this.overlay.querySelector(
+      `input[name="adminColorTheme"][value="${theme.colorTheme || 'dark'}"]`
+    );
     if (envRadio) {
       envRadio.checked = true;
-      this.overlay.querySelectorAll('#themeEnvOptions .admin-font-choice-label').forEach(l => l.classList.remove('active'));
+      this.overlay
+        .querySelectorAll('#themeEnvOptions .admin-font-choice-label')
+        .forEach((l) => l.classList.remove('active'));
       envRadio.closest('.admin-font-choice-label')?.classList.add('active');
     }
 
@@ -565,23 +603,33 @@ export class AdminDashboard {
     const glowRadio = this.overlay.querySelector(`input[name="adminGlowFx"][value="${glowVal}"]`);
     if (glowRadio) {
       glowRadio.checked = true;
-      this.overlay.querySelectorAll('#themeGlowOptions .admin-font-choice-label').forEach(l => l.classList.remove('active'));
+      this.overlay
+        .querySelectorAll('#themeGlowOptions .admin-font-choice-label')
+        .forEach((l) => l.classList.remove('active'));
       glowRadio.closest('.admin-font-choice-label')?.classList.add('active');
     }
 
     // 1. Tipografia
-    const fontRadio = this.overlay.querySelector(`input[name="adminFontTheme"][value="${theme.fontTheme || 'calibri'}"]`);
+    const fontRadio = this.overlay.querySelector(
+      `input[name="adminFontTheme"][value="${theme.fontTheme || 'calibri'}"]`
+    );
     if (fontRadio) {
       fontRadio.checked = true;
-      this.overlay.querySelectorAll('#themeFontOptions .admin-font-choice-label').forEach(l => l.classList.remove('active'));
+      this.overlay
+        .querySelectorAll('#themeFontOptions .admin-font-choice-label')
+        .forEach((l) => l.classList.remove('active'));
       fontRadio.closest('.admin-font-choice-label')?.classList.add('active');
     }
 
     // 2. Escala
-    const scaleRadio = this.overlay.querySelector(`input[name="adminHudScale"][value="${theme.hudScale || 'normal'}"]`);
+    const scaleRadio = this.overlay.querySelector(
+      `input[name="adminHudScale"][value="${theme.hudScale || 'normal'}"]`
+    );
     if (scaleRadio) {
       scaleRadio.checked = true;
-      this.overlay.querySelectorAll('#themeScaleOptions .admin-font-choice-label').forEach(l => l.classList.remove('active'));
+      this.overlay
+        .querySelectorAll('#themeScaleOptions .admin-font-choice-label')
+        .forEach((l) => l.classList.remove('active'));
       scaleRadio.closest('.admin-font-choice-label')?.classList.add('active');
     }
 
@@ -602,7 +650,11 @@ export class AdminDashboard {
     setColors('themeColorTopoBg', 'themeTextTopoBg', theme.topoBg || DEFAULT_THEME.topoBg);
     setColors('themeColorTopoText', 'themeTextTopoText', theme.topoText || DEFAULT_THEME.topoText);
     setColors('themeColorFundoBg', 'themeTextFundoBg', theme.fundoBg || DEFAULT_THEME.fundoBg);
-    setColors('themeColorFundoText', 'themeTextFundoText', theme.fundoText || DEFAULT_THEME.fundoText);
+    setColors(
+      'themeColorFundoText',
+      'themeTextFundoText',
+      theme.fundoText || DEFAULT_THEME.fundoText
+    );
 
     // 5. Suporte
     const whatsInput = this.overlay.querySelector('#themeSupportWhats');
@@ -617,7 +669,7 @@ export class AdminDashboard {
     if (!tbody) return;
 
     const users = authManager.getUsers();
-    const pendingUsers = users.filter(u => u.status === 'pending');
+    const pendingUsers = users.filter((u) => u.status === 'pending');
 
     if (badge) {
       badge.textContent = pendingUsers.length;
@@ -625,30 +677,40 @@ export class AdminDashboard {
     }
 
     if (pendingUsers.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">🎉 Nenhuma solicitação pendente no momento!</td></tr>';
+      tbody.innerHTML =
+        '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">🎉 Nenhuma solicitação pendente no momento!</td></tr>';
       return;
     }
 
-    tbody.innerHTML = pendingUsers.map(u => {
-      const cleanWhats = (u.whatsapp || '').replace(/\D/g, '');
-      const whatsFormatted = formatPhoneDisplay(u.whatsapp);
-      const whatsUrl = cleanWhats ? `https://wa.me/55${cleanWhats}?text=${encodeURIComponent(`Olá ${u.name}! Seu cadastro no Cockpit Precificação Justa Back ao Under foi aprovado com sucesso! Acesse em: https://bora-group-projects.github.io/Projeto_Back_Under/`)}` : '#';
-      const mailtoUrl = `mailto:${u.email}?subject=${encodeURIComponent('Acesso ao Cockpit Precificação Justa Back ao Under')}&body=${encodeURIComponent(`Olá ${u.name},\n\nSeu cadastro no Cockpit Precificação Justa Back ao Under foi aprovado!\n\nAcesse o link: https://bora-group-projects.github.io/Projeto_Back_Under/\nSeu E-mail: ${u.email}\n\nBons trades!`)}`;
+    tbody.innerHTML = pendingUsers
+      .map((u) => {
+        const cleanWhats = (u.whatsapp || '').replace(/\D/g, '');
+        const whatsFormatted = formatPhoneDisplay(u.whatsapp);
+        const safeName = htmlEscape(u.name);
+        const safeEmail = htmlEscape(u.email);
+        const whatsUrl = cleanWhats
+          ? `https://wa.me/55${cleanWhats}?text=${encodeURIComponent(`Olá ${safeName}! Seu cadastro no Cockpit Precificação Justa Back ao Under foi aprovado com sucesso! Acesse em: https://bora-group-projects.github.io/Projeto_Back_Under/`)}`
+          : '#';
+        const mailtoUrl = `mailto:${u.email}?subject=${encodeURIComponent('Acesso ao Cockpit Precificação Justa Back ao Under')}&body=${encodeURIComponent(`Olá ${safeName},\n\nSeu cadastro no Cockpit Precificação Justa Back ao Under foi aprovado!\n\nAcesse o link: https://bora-group-projects.github.io/Projeto_Back_Under/\nSeu E-mail: ${u.email}\n\nBons trades!`)}`;
 
-      return `
+        return `
         <tr>
-          <td style="font-weight: 700; color: #ffffff;">${u.name}</td>
+          <td style="font-weight: 700; color: #ffffff;">${safeName}</td>
           <td>
-            ${cleanWhats ? `
+            ${
+              cleanWhats
+                ? `
               <a href="${whatsUrl}" target="_blank" rel="noopener noreferrer" class="admin-contact-link whats-link" title="Clique para abrir no WhatsApp">
                 📲 ${whatsFormatted}
               </a>
-            ` : '-'}
+            `
+                : '-'
+            }
           </td>
           <td style="color: var(--text-secondary);">${u.city || '-'}</td>
           <td>
             <a href="${mailtoUrl}" class="admin-contact-link email-link" title="Clique para enviar um e-mail">
-              ✉️ ${u.email}
+              ✉️ ${safeEmail}
             </a>
           </td>
           <td style="color: var(--text-muted);">${new Date(u.createdAt).toLocaleString('pt-BR')}</td>
@@ -662,10 +724,11 @@ export class AdminDashboard {
           </td>
         </tr>
       `;
-    }).join('');
+      })
+      .join('');
 
     // Binds de aprovação e recusa
-    tbody.querySelectorAll('.admin-approve-btn').forEach(btn => {
+    tbody.querySelectorAll('.admin-approve-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-user-id');
         authManager.approveUser(id);
@@ -674,7 +737,7 @@ export class AdminDashboard {
       });
     });
 
-    tbody.querySelectorAll('.admin-reject-btn').forEach(btn => {
+    tbody.querySelectorAll('.admin-reject-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-user-id');
         if (confirm('Deseja recusar e remover esta solicitação?')) {
@@ -690,51 +753,65 @@ export class AdminDashboard {
     if (!tbody) return;
 
     const users = authManager.getUsers();
-    const approvedUsers = users.filter(u => u.status !== 'pending');
+    const approvedUsers = users.filter((u) => u.status !== 'pending');
 
-    tbody.innerHTML = approvedUsers.map(u => {
-      const isActive = u.status === 'active';
-      const isMasterAdmin = u.id === 'usr_admin_1';
-      const cleanWhats = (u.whatsapp || '').replace(/\D/g, '');
-      const whatsFormatted = formatPhoneDisplay(u.whatsapp);
-      const whatsUrl = cleanWhats ? `https://wa.me/55${cleanWhats}?text=${encodeURIComponent(`Olá ${u.name}! Tudo bem?`)}` : '#';
-      const mailtoUrl = `mailto:${u.email}?subject=${encodeURIComponent('Suporte Precificação Justa Back ao Under')}`;
+    tbody.innerHTML = approvedUsers
+      .map((u) => {
+        const isActive = u.status === 'active';
+        const isMasterAdmin = u.id === 'usr_admin_1';
+        const cleanWhats = (u.whatsapp || '').replace(/\D/g, '');
+        const whatsFormatted = formatPhoneDisplay(u.whatsapp);
+        const safeName = htmlEscape(u.name);
+        const safeEmail = htmlEscape(u.email);
+        const whatsUrl = cleanWhats
+          ? `https://wa.me/55${cleanWhats}?text=${encodeURIComponent(`Olá ${safeName}! Tudo bem?`)}`
+          : '#';
+        const mailtoUrl = `mailto:${u.email}?subject=${encodeURIComponent('Suporte Precificação Justa Back ao Under')}`;
 
-      return `
+        return `
         <tr>
-          <td style="font-weight: 700; color: #ffffff;">${u.name}</td>
+          <td style="font-weight: 700; color: #ffffff;">${safeName}</td>
           <td>
-            ${cleanWhats ? `
+            ${
+              cleanWhats
+                ? `
               <a href="${whatsUrl}" target="_blank" rel="noopener noreferrer" class="admin-contact-link whats-link" title="Clique para abrir no WhatsApp">
                 📲 ${whatsFormatted}
               </a>
-            ` : '-'}
+            `
+                : '-'
+            }
           </td>
           <td style="color: var(--text-secondary); font-size: 0.7rem;">${u.city || '-'}</td>
           <td>
             <a href="${mailtoUrl}" class="admin-contact-link email-link" title="Clique para enviar um e-mail">
-              ✉️ ${u.email}
+              ✉️ ${safeEmail}
             </a>
           </td>
           <td><span style="font-size: 0.65rem; font-weight: 800; padding: 0.15rem 0.4rem; border-radius: 3px; background: ${u.role === 'admin' ? 'rgba(234, 179, 8, 0.2); color: #fef08a;' : 'rgba(56, 189, 248, 0.2); color: #bae6fd;'}">${u.role.toUpperCase()}</span></td>
           <td><span style="font-size: 0.65rem; font-weight: 800; padding: 0.15rem 0.4rem; border-radius: 3px; background: ${isActive ? 'rgba(16, 185, 129, 0.2); color: #34d399;' : 'rgba(239, 68, 68, 0.2); color: #f87171;'}">${isActive ? '🟢 ATIVO' : '🔴 BLOQUEADO'}</span></td>
           <td style="color: var(--text-secondary); font-size: 0.7rem;">${u.lastLogin ? new Date(u.lastLogin).toLocaleString('pt-BR') : 'Nunca'}</td>
           <td>
-            ${!isMasterAdmin ? `
+            ${
+              !isMasterAdmin
+                ? `
               <button class="btn btn-secondary btn-sm admin-toggle-user-btn" data-user-id="${u.id}" style="padding: 0.15rem 0.4rem; font-size: 0.65rem;">
                 ${isActive ? '🔒 Bloquear' : '🔓 Liberar'}
               </button>
               <button class="btn btn-danger btn-sm admin-delete-user-btn" data-user-id="${u.id}" style="padding: 0.15rem 0.4rem; font-size: 0.65rem; margin-left: 0.2rem;">
                 🗑️
               </button>
-            ` : '<span style="color: var(--text-muted); font-size: 0.65rem;">Master</span>'}
+            `
+                : '<span style="color: var(--text-muted); font-size: 0.65rem;">Master</span>'
+            }
           </td>
         </tr>
       `;
-    }).join('');
+      })
+      .join('');
 
     // Binds de ações
-    tbody.querySelectorAll('.admin-toggle-user-btn').forEach(btn => {
+    tbody.querySelectorAll('.admin-toggle-user-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-user-id');
         authManager.toggleUserStatus(id);
@@ -742,7 +819,7 @@ export class AdminDashboard {
       });
     });
 
-    tbody.querySelectorAll('.admin-delete-user-btn').forEach(btn => {
+    tbody.querySelectorAll('.admin-delete-user-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const id = btn.getAttribute('data-user-id');
         if (confirm('Deseja realmente excluir este usuário?')) {
@@ -759,11 +836,14 @@ export class AdminDashboard {
 
     const logs = authManager.getAccessLogs();
     if (logs.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Nenhum log registrado ainda.</td></tr>';
+      tbody.innerHTML =
+        '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Nenhum log registrado ainda.</td></tr>';
       return;
     }
 
-    tbody.innerHTML = logs.map(l => `
+    tbody.innerHTML = logs
+      .map(
+        (l) => `
       <tr>
         <td style="color: var(--text-muted);">${l.dateFormatted}</td>
         <td style="font-weight: 700; color: #ffffff;">${l.name} <span style="font-size: 0.65rem; color: var(--text-secondary);">(${l.email})</span></td>
@@ -772,7 +852,9 @@ export class AdminDashboard {
         <td><span style="font-size: 0.65rem; font-weight: 800; padding: 0.15rem 0.4rem; border-radius: 3px; background: ${l.success ? 'rgba(16, 185, 129, 0.2); color: #34d399;' : 'rgba(239, 68, 68, 0.2); color: #f87171;'}">${l.success ? 'AUTORIZADO' : 'NEGADO'}</span></td>
         <td style="color: var(--text-muted); font-size: 0.7rem;">${l.reason || '-'}</td>
       </tr>
-    `).join('');
+    `
+      )
+      .join('');
   }
 
   show() {

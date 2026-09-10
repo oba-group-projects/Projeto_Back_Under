@@ -5,12 +5,12 @@ const wb = XLSX.readFile(filePath, { cellFormula: true, cellStyles: true, cellNF
 
 console.log('List of Sheet Names:', wb.SheetNames);
 
-wb.SheetNames.forEach(sheetName => {
+wb.SheetNames.forEach((sheetName) => {
   const sheet = wb.Sheets[sheetName];
   console.log(`\n======================================================`);
   console.log(`Sheet: "${sheetName}" -> Range: ${sheet['!ref']}`);
   console.log(`======================================================`);
-  
+
   // Vamos ler o cabeçalho e as primeiras 25 linhas
   const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1:A1');
   for (let r = range.s.r; r <= Math.min(range.e.r, range.s.r + 30); r++) {

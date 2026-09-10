@@ -4,7 +4,7 @@
  */
 
 export const STRATEGIES = {
-  'back_under_pendulos': {
+  back_under_pendulos: {
     id: 'back_under_pendulos',
     name: 'Back Under (Pêndulo Parede V6)',
     category: 'Under Limit',
@@ -12,38 +12,38 @@ export const STRATEGIES = {
     contexto: 'Escada de descida rápida / Pêndulos de Under HT e FT',
     stakeMultiplier: 1.0,
     lucroMedioPct: 0.04, // Variável conforme pêndulo
-    redMedioPct: 0.20,
+    redMedioPct: 0.2,
     lucroEstimadoTexto: '2% a 13% (por bloco)',
     redEstimadoTexto: 'Stop configurado',
-    isUnder: true
+    isUnder: true,
   },
-  'lay_parelho_ht': {
+  lay_parelho_ht: {
     id: 'lay_parelho_ht',
     name: 'Lay Parelho 1º Tempo',
     category: '1º Tempo',
     oddsBase: 'Abaixo de 5.0',
     contexto: 'Fav. Parelho 2.50 x 3.00 Z. Parelho',
     stakeMultiplier: 2.5,
-    lucroMedioPct: 0.20,
-    redMedioPct: 0.40,
+    lucroMedioPct: 0.2,
+    redMedioPct: 0.4,
     lucroEstimadoTexto: '15% à 25%',
     redEstimadoTexto: '40%',
-    isUnder: false
+    isUnder: false,
   },
-  'lay_zebra_ht': {
+  lay_zebra_ht: {
     id: 'lay_zebra_ht',
     name: 'Lay Zebra 1º Tempo',
     category: '1º Tempo',
     oddsBase: 'De 5.5 a 10',
     contexto: 'Favorito 1.65 x 6.5 Zebra',
     stakeMultiplier: 3.33,
-    lucroMedioPct: 0.10,
-    redMedioPct: 0.30,
+    lucroMedioPct: 0.1,
+    redMedioPct: 0.3,
     lucroEstimadoTexto: '8% à 12%',
     redEstimadoTexto: '25% à 30%',
-    isUnder: false
+    isUnder: false,
   },
-  'lay_super_zebra_ht': {
+  lay_super_zebra_ht: {
     id: 'lay_super_zebra_ht',
     name: 'Lay Super Zebra 1º Tempo',
     category: '1º Tempo',
@@ -54,9 +54,9 @@ export const STRATEGIES = {
     redMedioPct: 0.18,
     lucroEstimadoTexto: '5% à 7%',
     redEstimadoTexto: '18%',
-    isUnder: false
+    isUnder: false,
   },
-  'drakito_ht_parelho': {
+  drakito_ht_parelho: {
     id: 'drakito_ht_parelho',
     name: 'Drakito 1º Tempo Parelho',
     category: '1º Tempo',
@@ -67,9 +67,9 @@ export const STRATEGIES = {
     redMedioPct: 0.25,
     lucroEstimadoTexto: '5% à 10%',
     redEstimadoTexto: '20% à 25%',
-    isUnder: false
+    isUnder: false,
   },
-  'drakito_ht_favorito': {
+  drakito_ht_favorito: {
     id: 'drakito_ht_favorito',
     name: 'Drakito 1º Tempo Favorito',
     category: '1º Tempo',
@@ -80,9 +80,9 @@ export const STRATEGIES = {
     redMedioPct: 0.15,
     lucroEstimadoTexto: '4% à 6%',
     redEstimadoTexto: '10% à 15%',
-    isUnder: false
+    isUnder: false,
   },
-  'vovo_back_favorito': {
+  vovo_back_favorito: {
     id: 'vovo_back_favorito',
     name: 'Vovô Favorito (Back 1.04-1.05)',
     category: 'Final de Jogo',
@@ -93,9 +93,9 @@ export const STRATEGIES = {
     redMedioPct: 0.12,
     lucroEstimadoTexto: '2% à 5%',
     redEstimadoTexto: '8% á 15%',
-    isUnder: false
+    isUnder: false,
   },
-  'vovo_lay_tempo': {
+  vovo_lay_tempo: {
     id: 'vovo_lay_tempo',
     name: 'Vovô Favorito (Lay 35/50 - 70min)',
     category: 'Final de Jogo',
@@ -106,8 +106,8 @@ export const STRATEGIES = {
     redMedioPct: 0.08,
     lucroEstimadoTexto: '2% à 3%',
     redEstimadoTexto: '8% na tampa',
-    isUnder: false
-  }
+    isUnder: false,
+  },
 };
 
 /**
@@ -120,18 +120,20 @@ export const STRATEGIES = {
 export function calculateStakeFromRed(strategyKey, redAceitavel, customParams = {}) {
   const red = Math.max(0, Number(redAceitavel) || 0);
   const strategy = STRATEGIES[strategyKey] || STRATEGIES['back_under_pendulos'];
-  
+
   let stake = 0;
   let lucroMedio = 0;
   let redMedio = 0;
-  
+
   if (strategy.id === 'back_under_pendulos') {
     // No Back Under, se o usuário definir stop loss de X% da stake, calculamos a stake proporcional
     const stopLossPct = customParams.stopLossPct || 0.25; // Stop padrão de 25% ou perda de 1 gol
-    stake = stopLossPct > 0 ? (red / stopLossPct) : red;
-    
+    stake = stopLossPct > 0 ? red / stopLossPct : red;
+
     // Se foi passado valor de bloco do pêndulo
-    const blocoPct = customParams.valorBloco ? (customParams.valorBloco / 100) : strategy.lucroMedioPct;
+    const blocoPct = customParams.valorBloco
+      ? customParams.valorBloco / 100
+      : strategy.lucroMedioPct;
     lucroMedio = stake * blocoPct;
     redMedio = red;
   } else {
@@ -140,7 +142,7 @@ export function calculateStakeFromRed(strategyKey, redAceitavel, customParams = 
     lucroMedio = stake * strategy.lucroMedioPct;
     redMedio = stake * strategy.redMedioPct;
   }
-  
+
   return {
     strategyId: strategy.id,
     strategyName: strategy.name,
@@ -153,6 +155,6 @@ export function calculateStakeFromRed(strategyKey, redAceitavel, customParams = 
     lucroEstimadoTexto: strategy.lucroEstimadoTexto,
     redEstimadoTexto: strategy.redEstimadoTexto,
     roiEstimadoPct: stake > 0 ? Number(((lucroMedio / stake) * 100).toFixed(2)) : 0,
-    relacaoRiscoRetorno: lucroMedio > 0 ? Number((redMedio / lucroMedio).toFixed(2)) : 0
+    relacaoRiscoRetorno: lucroMedio > 0 ? Number((redMedio / lucroMedio).toFixed(2)) : 0,
   };
 }

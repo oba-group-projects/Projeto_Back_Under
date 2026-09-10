@@ -174,7 +174,7 @@ export class UserProfileModal {
         city,
         email,
         currentPassword: currentPass,
-        newPassword: newPass
+        newPassword: newPass,
       });
 
       if (res.success) {
@@ -230,7 +230,9 @@ export class UserProfileModal {
     reqNum.innerHTML = hasNum ? '✅ Número (0-9)' : '❌ Número (0-9)';
     reqNum.style.color = hasNum ? '#4ade80' : 'var(--text-muted)';
 
-    reqSpec.innerHTML = hasSpec ? '✅ Símbolo especial (!@#$%...)' : '❌ Símbolo especial (!@#$%...)';
+    reqSpec.innerHTML = hasSpec
+      ? '✅ Símbolo especial (!@#$%...)'
+      : '❌ Símbolo especial (!@#$%...)';
     reqSpec.style.color = hasSpec ? '#4ade80' : 'var(--text-muted)';
 
     let score = 0;
@@ -281,7 +283,10 @@ export class UserProfileModal {
     }
 
     // Embaralha os caracteres
-    return pwd.split('').sort(() => 0.5 - Math.random()).join('');
+    return pwd
+      .split('')
+      .sort(() => 0.5 - Math.random())
+      .join('');
   }
 
   show() {

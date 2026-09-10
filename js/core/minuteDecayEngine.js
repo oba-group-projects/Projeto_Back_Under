@@ -3,7 +3,7 @@
  * Implementação exata das fórmulas da aba 'IN LIVE' e 'HTFT' da planilha Google Docs.
  */
 
-import { LADDER_DATA, findClosestLadder, getOddByTicks } from './ladderData.js';
+import { findClosestLadder } from './ladderData.js';
 import { lookupBloco1, lookupBloco2 } from './blocosData.js';
 import { findClosestPendulo } from './pendulosData.js';
 import { normalizeOdd } from './oddsCalculator.js';
@@ -27,44 +27,55 @@ export function calculateMinuteCurve({
   liveCorrections = {},
   baseMinute = null,
   baseOdd = null,
-  curveEndMinute = null
+  curveEndMinute = null,
 }) {
   const isHT = period === 'HT';
   const startMinute = isHT ? 1 : 46;
   const nominalMinutes = 45;
-  const totalPeriodMinutes = curveEndMinute === null
-    ? nominalMinutes + (Number(addedMinutes) || 0)
-    : (isHT ? Number(curveEndMinute) : Number(curveEndMinute) - 45);
-  const endMinute = curveEndMinute === null
-    ? (isHT ? totalPeriodMinutes : (45 + totalPeriodMinutes))
-    : Number(curveEndMinute);
+  const totalPeriodMinutes =
+    curveEndMinute === null
+      ? nominalMinutes + (Number(addedMinutes) || 0)
+      : isHT
+        ? Number(curveEndMinute)
+        : Number(curveEndMinute) - 45;
+  const endMinute =
+    curveEndMinute === null
+      ? isHT
+        ? totalPeriodMinutes
+        : 45 + totalPeriodMinutes
+      : Number(curveEndMinute);
 
   const curve = [];
-  let prevOdd = Number(initialOdd) || 2.00;
+  let prevOdd = Number(initialOdd) || 2.0;
   const openingBase = Math.max(1.01, prevOdd);
   const startBaseMinute = baseMinute === null ? startMinute : Number(baseMinute);
   const eventBase = baseMinute !== null && Number(baseOdd) >= 1.01 ? Number(baseOdd) : openingBase;
-  const eventRemainingMinutes = Math.max(1, (totalPeriodMinutes - 1) - (startBaseMinute - startMinute));
-  const decayRate = 1 - (1.01 / eventBase);
+  const eventRemainingMinutes = Math.max(
+    1,
+    totalPeriodMinutes - 1 - (startBaseMinute - startMinute)
+  );
+  const decayRate = 1 - 1.01 / eventBase;
 
   for (let minute = startMinute; minute <= endMinute; minute++) {
-    const elapsed = isHT ? minute : (minute - 45);
-    const rowOffset = elapsed; // Minuto relativo dentro do tempo (1 a 45+acrescimos)
-    const timeRemaining = Math.max(1, totalPeriodMinutes - rowOffset + 1);
+    const elapsed = isHT ? minute : minute - 45;
 
     let oddJusta;
 
     // Se houver correção manual neste minuto
     if (baseMinute === minute && Number(baseOdd) >= 1.01) {
       oddJusta = Number(baseOdd);
-    } else if (liveCorrections[minute] !== undefined && liveCorrections[minute] !== null && liveCorrections[minute] > 1.0) {
+    } else if (
+      liveCorrections[minute] !== undefined &&
+      liveCorrections[minute] !== null &&
+      liveCorrections[minute] > 1.0
+    ) {
       oddJusta = Number(liveCorrections[minute]);
     } else if (minute === startMinute) {
       oddJusta = prevOdd;
     } else {
       const elapsedFromBase = Math.max(0, minute - startBaseMinute);
       const progress = Math.min(1, elapsedFromBase / eventRemainingMinutes);
-      oddJusta = eventBase * (1 - (progress * decayRate));
+      oddJusta = eventBase * (1 - progress * decayRate);
     }
 
     oddJusta = Math.max(1.01, oddJusta);
@@ -76,13 +87,19 @@ export function calculateMinuteCurve({
 
     // Zona de Velocidade
     const pendulo = findClosestPendulo(oddJusta, 'justa');
-    const zona = pendulo ? pendulo.zona : (oddJusta >= 4.0 ? 'Lenta' : (oddJusta >= 1.8 ? 'Rápida' : 'Média'));
+    const zona = pendulo
+      ? pendulo.zona
+      : oddJusta >= 4.0
+        ? 'Lenta'
+        : oddJusta >= 1.8
+          ? 'Rápida'
+          : 'Média';
 
     // Diferença se houver odd de mercado ao vivo informada
     const liveOdd = liveCorrections[minute] !== undefined ? liveCorrections[minute] : null;
     let diffPct = null;
     if (liveOdd && liveOdd > 1.0) {
-      diffPct = Number((((liveOdd / oddJusta) - 1) * 100).toFixed(2));
+      diffPct = Number(((liveOdd / oddJusta - 1) * 100).toFixed(2));
     }
 
     curve.push({
@@ -96,7 +113,7 @@ export function calculateMinuteCurve({
       fundo1: bloco1.fundo,
       topo2: bloco2.topo,
       fundo2: bloco2.fundo,
-      zona: zona
+      zona: zona,
     });
   }
 
@@ -111,7 +128,7 @@ export function calculateMinuteCurve({
  */
 export function getMinuteMetrics(curve, currentMinute) {
   if (!curve || curve.length === 0) return null;
-  const match = curve.find(c => c.minute === currentMinute);
+  const match = curve.find((c) => c.minute === currentMinute);
   if (match) return match;
   if (currentMinute < curve[0].minute) return curve[0];
   return curve[curve.length - 1];
@@ -124,7 +141,8 @@ export function getMinuteMetrics(curve, currentMinute) {
 export function calibrateOpeningOdd({ period = 'HT', eventMinute, eventOdd, addedMinutes = 0 }) {
   const targetMinute = Number(eventMinute);
   const targetOdd = Number(eventOdd);
-  if (!Number.isFinite(targetMinute) || !Number.isFinite(targetOdd) || targetOdd < 1.01) return null;
+  if (!Number.isFinite(targetMinute) || !Number.isFinite(targetOdd) || targetOdd < 1.01)
+    return null;
 
   let lower = 1.01;
   let upper = 1000;
@@ -134,7 +152,7 @@ export function calibrateOpeningOdd({ period = 'HT', eventMinute, eventOdd, adde
       period,
       initialOdd: candidate,
       addedMinutes,
-      liveCorrections: {}
+      liveCorrections: {},
     });
     const candidateOdd = getMinuteMetrics(curve, targetMinute)?.oddJusta ?? candidate;
     if (candidateOdd < targetOdd) lower = candidate;
@@ -146,14 +164,14 @@ export function calibrateOpeningOdd({ period = 'HT', eventMinute, eventOdd, adde
 
 /**
  * Aplica o salto de odd decorrente de um gol a favor ou contra (Regra x2.5 da planilha)
- * @param {number} currentOdd 
+ * @param {number} currentOdd
  * @param {boolean} isFavor - true = Gol a Favor (Odd sobe x2.5), false = Gol Contra (Odd cai /2.5)
  * @returns {number}
  */
 export function applyGoalOddShift(currentOdd, isFavor = true) {
-  const base = Number(currentOdd) || 2.00;
-  let shifted = isFavor ? (base * 2.5) : (base / 2.5);
+  const base = Number(currentOdd) || 2.0;
+  let shifted = isFavor ? base * 2.5 : base / 2.5;
   shifted = Math.max(1.01, Math.min(1000.0, shifted));
   const ladderItem = findClosestLadder(shifted);
-  return ladderItem.odd;
+  return ladderItem ? ladderItem.odd : shifted;
 }

@@ -11,29 +11,33 @@ console.log('URL:', exportUrl);
 
 function downloadFile(url, dest, callback) {
   const file = fs.createWriteStream(dest);
-  https.get(url, (response) => {
-    // Handle redirects if any (302/307)
-    if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
-      console.log('Redirecting to:', response.headers.location);
-      return downloadFile(response.headers.location, dest, callback);
-    }
-    
-    if (response.statusCode !== 200) {
-      console.error(`Download failed with status: ${response.statusCode} - ${response.statusMessage}`);
-      return;
-    }
+  https
+    .get(url, (response) => {
+      // Handle redirects if any (302/307)
+      if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+        console.log('Redirecting to:', response.headers.location);
+        return downloadFile(response.headers.location, dest, callback);
+      }
 
-    response.pipe(file);
-    file.on('finish', () => {
-      file.close(() => {
-        console.log(`Download completed successfully: ${dest} (${fs.statSync(dest).size} bytes)`);
-        if (callback) callback();
+      if (response.statusCode !== 200) {
+        console.error(
+          `Download failed with status: ${response.statusCode} - ${response.statusMessage}`
+        );
+        return;
+      }
+
+      response.pipe(file);
+      file.on('finish', () => {
+        file.close(() => {
+          console.log(`Download completed successfully: ${dest} (${fs.statSync(dest).size} bytes)`);
+          if (callback) callback();
+        });
       });
+    })
+    .on('error', (err) => {
+      fs.unlink(dest, () => {});
+      console.error('Download error:', err.message);
     });
-  }).on('error', (err) => {
-    fs.unlink(dest, () => {});
-    console.error('Download error:', err.message);
-  });
 }
 
 downloadFile(exportUrl, destPath, () => {

@@ -11,12 +11,12 @@
 /* ========================================================
    REMOÇÃO DE SPINNER NATIVO DO NAVEGADOR
    ======================================================== */
-input[type=number]::-webkit-inner-spin-button, 
-input[type=number]::-webkit-outer-spin-button { 
-  -webkit-appearance: none; 
-  margin: 0; 
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
-input[type=number] {
+input[type='number'] {
   -moz-appearance: textfield;
 }
 
@@ -290,7 +290,9 @@ input[type=number] {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
   width: 100%;
 }
 
@@ -310,7 +312,10 @@ input[type=number] {
 
 /* Slot #1: Azul / Índigo */
 #slotCard1 .hud-card-header {
-  background: var(--slot1-header-bg, linear-gradient(135deg, rgba(30, 58, 138, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%));
+  background: var(
+    --slot1-header-bg,
+    linear-gradient(135deg, rgba(30, 58, 138, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)
+  );
 }
 #slotCard1 .game-slot-badge {
   background: rgba(59, 130, 246, 0.25);
@@ -320,7 +325,10 @@ input[type=number] {
 
 /* Slot #2: Verde Esmeralda / Teal */
 #slotCard2 .hud-card-header {
-  background: var(--slot2-header-bg, linear-gradient(135deg, rgba(6, 78, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%));
+  background: var(
+    --slot2-header-bg,
+    linear-gradient(135deg, rgba(6, 78, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)
+  );
 }
 #slotCard2 .game-slot-badge {
   background: rgba(16, 185, 129, 0.25);
@@ -330,7 +338,10 @@ input[type=number] {
 
 /* Slot #3: Roxo / Violeta */
 #slotCard3 .hud-card-header {
-  background: var(--slot3-header-bg, linear-gradient(135deg, rgba(88, 28, 135, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%));
+  background: var(
+    --slot3-header-bg,
+    linear-gradient(135deg, rgba(88, 28, 135, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)
+  );
 }
 #slotCard3 .game-slot-badge {
   background: rgba(168, 85, 247, 0.25);
@@ -340,7 +351,10 @@ input[type=number] {
 
 /* Slot #4: Âmbar / Laranja */
 #slotCard4 .hud-card-header {
-  background: var(--slot4-header-bg, linear-gradient(135deg, rgba(120, 53, 15, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%));
+  background: var(
+    --slot4-header-bg,
+    linear-gradient(135deg, rgba(120, 53, 15, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%)
+  );
 }
 #slotCard4 .game-slot-badge {
   background: rgba(245, 158, 11, 0.25);
@@ -412,7 +426,9 @@ input[type=number] {
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: #ffffff;
   border-color: #60a5fa;
-  box-shadow: 0 0 12px rgba(59, 130, 246, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow:
+    0 0 12px rgba(59, 130, 246, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
@@ -427,7 +443,9 @@ input[type=number] {
   border-radius: 7px;
   padding: 0.2rem 0.55rem;
   gap: 0.4rem;
-  box-shadow: 0 0 12px rgba(6, 182, 212, 0.25), inset 0 1px 3px rgba(0, 0, 0, 0.6);
+  box-shadow:
+    0 0 12px rgba(6, 182, 212, 0.25),
+    inset 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 .timer-display {
@@ -536,9 +554,17 @@ input[type=number] {
   box-shadow: 0 0 8px rgba(234, 179, 8, 0.5) !important;
 }
 
-.hud-initial-odd-input { width: 56px; font-size: 1rem !important; }
-.hud-added-min-input { width: 40px; }
-.hud-tv-min-input { width: 48px; font-size: 1rem !important; }
+.hud-initial-odd-input {
+  width: 56px;
+  font-size: 1rem !important;
+}
+.hud-added-min-input {
+  width: 40px;
+}
+.hud-tv-min-input {
+  width: 48px;
+  font-size: 1rem !important;
+}
 
 /* Mini Stepper Botões (+ e -) */
 .hud-mini-stepper-btn {
@@ -855,13 +881,17 @@ input[type=number] {
   background: linear-gradient(135deg, rgba(6, 78, 59, 0.5) 0%, rgba(15, 23, 42, 0.85) 100%);
   border-color: rgba(16, 185, 129, 0.65);
 }
-.card-bloco1 .giant-bloco-title { color: #34d399; }
+.card-bloco1 .giant-bloco-title {
+  color: #34d399;
+}
 
 .card-bloco2 {
   background: linear-gradient(135deg, rgba(30, 27, 75, 0.5) 0%, rgba(15, 23, 42, 0.85) 100%);
   border-color: rgba(99, 102, 241, 0.65);
 }
-.card-bloco2 .giant-bloco-title { color: #a5b4fc; }
+.card-bloco2 .giant-bloco-title {
+  color: #a5b4fc;
+}
 
 .giant-bloco-header {
   display: flex;
@@ -897,16 +927,24 @@ input[type=number] {
   background: var(--color-topo-bg, #e0f2fe) !important;
   border: 1.5px solid var(--color-topo-border, #7dd3fc) !important;
 }
-.bloco-topo-pastel .bloco-pastel-label { color: var(--color-topo-text, #0284c7) !important; }
-.bloco-topo-pastel .bloco-pastel-number { color: var(--color-topo-text, #0369a1) !important; }
+.bloco-topo-pastel .bloco-pastel-label {
+  color: var(--color-topo-text, #0284c7) !important;
+}
+.bloco-topo-pastel .bloco-pastel-number {
+  color: var(--color-topo-text, #0369a1) !important;
+}
 
 /* FUNDO: Rosa Pastel idêntico à imagem do usuário */
 .bloco-fundo-pastel {
   background: var(--color-fundo-bg, #ffe4e6) !important;
   border: 1.5px solid var(--color-fundo-border, #fda4af) !important;
 }
-.bloco-fundo-pastel .bloco-pastel-label { color: var(--color-fundo-text, #e11d48) !important; }
-.bloco-fundo-pastel .bloco-pastel-number { color: var(--color-fundo-text, #be123c) !important; }
+.bloco-fundo-pastel .bloco-pastel-label {
+  color: var(--color-fundo-text, #e11d48) !important;
+}
+.bloco-fundo-pastel .bloco-pastel-number {
+  color: var(--color-fundo-text, #be123c) !important;
+}
 
 .bloco-pastel-label {
   font-size: 0.58rem;
@@ -1165,7 +1203,9 @@ input[type=number] {
   background: #0f172a;
   border: 1.5px solid rgba(59, 130, 246, 0.4);
   border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(59, 130, 246, 0.15);
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.8),
+    0 0 20px rgba(59, 130, 246, 0.15);
   max-width: 440px;
   width: 100%;
   padding: 1.6rem;

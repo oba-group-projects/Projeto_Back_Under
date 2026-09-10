@@ -1,0 +1,26 @@
+#!/usr/bin/env sh
+# Husky pre-commit hook
+# Bloqueia o commit se lint, testes ou formatação falharem.
+
+echo "🔍 [1/3] Rodando ESLint..."
+npm run lint
+if [ $? -ne 0 ]; then
+  echo "❌ ESLint encontrou erros. Corrija antes de commitar (npm run lint:fix)."
+  exit 1
+fi
+
+echo "🧪 [2/3] Rodando testes Jest..."
+npm run test:jest
+if [ $? -ne 0 ]; then
+  echo "❌ Testes falharam. Corrija antes de commitar."
+  exit 1
+fi
+
+echo "💅 [3/3] Verificando formatação Prettier..."
+npm run format:check
+if [ $? -ne 0 ]; then
+  echo "❌ Formatação incorreta. Rode 'npm run format' e adicione os arquivos ao stage."
+  exit 1
+fi
+
+echo "✅ Todas as verificações passaram. Commit liberado."

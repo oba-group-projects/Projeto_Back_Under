@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+# Husky commit-msg hook
+# Valida a mensagem de commit contra o padrão Conventional Commits.
+# Formatos aceitos: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert
+
+npx --no-install commitlint --edit "$1"

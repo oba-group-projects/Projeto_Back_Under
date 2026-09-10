@@ -7,7 +7,11 @@
  * - Zona centralizada abaixo do campo de Odd Live
  * - Remoção dos botões de spinner do navegador
  */
-import { calculateMinuteCurve, getMinuteMetrics, calibrateOpeningOdd } from '../core/minuteDecayEngine.js';
+import {
+  calculateMinuteCurve,
+  getMinuteMetrics,
+  calibrateOpeningOdd,
+} from '../core/minuteDecayEngine.js';
 import { moveOddTicks } from '../core/oddsCalculator.js';
 import { findClosestLadder } from '../core/ladderData.js';
 
@@ -19,41 +23,41 @@ export class GameSlot {
     this.onTradeCompleted = onTradeCompleted;
     this.onOpenPendulos = onOpenPendulos;
 
-     // Estado do Slot
-     this.state = {
-       gameName: `Jogo ${slotId}`,
-       period: 'HT', // 'HT' | 'FT'
+    // Estado do Slot
+    this.state = {
+      gameName: `Jogo ${slotId}`,
+      period: 'HT', // 'HT' | 'FT'
       periodStartTimes: this.loadPeriodStartTimes(),
-       initialOdd: 3.35,
+      initialOdd: 3.35,
       currentOddBase: 3.35,
       currentOddBaseMinute: null,
-       addedMinutes: 2,
+      addedMinutes: 2,
       addedMinutesActive: false,
       addedMinutesSynced: false,
-       pendingAddedMinutes: null,
-       tvMinuteInput: 1,
-       currentMinute: 1,
-       liveMinute: 1,
-       projectedMinute: 1,
+      pendingAddedMinutes: null,
+      tvMinuteInput: 1,
+      currentMinute: 1,
+      liveMinute: 1,
+      projectedMinute: 1,
       projectionOffset: 0,
-       liveOddCurrentMinute: '',
-       liveCorrections: {},
+      liveOddCurrentMinute: '',
+      liveCorrections: {},
       timerPaused: true,
-       isSimulating: false,
+      isSimulating: false,
       sheetLog: this.loadSheetLog(),
-       lastSheetRow: null,
-       
-       // Velocidade do tempo
-       ticksPorMinuto: 0,
-       pctPorMinuto: 0,
-       
-       // Métricas calculadas
-       minuteCurve: [],
-       currentMetrics: null,
-       
-       timerSeconds: 0,
-       timerRunning: false
-     };
+      lastSheetRow: null,
+
+      // Velocidade do tempo
+      ticksPorMinuto: 0,
+      pctPorMinuto: 0,
+
+      // Métricas calculadas
+      minuteCurve: [],
+      currentMetrics: null,
+
+      timerSeconds: 0,
+      timerRunning: false,
+    };
 
     this.hydrateEventCorrections();
     this.timerInterval = null;
@@ -67,7 +71,7 @@ export class GameSlot {
     try {
       const saved = localStorage.getItem(`projeto_back_under_events_slot_${this.slotId}`);
       return saved ? JSON.parse(saved) : [];
-    } catch (error) {
+    } catch (_error) {
       return [];
     }
   }
@@ -76,14 +80,17 @@ export class GameSlot {
     try {
       const saved = localStorage.getItem(`projeto_back_under_period_start_slot_${this.slotId}`);
       return saved ? JSON.parse(saved) : { HT: null, FT: null };
-    } catch (error) {
+    } catch (_error) {
       return { HT: null, FT: null };
     }
   }
 
   savePeriodStartTimes() {
     try {
-      localStorage.setItem(`projeto_back_under_period_start_slot_${this.slotId}`, JSON.stringify(this.state.periodStartTimes));
+      localStorage.setItem(
+        `projeto_back_under_period_start_slot_${this.slotId}`,
+        JSON.stringify(this.state.periodStartTimes)
+      );
     } catch (error) {
       console.warn('Não foi possível salvar os horários de início.', error);
     }
@@ -91,7 +98,11 @@ export class GameSlot {
 
   formatPeriodStartTime(value) {
     if (!value) return 'não registrado';
-    return new Date(value).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return new Date(value).toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
   }
 
   getDisplayMinute(minute) {
@@ -105,7 +116,9 @@ export class GameSlot {
 
   registerPeriodStart(minute) {
     const startOffsetMinutes = Math.max(0, Number(minute) - (this.state.period === 'HT' ? 1 : 46));
-    this.state.periodStartTimes[this.state.period] = new Date(Date.now() - startOffsetMinutes * 60000).toISOString();
+    this.state.periodStartTimes[this.state.period] = new Date(
+      Date.now() - startOffsetMinutes * 60000
+    ).toISOString();
     this.savePeriodStartTimes();
     this.updatePeriodStartUI();
   }
@@ -119,7 +132,10 @@ export class GameSlot {
 
   saveSheetLog() {
     try {
-      localStorage.setItem(`projeto_back_under_events_slot_${this.slotId}`, JSON.stringify(this.state.sheetLog));
+      localStorage.setItem(
+        `projeto_back_under_events_slot_${this.slotId}`,
+        JSON.stringify(this.state.sheetLog)
+      );
     } catch (error) {
       console.warn('Não foi possível salvar o registro de eventos.', error);
     }
@@ -127,7 +143,7 @@ export class GameSlot {
 
   hydrateEventCorrections() {
     const latestEvent = this.state.sheetLog[0];
-    this.state.sheetLog.forEach(row => {
+    this.state.sheetLog.forEach((row) => {
       this.state.liveCorrections[row.minute] = row.newOdd;
     });
     if (latestEvent) {
@@ -169,8 +185,9 @@ export class GameSlot {
     return this.state.period === 'HT' ? 45 : 90;
   }
 
-  getEffectiveAddedMinutes(referenceMinute = this.state.liveMinute) {
-    const additionsAreInView = this.state.isSimulating && this.state.projectedMinute >= this.getNominalEndMinute();
+  getEffectiveAddedMinutes(_referenceMinute = this.state.liveMinute) {
+    const additionsAreInView =
+      this.state.isSimulating && this.state.projectedMinute >= this.getNominalEndMinute();
     return this.state.addedMinutesActive || additionsAreInView ? this.state.addedMinutes : 0;
   }
 
@@ -189,15 +206,16 @@ export class GameSlot {
 
   getMinuteMetricsFor(minute) {
     const targetMinute = Number(minute);
-    const curve = targetMinute >= this.getNominalEndMinute() && !this.state.addedMinutesActive
-      ? calculateMinuteCurve({
-          period: this.state.period,
-          initialOdd: this.state.initialOdd,
-          addedMinutes: this.state.addedMinutes,
-          liveCorrections: this.state.liveCorrections,
-          curveEndMinute: this.getCurveEndMinute()
-        })
-      : this.state.minuteCurve;
+    const curve =
+      targetMinute >= this.getNominalEndMinute() && !this.state.addedMinutesActive
+        ? calculateMinuteCurve({
+            period: this.state.period,
+            initialOdd: this.state.initialOdd,
+            addedMinutes: this.state.addedMinutes,
+            liveCorrections: this.state.liveCorrections,
+            curveEndMinute: this.getCurveEndMinute(),
+          })
+        : this.state.minuteCurve;
     return getMinuteMetrics(curve, targetMinute);
   }
 
@@ -218,43 +236,46 @@ export class GameSlot {
       curveEndMinute: this.getCurveEndMinute(),
       liveCorrections: this.state.liveCorrections,
       baseMinute: this.state.currentOddBaseMinute,
-      baseOdd: this.state.currentOddBaseMinute === null ? null : this.state.currentOddBase
+      baseOdd: this.state.currentOddBaseMinute === null ? null : this.state.currentOddBase,
     });
     this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
 
     // Ticks por minuto e % por minuto base
     const ladderItem = findClosestLadder(this.state.initialOdd);
     const totalMin = 45 + (Number(this.state.addedMinutes) || 0);
-    this.state.ticksPorMinuto = Number((ladderItem.tickIndex / totalMin).toFixed(2));
-    this.state.pctPorMinuto = Number(((Math.pow(1.01 / this.state.initialOdd, 1 / totalMin) - 1) * 100).toFixed(2));
+    this.state.ticksPorMinuto =
+      ladderItem != null ? Number((ladderItem.tickIndex / totalMin).toFixed(2)) : 0;
+    this.state.pctPorMinuto = Number(
+      ((Math.pow(1.01 / this.state.initialOdd, 1 / totalMin) - 1) * 100).toFixed(2)
+    );
   }
 
-   setPeriod(period) {
-     this.state.period = period;
-     const startMin = period === 'HT' ? 1 : 46;
-     this.state.currentMinute = startMin;
-     this.state.liveMinute = startMin;
-     this.state.projectedMinute = startMin;
+  setPeriod(period) {
+    this.state.period = period;
+    const startMin = period === 'HT' ? 1 : 46;
+    this.state.currentMinute = startMin;
+    this.state.liveMinute = startMin;
+    this.state.projectedMinute = startMin;
     this.state.projectionOffset = 0;
-     this.state.tvMinuteInput = startMin;
-     this.state.initialOdd = period === 'HT' ? 3.35 : 5.10;
+    this.state.tvMinuteInput = startMin;
+    this.state.initialOdd = period === 'HT' ? 3.35 : 5.1;
     this.state.currentOddBase = this.state.initialOdd;
     this.state.currentOddBaseMinute = null;
-     this.state.addedMinutes = period === 'HT' ? 2 : 5;
+    this.state.addedMinutes = period === 'HT' ? 2 : 5;
     this.state.addedMinutesActive = false;
     this.state.addedMinutesSynced = false;
-     this.state.pendingAddedMinutes = null;
-     this.state.liveOddCurrentMinute = '';
-     this.state.liveCorrections = {};
-     this.state.timerSeconds = 0;
+    this.state.pendingAddedMinutes = null;
+    this.state.liveOddCurrentMinute = '';
+    this.state.liveCorrections = {};
+    this.state.timerSeconds = 0;
     this.updatePeriodStartUI();
-     this.state.isSimulating = false;
-     this.pauseTimer();
-     this.recomputeCurve();
-     this.render();
-     this.bindEvents();
-     this.recalculate();
-   }
+    this.state.isSimulating = false;
+    this.pauseTimer();
+    this.recomputeCurve();
+    this.render();
+    this.bindEvents();
+    this.recalculate();
+  }
 
   setInitialOdd(odd) {
     const val = Number(odd);
@@ -275,46 +296,47 @@ export class GameSlot {
     this.setInitialOdd(newOdd);
   }
 
-   setAddedMinutes(mins) {
-     const val = parseInt(mins, 10);
-     const pending = isNaN(val) || val < 0 ? 0 : val;
-     this.state.pendingAddedMinutes = pending;
-     const addedInput = this.container.querySelector('.hud-added-min-input');
-     if (addedInput) addedInput.value = pending;
-   }
+  setAddedMinutes(mins) {
+    const val = parseInt(mins, 10);
+    const pending = isNaN(val) || val < 0 ? 0 : val;
+    this.state.pendingAddedMinutes = pending;
+    const addedInput = this.container.querySelector('.hud-added-min-input');
+    if (addedInput) addedInput.value = pending;
+  }
 
-   syncAddedMinutes() {
-     if (this.state.pendingAddedMinutes !== null) {
-       this.state.addedMinutes = this.state.pendingAddedMinutes;
-       this.state.pendingAddedMinutes = null;
+  syncAddedMinutes() {
+    if (this.state.pendingAddedMinutes !== null) {
+      this.state.addedMinutes = this.state.pendingAddedMinutes;
+      this.state.pendingAddedMinutes = null;
       this.state.addedMinutesSynced = true;
-       this.state.addedMinutesActive = this.state.liveMinute >= this.getNominalEndMinute();
-       this.recomputeCurve();
-       this.recalculate();
-       if (!this.state.currentMetrics) {
-         this.state.currentMinute = this.state.liveMinute;
-         this.recomputeCurve();
-       }
-       this.render();
-       this.bindEvents();
-       this.recalculate();
-     }
-   }
+      this.state.addedMinutesActive = this.state.liveMinute >= this.getNominalEndMinute();
+      this.recomputeCurve();
+      this.render();
+      this.bindEvents();
+      this.recalculate();
+    }
+  }
 
-   adjustAddedMinutes(delta) {
-     const currentVal = this.state.pendingAddedMinutes !== null ? this.state.pendingAddedMinutes : this.state.addedMinutes;
-     const newVal = currentVal + delta;
-     this.setAddedMinutes(newVal);
-   }
+  adjustAddedMinutes(delta) {
+    const currentVal =
+      this.state.pendingAddedMinutes !== null
+        ? this.state.pendingAddedMinutes
+        : this.state.addedMinutes;
+    const newVal = currentVal + delta;
+    this.setAddedMinutes(newVal);
+  }
 
   setTVMinute(mins) {
     const isHT = this.state.period === 'HT';
     const minStart = isHT ? 1 : 46;
-    const maxMin = isHT ? (45 + this.state.addedMinutes) : (90 + this.state.addedMinutes);
+    const maxMin = isHT ? 45 + this.state.addedMinutes : 90 + this.state.addedMinutes;
     const displayMinStart = this.getDisplayMinute(minStart);
     const displayMax = this.getDisplayMinute(maxMin);
     const displayValue = parseInt(mins, 10);
-    const safeDisplay = Math.max(displayMinStart, Math.min(displayMax, isNaN(displayValue) ? displayMinStart : displayValue));
+    const safeDisplay = Math.max(
+      displayMinStart,
+      Math.min(displayMax, isNaN(displayValue) ? displayMinStart : displayValue)
+    );
     this.state.tvMinuteInput = safeDisplay + 1;
     const tvInput = this.container.querySelector('.hud-tv-min-input');
     if (tvInput) tvInput.value = this.getDisplayMinute(this.state.tvMinuteInput);
@@ -335,9 +357,9 @@ export class GameSlot {
   setMinute(min) {
     const isHT = this.state.period === 'HT';
     const minStart = isHT ? 1 : 46;
-    const maxMin = isHT ? (45 + this.state.addedMinutes) : (90 + this.state.addedMinutes);
+    const maxMin = isHT ? 45 + this.state.addedMinutes : 90 + this.state.addedMinutes;
     const newMin = Math.max(minStart, Math.min(maxMin, parseInt(min, 10) || minStart));
-    
+
     // Ao mudar o minuto, atualiza os campos
     this.state.currentMinute = newMin;
     this.state.liveMinute = newMin;
@@ -345,9 +367,11 @@ export class GameSlot {
     this.state.projectionOffset = 0;
     this.state.tvMinuteInput = newMin;
     this.state.isSimulating = false;
-    this.state.liveOddCurrentMinute = this.state.liveCorrections[newMin] ? this.state.liveCorrections[newMin].toString() : '';
+    this.state.liveOddCurrentMinute = this.state.liveCorrections[newMin]
+      ? this.state.liveCorrections[newMin].toString()
+      : '';
     this.state.timerSeconds = (newMin - minStart) * 60;
-    
+
     const liveInput = this.container.querySelector('.hud-live-odd-input');
     if (liveInput) liveInput.value = this.state.liveOddCurrentMinute;
 
@@ -362,126 +386,81 @@ export class GameSlot {
     this.updateTimerDisplay();
   }
 
-   setSimulatedMinute(targetMin) {
-     const isHT = this.state.period === 'HT';
-     const minStart = isHT ? 1 : 46;
-     const maxMin = this.getProjectionMaxMinute();
-     const requestedMinute = parseInt(targetMin, 10) || this.state.liveMinute;
-     const requestedOffset = requestedMinute - this.state.liveMinute;
-     const newMin = Math.max(minStart, Math.min(maxMin, this.state.liveMinute + requestedOffset));
-     
-     this.state.projectedMinute = newMin;
-     this.state.projectionOffset = newMin - this.state.liveMinute;
-     this.state.isSimulating = (newMin !== this.getLiveGameMinute());
-     this.recomputeCurve();
-    this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.projectedMinute);
-     this.recalculate();
-     this.updateTimerDisplay();
-     const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
-     if (playPauseBtn) playPauseBtn.textContent = this.state.timerPaused ? '▶️' : '⏸️';
-   }
+  setSimulatedMinute(targetMin) {
+    const isHT = this.state.period === 'HT';
+    const minStart = isHT ? 1 : 46;
+    const maxMin = this.getProjectionMaxMinute();
+    const requestedMinute = parseInt(targetMin, 10) || this.state.liveMinute;
+    const requestedOffset = requestedMinute - this.state.liveMinute;
+    const newMin = Math.max(minStart, Math.min(maxMin, this.state.liveMinute + requestedOffset));
+
+    this.state.projectedMinute = newMin;
+    this.state.projectionOffset = newMin - this.state.liveMinute;
+    this.state.isSimulating = newMin !== this.getLiveGameMinute();
+    this.recomputeCurve();
+    this.state.currentMetrics = getMinuteMetrics(
+      this.state.minuteCurve,
+      this.state.projectedMinute
+    );
+    this.recalculate();
+    this.updateTimerDisplay();
+    const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
+    if (playPauseBtn) playPauseBtn.textContent = this.state.timerPaused ? '▶️' : '⏸️';
+  }
 
   adjustCurrentMinute(delta) {
     this.setSimulatedMinute(this.state.projectedMinute + delta);
   }
 
-   returnToLiveMinute() {
-     this.state.isSimulating = false;
-     this.state.timerPaused = false;
-     this.state.liveMinute = this.getLiveGameMinute();
-     this.state.projectedMinute = this.state.liveMinute;
+  returnToLiveMinute() {
+    this.state.isSimulating = false;
+    this.state.timerPaused = false;
+    this.state.liveMinute = this.getLiveGameMinute();
+    this.state.projectedMinute = this.state.liveMinute;
     this.state.projectionOffset = 0;
-     this.state.currentMinute = this.state.liveMinute;
-     this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
-     this.recalculate();
-     this.updateTimerDisplay();
-     const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
-     if (playPauseBtn) playPauseBtn.textContent = '⏸️';
-   }
+    this.state.currentMinute = this.state.liveMinute;
+    this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
+    this.recalculate();
+    this.updateTimerDisplay();
+    const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
+    if (playPauseBtn) playPauseBtn.textContent = '⏸️';
+  }
 
-   syncFromTV() {
-     const isHT = this.state.period === 'HT';
-     const minStart = isHT ? 1 : 46;
-     const min = parseInt(this.state.tvMinuteInput, 10) || this.state.currentMinute;
-     this.state.timerSeconds = (min - minStart) * 60;
+  syncFromTV() {
+    const isHT = this.state.period === 'HT';
+    const minStart = isHT ? 1 : 46;
+    const min = parseInt(this.state.tvMinuteInput, 10) || this.state.currentMinute;
+    this.state.timerSeconds = (min - minStart) * 60;
     this.registerPeriodStart(min);
     this.activateAddedMinutesIfReached(min);
-     this.state.isSimulating = false;
+    this.state.isSimulating = false;
     this.state.liveMinute = min;
     this.state.projectedMinute = min;
     this.state.projectionOffset = 0;
-     this.state.currentMinute = min;
+    this.state.currentMinute = min;
     this.state.timerPaused = false;
-     this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
-     this.updateTimerDisplay();
-     this.startTimer();
-     this.recalculate();
-   }
-
-  applyEventOverride(minute, newOdd) {
-    const parsedDisplayMinute = parseInt(minute, 10);
-    const targetMin = Number.isNaN(parsedDisplayMinute) ? this.state.liveMinute : this.getInternalMinute(parsedDisplayMinute);
-    const parsedOdd = parseFloat(newOdd);
-    if (!isNaN(parsedOdd) && parsedOdd >= 1.01) {
-      const oldOdd = this.state.liveCorrections[targetMin] ?? this.getMinuteMetricsFor(targetMin)?.oddJusta ?? null;
-      const openingOdd = calibrateOpeningOdd({
-        period: this.state.period,
-        eventMinute: targetMin,
-        eventOdd: parsedOdd,
-        addedMinutes: this.state.addedMinutes
-      });
-      if (openingOdd !== null) {
-        this.state.initialOdd = openingOdd;
-        const initialOddInput = this.container.querySelector('.hud-initial-odd-input');
-        if (initialOddInput) initialOddInput.value = openingOdd.toFixed(2);
-      }
-      this.state.liveCorrections[targetMin] = parsedOdd;
-      this.state.currentOddBase = parsedOdd;
-      this.state.currentOddBaseMinute = targetMin;
-      if (targetMin === this.state.liveMinute) {
-        this.state.liveOddCurrentMinute = parsedOdd.toFixed(2);
-        const liveInput = this.container.querySelector('.hud-live-odd-input');
-        if (liveInput) liveInput.value = this.state.liveOddCurrentMinute;
-      }
-      this.recomputeCurve();
-      this.recalculate();
-
-      const row = {
-        minute: targetMin,
-        period: this.state.period,
-        oldOdd: oldOdd !== null ? Number(oldOdd.toFixed(2)) : null,
-        newOdd: Number(parsedOdd.toFixed(2)),
-        openingOdd,
-        fairOddAfterUpdate: Number(this.getMinuteMetricsFor(targetMin).oddJusta.toFixed(2)),
-        bloco1: this.getMinuteMetricsFor(targetMin).topo1 && this.getMinuteMetricsFor(targetMin).fundo1 ? {
-          topo: Number(this.getMinuteMetricsFor(targetMin).topo1.toFixed(2)),
-          fundo: Number(this.getMinuteMetricsFor(targetMin).fundo1.toFixed(2))
-        } : null,
-        bloco2: this.getMinuteMetricsFor(targetMin).topo2 && this.getMinuteMetricsFor(targetMin).fundo2 ? {
-          topo: Number(this.getMinuteMetricsFor(targetMin).topo2.toFixed(2)),
-          fundo: Number(this.getMinuteMetricsFor(targetMin).fundo2.toFixed(2))
-        } : null,
-        ts: new Date().toISOString()
-      };
-
-      this.state.sheetLog.unshift(row);
-      this.state.lastSheetRow = row;
-      this.saveSheetLog();
-      this.renderEventLog();
-    }
+    this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
+    this.updateTimerDisplay();
+    if (!this.state.timerRunning) this.startTimer();
+    this.recalculate();
   }
 
   applyEventOverride(minute, newOdd) {
     const parsedDisplayMinute = parseInt(minute, 10);
-    const targetMin = Number.isNaN(parsedDisplayMinute) ? this.state.liveMinute : this.getInternalMinute(parsedDisplayMinute);
+    const targetMin = Number.isNaN(parsedDisplayMinute)
+      ? this.state.liveMinute
+      : this.getInternalMinute(parsedDisplayMinute);
     const parsedOdd = parseFloat(newOdd);
     if (!isNaN(parsedOdd) && parsedOdd >= 1.01) {
-      const oldOdd = this.state.liveCorrections[targetMin] ?? this.getMinuteMetricsFor(targetMin)?.oddJusta ?? null;
+      const oldOdd =
+        this.state.liveCorrections[targetMin] ??
+        this.getMinuteMetricsFor(targetMin)?.oddJusta ??
+        null;
       const openingOdd = calibrateOpeningOdd({
         period: this.state.period,
         eventMinute: targetMin,
         eventOdd: parsedOdd,
-        addedMinutes: this.state.addedMinutes
+        addedMinutes: this.state.addedMinutes,
       });
       if (openingOdd !== null) {
         this.state.initialOdd = openingOdd;
@@ -499,22 +478,32 @@ export class GameSlot {
       this.recomputeCurve();
       this.recalculate();
 
+      // Cache único de metrics para evitar múltiplas chamadas e crash em null
+      const updatedMetrics = this.getMinuteMetricsFor(targetMin);
+      if (!updatedMetrics) return;
+
       const row = {
         minute: targetMin,
         period: this.state.period,
         oldOdd: oldOdd !== null ? Number(oldOdd.toFixed(2)) : null,
         newOdd: Number(parsedOdd.toFixed(2)),
         openingOdd,
-        fairOddAfterUpdate: Number(this.getMinuteMetricsFor(targetMin).oddJusta.toFixed(2)),
-        bloco1: this.getMinuteMetricsFor(targetMin).topo1 && this.getMinuteMetricsFor(targetMin).fundo1 ? {
-          topo: Number(this.getMinuteMetricsFor(targetMin).topo1.toFixed(2)),
-          fundo: Number(this.getMinuteMetricsFor(targetMin).fundo1.toFixed(2))
-        } : null,
-        bloco2: this.getMinuteMetricsFor(targetMin).topo2 && this.getMinuteMetricsFor(targetMin).fundo2 ? {
-          topo: Number(this.getMinuteMetricsFor(targetMin).topo2.toFixed(2)),
-          fundo: Number(this.getMinuteMetricsFor(targetMin).fundo2.toFixed(2))
-        } : null,
-        ts: new Date().toISOString()
+        fairOddAfterUpdate: Number(updatedMetrics.oddJusta.toFixed(2)),
+        bloco1:
+          updatedMetrics.topo1 != null && updatedMetrics.fundo1 != null
+            ? {
+                topo: Number(updatedMetrics.topo1.toFixed(2)),
+                fundo: Number(updatedMetrics.fundo1.toFixed(2)),
+              }
+            : null,
+        bloco2:
+          updatedMetrics.topo2 != null && updatedMetrics.fundo2 != null
+            ? {
+                topo: Number(updatedMetrics.topo2.toFixed(2)),
+                fundo: Number(updatedMetrics.fundo2.toFixed(2)),
+              }
+            : null,
+        ts: new Date().toISOString(),
       };
 
       this.state.sheetLog.unshift(row);
@@ -528,21 +517,28 @@ export class GameSlot {
     const eventLogBody = this.container.querySelector('.event-log-body');
     if (!eventLogBody) return;
 
-    eventLogBody.innerHTML = this.state.sheetLog.slice(0, 8).map(row => `
+    eventLogBody.innerHTML = this.state.sheetLog
+      .slice(0, 8)
+      .map(
+        (row) => `
       <tr>
         <td>${row.period} ${this.getDisplayMinute(row.minute)}'</td>
         <td>${row.oldOdd === null ? '-' : row.oldOdd.toFixed(2)}</td>
         <td>${row.newOdd.toFixed(2)}</td>
         <td>${row.openingOdd ? row.openingOdd.toFixed(2) : '-'}</td>
-        <td>${row.fairOddAfterUpdate.toFixed(2)}</td>
+        <td>${row.fairOddAfterUpdate != null ? row.fairOddAfterUpdate.toFixed(2) : '-'}</td>
         <td>${row.bloco1 ? `${row.bloco1.topo.toFixed(2)} / ${row.bloco1.fundo.toFixed(2)}` : '-'}</td>
         <td>${row.bloco2 ? `${row.bloco2.topo.toFixed(2)} / ${row.bloco2.fundo.toFixed(2)}` : '-'}</td>
       </tr>
-    `).join('');
+    `
+      )
+      .join('');
   }
 
   recalculate() {
-    const metricsMinute = this.state.isSimulating ? this.state.projectedMinute : this.state.liveMinute;
+    const metricsMinute = this.state.isSimulating
+      ? this.state.projectedMinute
+      : this.state.liveMinute;
     this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, metricsMinute);
     const cm = this.state.currentMetrics;
     if (!cm) return;
@@ -581,7 +577,9 @@ export class GameSlot {
     const cm = this.state.currentMetrics;
     if (!cm) return;
 
-    const displayMinute = this.getDisplayMinute(this.state.isSimulating ? this.state.projectedMinute : this.state.liveMinute);
+    const displayMinute = this.getDisplayMinute(
+      this.state.isSimulating ? this.state.projectedMinute : this.state.liveMinute
+    );
 
     // Minuto e Odd Justa
     const minuteBadge = this.container.querySelector('.hud-minute-hero-badge');
@@ -598,19 +596,27 @@ export class GameSlot {
     const bloco2Fundo = this.container.querySelector('.bloco2-fundo-val');
 
     if (minuteBadge) minuteBadge.textContent = `${displayMinute}'`;
-    if (liveMinuteLabel) liveMinuteLabel.textContent = `AO VIVO: ${this.getDisplayMinute(this.state.liveMinute)}'`;
-    if (projectedMinuteLabel) projectedMinuteLabel.textContent = `PROJEÇÃO: ${this.getDisplayMinute(this.state.projectedMinute)}'`;
+    if (liveMinuteLabel)
+      liveMinuteLabel.textContent = `AO VIVO: ${this.getDisplayMinute(this.state.liveMinute)}'`;
+    if (projectedMinuteLabel)
+      projectedMinuteLabel.textContent = `PROJEÇÃO: ${this.getDisplayMinute(this.state.projectedMinute)}'`;
     if (oddJustaDisplay) oddJustaDisplay.textContent = cm.oddJusta.toFixed(2);
 
-    if (bloco1Topo) bloco1Topo.textContent = cm.topo1.toFixed(2);
-    if (bloco1Fundo) bloco1Fundo.textContent = cm.fundo1.toFixed(2);
-    if (bloco2Topo) bloco2Topo.textContent = cm.topo2.toFixed(2);
-    if (bloco2Fundo) bloco2Fundo.textContent = cm.fundo2.toFixed(2);
+    if (bloco1Topo) bloco1Topo.textContent = cm.topo1 != null ? cm.topo1.toFixed(2) : '--';
+    if (bloco1Fundo) bloco1Fundo.textContent = cm.fundo1 != null ? cm.fundo1.toFixed(2) : '--';
+    if (bloco2Topo) bloco2Topo.textContent = cm.topo2 != null ? cm.topo2.toFixed(2) : '--';
+    if (bloco2Fundo) bloco2Fundo.textContent = cm.fundo2 != null ? cm.fundo2.toFixed(2) : '--';
 
     // Zona com cores e badges destacados
     if (zoneBadge) {
-      const zClass = cm.zona === 'Rápida' ? 'zone-rapida' : (cm.zona === 'Média' || cm.zona === 'Normal' ? 'zone-media' : 'zone-lenta');
-      const zIcon = cm.zona === 'Rápida' ? '🟢' : (cm.zona === 'Média' || cm.zona === 'Normal' ? '🟡' : '🔵');
+      const zClass =
+        cm.zona === 'Rápida'
+          ? 'zone-rapida'
+          : cm.zona === 'Média' || cm.zona === 'Normal'
+            ? 'zone-media'
+            : 'zone-lenta';
+      const zIcon =
+        cm.zona === 'Rápida' ? '🟢' : cm.zona === 'Média' || cm.zona === 'Normal' ? '🟡' : '🔵';
       zoneBadge.className = `zone-badge ${zClass}`;
       zoneBadge.innerHTML = `<span>${zIcon} ZONA ${cm.zona.toUpperCase()}</span>`;
     }
@@ -619,14 +625,14 @@ export class GameSlot {
     if (valueDiffBadge) {
       const live = parseFloat(this.state.liveOddCurrentMinute);
       if (live && live > 1.0) {
-        const diff = ((live / cm.oddJusta) - 1) * 100;
+        const diff = (live / cm.oddJusta - 1) * 100;
         const sign = diff > 0 ? '+' : '';
         const isGood = diff > 0.5;
         const isBad = diff < -0.5;
 
-        valueDiffBadge.className = `hud-diff-badge ${isGood ? 'diff-good' : (isBad ? 'diff-bad' : 'diff-fair')}`;
+        valueDiffBadge.className = `hud-diff-badge ${isGood ? 'diff-good' : isBad ? 'diff-bad' : 'diff-fair'}`;
         valueDiffBadge.innerHTML = `
-          <strong>${sign}${diff.toFixed(1)}% ${isGood ? '📈 VALOR' : (isBad ? '📉 SEM VALOR' : '⚖️ JUSTO')}</strong>
+          <strong>${sign}${diff.toFixed(1)}% ${isGood ? '📈 VALOR' : isBad ? '📉 SEM VALOR' : '⚖️ JUSTO'}</strong>
         `;
       } else {
         valueDiffBadge.className = `hud-diff-badge diff-fair`;
@@ -635,72 +641,82 @@ export class GameSlot {
     }
   }
 
-   startTimer() {
-     if (this.timerInterval) clearInterval(this.timerInterval);
-     this.state.timerRunning = true;
-     const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
-     if (playPauseBtn) playPauseBtn.textContent = this.state.timerPaused ? '▶️' : '⏸️';
+  startTimer() {
+    if (this.timerInterval) clearInterval(this.timerInterval);
+    this.state.timerRunning = true;
+    const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
+    if (playPauseBtn) playPauseBtn.textContent = this.state.timerPaused ? '▶️' : '⏸️';
 
-     this.timerInterval = setInterval(() => {
-       if (this.state.timerPaused) {
-         this.updateTimerDisplay();
-         return;
-       }
+    this.timerInterval = setInterval(() => {
+      if (this.state.timerPaused) {
+        this.updateTimerDisplay();
+        return;
+      }
 
-       const isHT = this.state.period === 'HT';
-       const nominalEndMinute = this.getNominalEndMinute();
-       const nominalEndSeconds = (nominalEndMinute - (isHT ? 1 : 46)) * 60;
+      const isHT = this.state.period === 'HT';
+      const nominalEndMinute = this.getNominalEndMinute();
+      const nominalEndSeconds = (nominalEndMinute - (isHT ? 1 : 46)) * 60;
 
-       if (!this.state.addedMinutesActive && this.state.timerSeconds >= nominalEndSeconds && this.state.addedMinutes > 0) {
-         this.state.addedMinutesActive = true;
-         this.recomputeCurve();
-       }
+      if (
+        !this.state.addedMinutesActive &&
+        this.state.timerSeconds >= nominalEndSeconds &&
+        this.state.addedMinutes > 0
+      ) {
+        this.state.addedMinutesActive = true;
+        this.recomputeCurve();
+      }
 
-       const maxMin = this.getMaxMinute();
-       const maxSeconds = (maxMin - (isHT ? 1 : 46)) * 60;
+      const maxMin = this.getMaxMinute();
+      const maxSeconds = (maxMin - (isHT ? 1 : 46)) * 60;
 
-       if (this.state.timerSeconds >= maxSeconds) {
-         this.state.timerSeconds = maxSeconds;
-         this.state.liveMinute = maxMin;
-         this.state.currentMinute = maxMin;
-         this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
-         this.recalculate();
-         this.updateTimerDisplay();
-         this.pauseTimer();
-         return;
-       }
+      if (this.state.timerSeconds >= maxSeconds) {
+        this.state.timerSeconds = maxSeconds;
+        this.state.liveMinute = maxMin;
+        this.state.currentMinute = maxMin;
+        this.state.currentMetrics = getMinuteMetrics(
+          this.state.minuteCurve,
+          this.state.currentMinute
+        );
+        this.recalculate();
+        this.updateTimerDisplay();
+        this.pauseTimer();
+        return;
+      }
 
-       this.state.timerSeconds++;
-       this.state.liveMinute = this.getLiveGameMinute();
-       if (this.state.isSimulating) {
-         const projectionMax = this.getProjectionMaxMinute();
-         this.state.projectedMinute = Math.max(
-           this.state.period === 'HT' ? 1 : 46,
-           Math.min(projectionMax, this.state.liveMinute + this.state.projectionOffset)
-         );
-       }
-       this.updateTimerDisplay();
+      this.state.timerSeconds++;
+      this.state.liveMinute = this.getLiveGameMinute();
+      if (this.state.isSimulating) {
+        const projectionMax = this.getProjectionMaxMinute();
+        this.state.projectedMinute = Math.max(
+          this.state.period === 'HT' ? 1 : 46,
+          Math.min(projectionMax, this.state.liveMinute + this.state.projectionOffset)
+        );
+      }
+      this.updateTimerDisplay();
 
-       if (!this.state.isSimulating) {
-         if (this.state.liveMinute !== this.state.currentMinute && this.state.liveMinute <= maxMin) {
-           this.state.currentMinute = this.state.liveMinute;
-           this.state.currentMetrics = getMinuteMetrics(this.state.minuteCurve, this.state.currentMinute);
-           this.recalculate();
-         }
-       } else {
-         this.updateUI();
-         this.updateSimulationUI();
-       }
-     }, 1000);
-   }
+      if (!this.state.isSimulating) {
+        if (this.state.liveMinute !== this.state.currentMinute && this.state.liveMinute <= maxMin) {
+          this.state.currentMinute = this.state.liveMinute;
+          this.state.currentMetrics = getMinuteMetrics(
+            this.state.minuteCurve,
+            this.state.currentMinute
+          );
+          this.recalculate();
+        }
+      } else {
+        this.updateUI();
+        this.updateSimulationUI();
+      }
+    }, 1000);
+  }
 
-   pauseTimer() {
-     if (this.timerInterval) clearInterval(this.timerInterval);
-     this.state.timerRunning = false;
-     this.state.timerPaused = true;
-     const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
-     if (playPauseBtn) playPauseBtn.textContent = '▶️';
-   }
+  pauseTimer() {
+    if (this.timerInterval) clearInterval(this.timerInterval);
+    this.state.timerRunning = false;
+    this.state.timerPaused = true;
+    const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
+    if (playPauseBtn) playPauseBtn.textContent = '▶️';
+  }
 
   resetTimer() {
     this.pauseTimer();
@@ -711,8 +727,6 @@ export class GameSlot {
   updateTimerDisplay() {
     const timerDisplay = this.container.querySelector('.timer-display');
     if (timerDisplay) {
-      const isHT = this.state.period === 'HT';
-      const minStart = isHT ? 1 : 46;
       const maxMin = this.getMaxMinute();
       const liveMin = this.getLiveGameMinute();
       const minutes = this.getDisplayMinute(Math.min(maxMin, liveMin));
@@ -731,7 +745,7 @@ export class GameSlot {
     }
 
     // Período (HT vs FT)
-    this.container.querySelectorAll('.period-tab-btn').forEach(btn => {
+    this.container.querySelectorAll('.period-tab-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
         const p = btn.getAttribute('data-period');
         this.setPeriod(p);
@@ -760,27 +774,27 @@ export class GameSlot {
       oddPlusBtn.addEventListener('click', () => this.adjustInitialOdd(1));
     }
 
-     // Acréscimos (Input + Steppers + Botão Sync de Validação)
-     const addedMinutesInput = this.container.querySelector('.hud-added-min-input');
-     const addedMinusBtn = this.container.querySelector('.hud-added-minus-btn');
-     const addedPlusBtn = this.container.querySelector('.hud-added-plus-btn');
-     const addedSyncBtn = this.container.querySelector('.hud-added-sync-btn');
+    // Acréscimos (Input + Steppers + Botão Sync de Validação)
+    const addedMinutesInput = this.container.querySelector('.hud-added-min-input');
+    const addedMinusBtn = this.container.querySelector('.hud-added-minus-btn');
+    const addedPlusBtn = this.container.querySelector('.hud-added-plus-btn');
+    const addedSyncBtn = this.container.querySelector('.hud-added-sync-btn');
 
-     if (addedMinutesInput) {
-       addedMinutesInput.addEventListener('change', (e) => this.setAddedMinutes(e.target.value));
-       addedMinutesInput.addEventListener('keydown', (e) => {
-         if (e.key === 'Enter') this.setAddedMinutes(e.target.value);
-       });
-     }
-     if (addedPlusBtn) {
-       addedPlusBtn.addEventListener('click', () => this.adjustAddedMinutes(1));
-     }
-     if (addedMinusBtn) {
-       addedMinusBtn.addEventListener('click', () => this.adjustAddedMinutes(-1));
-     }
-     if (addedSyncBtn) {
-       addedSyncBtn.addEventListener('click', () => this.syncAddedMinutes());
-     }
+    if (addedMinutesInput) {
+      addedMinutesInput.addEventListener('change', (e) => this.setAddedMinutes(e.target.value));
+      addedMinutesInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') this.setAddedMinutes(e.target.value);
+      });
+    }
+    if (addedPlusBtn) {
+      addedPlusBtn.addEventListener('click', () => this.adjustAddedMinutes(1));
+    }
+    if (addedMinusBtn) {
+      addedMinusBtn.addEventListener('click', () => this.adjustAddedMinutes(-1));
+    }
+    if (addedSyncBtn) {
+      addedSyncBtn.addEventListener('click', () => this.syncAddedMinutes());
+    }
 
     // Sincronização Minuto na TV (Input + Steppers + / - + Botão Sync)
     const tvMinInput = this.container.querySelector('.hud-tv-min-input');
@@ -859,24 +873,24 @@ export class GameSlot {
 
     this.renderEventLog();
 
-     // Timer buttons
-     const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
-     const resetTimerBtn = this.container.querySelector('.timer-reset-btn');
+    // Timer buttons
+    const playPauseBtn = this.container.querySelector('.timer-play-pause-btn');
+    const resetTimerBtn = this.container.querySelector('.timer-reset-btn');
     const newGameBtn = this.container.querySelector('.new-game-btn');
-     if (playPauseBtn) {
-       playPauseBtn.addEventListener('click', () => {
-         if (this.state.timerPaused) {
-           this.registerPeriodStart(this.state.liveMinute);
-           this.state.timerPaused = false;
-           this.startTimer();
-         } else {
-           this.pauseTimer();
-         }
-       });
-     }
-     if (resetTimerBtn) {
-       resetTimerBtn.addEventListener('click', () => this.resetTimer());
-     }
+    if (playPauseBtn) {
+      playPauseBtn.addEventListener('click', () => {
+        if (this.state.timerPaused) {
+          this.registerPeriodStart(this.state.liveMinute);
+          this.state.timerPaused = false;
+          this.startTimer();
+        } else {
+          this.pauseTimer();
+        }
+      });
+    }
+    if (resetTimerBtn) {
+      resetTimerBtn.addEventListener('click', () => this.resetTimer());
+    }
     if (newGameBtn) {
       newGameBtn.addEventListener('click', () => {
         if (confirm('Iniciar novo jogo e limpar eventos deste slot?')) this.startNewGame();

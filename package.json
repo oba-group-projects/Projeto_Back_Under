@@ -5,12 +5,32 @@
   "main": "js/app.js",
   "type": "module",
   "scripts": {
-    "fix": "node logic_fix_demo.js",
+    "prepare": "husky",
+    "lint": "eslint . --ext .js",
+    "lint:fix": "eslint . --ext .js --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "validate": "node test/test-minute-decay.js",
     "test": "node test/test-calculations.js",
+    "test:jest": "jest --testPathPattern=GameSlot.test.js",
+    "test:coverage": "jest --testPathPattern=GameSlot.test.js --coverage",
     "test:browser": "playwright test",
     "start": "npx serve .",
     "dev": "npx serve ."
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "transform": {
+      "^.+\\.js$": "babel-jest"
+    },
+    "moduleNameMapper": {
+      "^(\\.{1,2}/.*)\\.js$": "$1"
+    },
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/qwen-code/",
+      "/odd-globl-live/"
+    ]
   },
   "repository": {
     "type": "git",
@@ -26,6 +46,24 @@
   "author": "Projeto Back Under",
   "license": "MIT",
   "devDependencies": {
-    "@playwright/test": "^1.63.0"
+    "@babel/core": "^7.24.0",
+    "@babel/preset-env": "^7.24.0",
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@playwright/test": "^1.63.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.3",
+    "@semantic-release/npm": "^12.0.1",
+    "babel-jest": "^29.7.0",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-jest": "^28.14.0",
+    "globals": "^15.15.0",
+    "husky": "^9.1.7",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "prettier": "^3.9.6",
+    "semantic-release": "^24.2.5"
   }
 }

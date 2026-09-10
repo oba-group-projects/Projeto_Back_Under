@@ -12,7 +12,7 @@
   --font-jakarta: 'Plus Jakarta Sans', -apple-system, sans-serif;
   --font-rajdhani: 'Rajdhani', -apple-system, sans-serif;
   --font-inter: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  
+
   /* Fonte Padrão Ativa (Calibri Pro) */
   --font-sans: var(--font-calibri);
   --font-mono: 'JetBrains Mono', 'Consolas', monospace;
@@ -26,7 +26,7 @@
   --bg-input: #090e1a;
   --bg-highlight-field: #fef08a; /* Amarelo da planilha para inputs de destaque */
   --text-highlight-field: #1e1b4b;
-  
+
   /* Bordas */
   --border-subtle: #1e293b;
   --border-medium: #334155;
@@ -37,7 +37,7 @@
   --color-green: #10b981;
   --color-green-glow: rgba(16, 185, 129, 0.25);
   --color-green-dark: #064e3b;
-  
+
   --color-red: #ef4444;
   --color-red-glow: rgba(239, 68, 68, 0.25);
   --color-red-dark: #7f1d1d;
@@ -73,7 +73,9 @@
   --transition-normal: 0.25s ease;
 }
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -111,38 +113,100 @@ body {
   font-family: var(--font-mono);
 }
 
-.text-xs { font-size: 0.75rem; }
-.text-sm { font-size: 0.875rem; }
-.text-base { font-size: 1rem; }
-.text-lg { font-size: 1.125rem; }
-.text-xl { font-size: 1.25rem; }
-.text-2xl { font-size: 1.5rem; }
-.text-3xl { font-size: 1.875rem; }
+.text-xs {
+  font-size: 0.75rem;
+}
+.text-sm {
+  font-size: 0.875rem;
+}
+.text-base {
+  font-size: 1rem;
+}
+.text-lg {
+  font-size: 1.125rem;
+}
+.text-xl {
+  font-size: 1.25rem;
+}
+.text-2xl {
+  font-size: 1.5rem;
+}
+.text-3xl {
+  font-size: 1.875rem;
+}
 
-.font-normal { font-weight: 400; }
-.font-medium { font-weight: 500; }
-.font-semibold { font-weight: 600; }
-.font-bold { font-weight: 700; }
-.font-extrabold { font-weight: 800; }
+.font-normal {
+  font-weight: 400;
+}
+.font-medium {
+  font-weight: 500;
+}
+.font-semibold {
+  font-weight: 600;
+}
+.font-bold {
+  font-weight: 700;
+}
+.font-extrabold {
+  font-weight: 800;
+}
 
-.text-primary { color: var(--text-primary); }
-.text-secondary { color: var(--text-secondary); }
-.text-muted { color: var(--text-muted); }
-.text-green { color: var(--color-green); }
-.text-red { color: var(--color-red); }
-.text-yellow { color: var(--color-yellow); }
-.text-blue { color: var(--color-blue); }
-.text-cyan { color: var(--color-cyan); }
+.text-primary {
+  color: var(--text-primary);
+}
+.text-secondary {
+  color: var(--text-secondary);
+}
+.text-muted {
+  color: var(--text-muted);
+}
+.text-green {
+  color: var(--color-green);
+}
+.text-red {
+  color: var(--color-red);
+}
+.text-yellow {
+  color: var(--color-yellow);
+}
+.text-blue {
+  color: var(--color-blue);
+}
+.text-cyan {
+  color: var(--color-cyan);
+}
 
 /* Temas de Fontes Selecionáveis Dinamicamente */
-body.font-theme-calibri, body.font-theme-calibri * { font-family: var(--font-calibri); }
-body.font-theme-outfit, body.font-theme-outfit * { font-family: var(--font-outfit); }
-body.font-theme-jakarta, body.font-theme-jakarta * { font-family: var(--font-jakarta); }
-body.font-theme-rajdhani, body.font-theme-rajdhani * { font-family: var(--font-rajdhani); }
-body.font-theme-inter, body.font-theme-inter * { font-family: var(--font-inter); }
+body.font-theme-calibri,
+body.font-theme-calibri * {
+  font-family: var(--font-calibri);
+}
+body.font-theme-outfit,
+body.font-theme-outfit * {
+  font-family: var(--font-outfit);
+}
+body.font-theme-jakarta,
+body.font-theme-jakarta * {
+  font-family: var(--font-jakarta);
+}
+body.font-theme-rajdhani,
+body.font-theme-rajdhani * {
+  font-family: var(--font-rajdhani);
+}
+body.font-theme-inter,
+body.font-theme-inter * {
+  font-family: var(--font-inter);
+}
 
 /* Preservação da fonte mono para números específicos e odds quando aplicável */
-.font-mono, .timer-display, .hud-minute-hero-badge, .bloco1-topo-val, .bloco1-fundo-val, .bloco2-topo-val, .bloco2-fundo-val, .hud-odd-justa-hero {
+.font-mono,
+.timer-display,
+.hud-minute-hero-badge,
+.bloco1-topo-val,
+.bloco1-fundo-val,
+.bloco2-topo-val,
+.bloco2-fundo-val,
+.hud-odd-justa-hero {
   font-family: var(--font-mono) !important;
 }
 
@@ -246,7 +310,9 @@ body.theme-light .modal-content {
 /* ========================================================
    EFEITOS NEON / GLOW
    ======================================================== */
-body.glow-fx-off *, body.glow-fx-off .hud-odd-justa-hero, body.glow-fx-off .timer-display {
+body.glow-fx-off *,
+body.glow-fx-off .hud-odd-justa-hero,
+body.glow-fx-off .timer-display {
   text-shadow: none !important;
   box-shadow: none !important;
 }

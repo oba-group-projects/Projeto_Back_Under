@@ -3,44 +3,44 @@
  */
 
 export const TICK_INCREMENTS = [
-  { min: 1.01, max: 2.00, increment: 0.01, decimals: 2 },
-  { min: 2.00, max: 3.00, increment: 0.02, decimals: 2 },
-  { min: 3.00, max: 4.00, increment: 0.05, decimals: 2 },
-  { min: 4.00, max: 6.00, increment: 0.10, decimals: 2 },
-  { min: 6.00, max: 10.00, increment: 0.20, decimals: 2 },
-  { min: 10.00, max: 20.00, increment: 0.50, decimals: 1 },
-  { min: 20.00, max: 30.00, increment: 1.00, decimals: 0 },
-  { min: 30.00, max: 50.00, increment: 2.00, decimals: 0 },
-  { min: 50.00, max: 100.00, increment: 5.00, decimals: 0 },
-  { min: 100.00, max: 1000.00, increment: 10.00, decimals: 0 }
+  { min: 1.01, max: 2.0, increment: 0.01, decimals: 2 },
+  { min: 2.0, max: 3.0, increment: 0.02, decimals: 2 },
+  { min: 3.0, max: 4.0, increment: 0.05, decimals: 2 },
+  { min: 4.0, max: 6.0, increment: 0.1, decimals: 2 },
+  { min: 6.0, max: 10.0, increment: 0.2, decimals: 2 },
+  { min: 10.0, max: 20.0, increment: 0.5, decimals: 1 },
+  { min: 20.0, max: 30.0, increment: 1.0, decimals: 0 },
+  { min: 30.0, max: 50.0, increment: 2.0, decimals: 0 },
+  { min: 50.0, max: 100.0, increment: 5.0, decimals: 0 },
+  { min: 100.0, max: 1000.0, increment: 10.0, decimals: 0 },
 ];
 
 /**
  * Retorna o tamanho do tick (incremento) para uma dada odd
- * @param {number} odd 
+ * @param {number} odd
  * @returns {number}
  */
 export function getTickSize(odd) {
   if (odd < 1.01) return 0.01;
   for (let i = 0; i < TICK_INCREMENTS.length; i++) {
     const tier = TICK_INCREMENTS[i];
-    if (odd >= tier.min && (odd < tier.max || (tier.max === 1000.00 && odd <= tier.max))) {
+    if (odd >= tier.min && (odd < tier.max || (tier.max === 1000.0 && odd <= tier.max))) {
       return tier.increment;
     }
   }
-  return 10.00;
+  return 10.0;
 }
 
 /**
  * Normaliza e arredonda a odd para o tick válido mais próximo
- * @param {number} odd 
+ * @param {number} odd
  * @returns {number}
  */
 export function normalizeOdd(odd) {
   if (!odd || isNaN(odd)) return 1.01;
   if (odd < 1.01) return 1.01;
   if (odd > 1000.0) return 1000.0;
-  
+
   const tick = getTickSize(odd);
   const rounded = Math.round(odd / tick) * tick;
   return Number(rounded.toFixed(2));
@@ -48,15 +48,15 @@ export function normalizeOdd(odd) {
 
 /**
  * Move uma odd por N ticks (positivo = sobe odd, negativo = desce odd)
- * @param {number} odd 
- * @param {number} ticksCount 
+ * @param {number} odd
+ * @param {number} ticksCount
  * @returns {number}
  */
 export function moveOddTicks(odd, ticksCount) {
   let currentOdd = normalizeOdd(odd);
   const direction = ticksCount >= 0 ? 1 : -1;
   let remaining = Math.abs(ticksCount);
-  
+
   while (remaining > 0) {
     if (direction > 0) {
       if (currentOdd >= 1000.0) break;
@@ -77,19 +77,19 @@ export function moveOddTicks(odd, ticksCount) {
 
 /**
  * Calcula a quantidade exata de ticks entre duas odds
- * @param {number} fromOdd 
- * @param {number} toOdd 
+ * @param {number} fromOdd
+ * @param {number} toOdd
  * @returns {number} (positivo se toOdd > fromOdd, negativo se toOdd < fromOdd)
  */
 export function calculateTicksDistance(fromOdd, toOdd) {
   const start = normalizeOdd(fromOdd);
   const end = normalizeOdd(toOdd);
   if (start === end) return 0;
-  
+
   let current = start;
   let ticks = 0;
   const direction = end > start ? 1 : -1;
-  
+
   while ((direction > 0 && current < end) || (direction < 0 && current > end)) {
     if (direction > 0) {
       const tick = getTickSize(current);
@@ -107,7 +107,7 @@ export function calculateTicksDistance(fromOdd, toOdd) {
 
 /**
  * Formata um valor de odd para visualização com casas decimais adequadas
- * @param {number} odd 
+ * @param {number} odd
  * @returns {string}
  */
 export function formatOdd(odd) {
@@ -118,7 +118,7 @@ export function formatOdd(odd) {
 
 /**
  * Formata um valor monetário em R$
- * @param {number} value 
+ * @param {number} value
  * @returns {string}
  */
 export function formatCurrency(value) {
@@ -128,7 +128,7 @@ export function formatCurrency(value) {
 
 /**
  * Formata um percentual
- * @param {number} value 
+ * @param {number} value
  * @returns {string}
  */
 export function formatPercent(value) {

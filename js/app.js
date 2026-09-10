@@ -6,10 +6,10 @@
  */
 import { GameSlot } from './components/GameSlot.js?v=2.6';
 import { PenduloModal } from './components/PenduloModal.js?v=2.5';
-import { LoginModal } from './components/LoginModal.js?v=2.5';
+import { LoginModal } from './components/LoginModal.js?v=3.0';
 import { AdminDashboard } from './components/AdminDashboard.js?v=2.5';
 import { UserProfileModal } from './components/UserProfileModal.js?v=2.5';
-import { authManager } from './core/authManager.js?v=2.5';
+import { authManager } from './core/authManager.js?v=3.0';
 import { themeManager } from './core/themeManager.js?v=2.5';
 
 class App {
@@ -38,15 +38,13 @@ class App {
   }
 
   initAuth() {
+    // Modo sem autenticação: o cockpit abre diretamente.
+    // O modal de identificação fica disponível para o usuário registrar seu perfil
+    // voluntariamente via botão no header, mas não bloqueia o acesso.
     this.loginModal = new LoginModal((user) => {
       this.updateUserUI();
       this.showToast(`Bem-vindo, ${user.name}!`);
     });
-
-    // Se não estiver autenticado, exibe a tela de login
-    if (!authManager.isAuthenticated()) {
-      this.loginModal.show();
-    }
   }
 
   initAdminDashboard() {
@@ -56,7 +54,7 @@ class App {
   }
 
   initUserProfileModal() {
-    this.userProfileModal = new UserProfileModal((updatedUser) => {
+    this.userProfileModal = new UserProfileModal((_updatedUser) => {
       this.updateUserUI();
       this.showToast('Dados salvos com sucesso!');
     });
@@ -99,7 +97,7 @@ class App {
     try {
       const data = {
         masterRed: this.masterRed,
-        viewMode: this.viewMode
+        viewMode: this.viewMode,
       };
       localStorage.setItem('projeto_back_under_settings', JSON.stringify(data));
     } catch (e) {
@@ -112,7 +110,7 @@ class App {
       document.getElementById('slotCard1'),
       document.getElementById('slotCard2'),
       document.getElementById('slotCard3'),
-      document.getElementById('slotCard4')
+      document.getElementById('slotCard4'),
     ];
 
     slotContainers.forEach((container, index) => {
@@ -120,7 +118,7 @@ class App {
         const slot = new GameSlot(index + 1, container, {
           getMasterRed: () => this.masterRed,
           onTradeCompleted: (tradeData) => this.handleTradeCompleted(tradeData),
-          onOpenPendulos: (slotId) => this.openPenduloModalForSlot(slotId)
+          onOpenPendulos: (slotId) => this.openPenduloModalForSlot(slotId),
         });
         this.slots.push(slot);
       }
@@ -160,7 +158,7 @@ class App {
     const viewButtons = document.querySelectorAll('.view-toggle-btn');
     const gamesGrid = document.getElementById('gamesGrid');
 
-    viewButtons.forEach(btn => {
+    viewButtons.forEach((btn) => {
       const mode = btn.getAttribute('data-view');
       if (mode === this.viewMode) {
         btn.classList.add('active');
@@ -170,7 +168,7 @@ class App {
       }
 
       btn.addEventListener('click', () => {
-        viewButtons.forEach(b => b.classList.remove('active'));
+        viewButtons.forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
         this.viewMode = mode;
         if (gamesGrid) gamesGrid.className = `games-grid ${mode}`;
@@ -183,7 +181,9 @@ class App {
     this.penduloModal = new PenduloModal((selectedOdd365, targetSlotId) => {
       if (targetSlotId && this.slots[targetSlotId - 1]) {
         this.slots[targetSlotId - 1].setOdd365(selectedOdd365);
-        this.showToast(`Pêndulo (365: ${selectedOdd365.toFixed(2)}) aplicado ao Slot #${targetSlotId}`);
+        this.showToast(
+          `Pêndulo (365: ${selectedOdd365.toFixed(2)}) aplicado ao Slot #${targetSlotId}`
+        );
       }
     });
   }

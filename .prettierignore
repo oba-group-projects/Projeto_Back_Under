@@ -1,0 +1,14 @@
+# Dependências e subprojetos externos
+node_modules/
+qwen-code/
+odd-globl-live/
+
+# Saída de cobertura e build
+coverage/
+
+# Documentos binários e gerados
+docs/
+package-lock.json
+
+# Arquivos estáticos que não devem ser reformatados
+*.html

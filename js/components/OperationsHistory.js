@@ -45,7 +45,7 @@ export class OperationsHistory {
       lucroLiquido: Number(trade.lucroLiquido) || 0,
       roiPct: Number(trade.roiPct) || 0,
       ticks: Number(trade.ticks) || 0,
-      status: trade.lucroLiquido > 0.01 ? 'GREEN' : (trade.lucroLiquido < -0.01 ? 'RED' : '0X0')
+      status: trade.lucroLiquido > 0.01 ? 'GREEN' : trade.lucroLiquido < -0.01 ? 'RED' : '0X0',
     };
 
     this.trades.unshift(newTrade);
@@ -70,7 +70,7 @@ export class OperationsHistory {
     let totalPL = 0;
     let totalStakeVolume = 0;
 
-    this.trades.forEach(t => {
+    this.trades.forEach((t) => {
       totalPL += t.lucroLiquido;
       totalStakeVolume += t.stake;
       if (t.status === 'GREEN') totalGreens++;
@@ -89,7 +89,7 @@ export class OperationsHistory {
       totalPL,
       totalStakeVolume,
       winRate,
-      roiGeral
+      roiGeral,
     };
   }
 
@@ -121,15 +121,19 @@ export class OperationsHistory {
 
     if (this.emptyMessage) this.emptyMessage.style.display = 'none';
 
-    this.tableBody.innerHTML = this.trades.slice(0, 30).map(t => {
-      const isGreen = t.status === 'GREEN';
-      const isRed = t.status === 'RED';
-      const plClass = isGreen ? 'text-green' : (isRed ? 'text-red' : 'text-secondary');
-      const badgeStyle = isGreen ? 'background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);' 
-                                 : (isRed ? 'background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);' 
-                                          : 'background: rgba(148, 163, 184, 0.15); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3);');
+    this.tableBody.innerHTML = this.trades
+      .slice(0, 30)
+      .map((t) => {
+        const isGreen = t.status === 'GREEN';
+        const isRed = t.status === 'RED';
+        const plClass = isGreen ? 'text-green' : isRed ? 'text-red' : 'text-secondary';
+        const badgeStyle = isGreen
+          ? 'background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);'
+          : isRed
+            ? 'background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);'
+            : 'background: rgba(148, 163, 184, 0.15); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3);';
 
-      return `
+        return `
         <tr>
           <td style="color: var(--text-muted); font-size: 0.75rem;">${t.dateStr}</td>
           <td style="font-weight: 600; color: #ffffff;">${t.gameName}</td>
@@ -142,7 +146,8 @@ export class OperationsHistory {
           <td><span style="display: inline-block; padding: 0.15rem 0.45rem; border-radius: var(--radius-sm); font-size: 0.65rem; font-weight: 800; ${badgeStyle}">${t.status}</span></td>
         </tr>
       `;
-    }).join('');
+      })
+      .join('');
   }
 
   exportCSV() {
@@ -151,8 +156,18 @@ export class OperationsHistory {
       return;
     }
 
-    const headers = ['Data_Hora', 'Jogo', 'Estrategia', 'Odd_Entrada', 'Odd_Saida', 'Stake', 'Lucro_Liquido_R$', 'ROI_%', 'Status'];
-    const rows = this.trades.map(t => [
+    const headers = [
+      'Data_Hora',
+      'Jogo',
+      'Estrategia',
+      'Odd_Entrada',
+      'Odd_Saida',
+      'Stake',
+      'Lucro_Liquido_R$',
+      'ROI_%',
+      'Status',
+    ];
+    const rows = this.trades.map((t) => [
       `"${t.timestamp}"`,
       `"${t.gameName}"`,
       `"${t.strategyName}"`,
@@ -161,10 +176,12 @@ export class OperationsHistory {
       t.stake,
       t.lucroLiquido,
       t.roiPct,
-      t.status
+      t.status,
     ]);
 
-    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+    const csvContent =
+      'data:text/csv;charset=utf-8,\uFEFF' +
+      [headers.join(';'), ...rows.map((r) => r.join(';'))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);

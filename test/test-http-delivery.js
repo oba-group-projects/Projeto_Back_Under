@@ -17,29 +17,35 @@ const filesToTest = [
   '/js/core/oddsCalculator.js',
   '/js/core/pendulosData.js',
   '/js/core/stakeManager.js',
-  '/js/core/hedgeEngine.js'
+  '/js/core/hedgeEngine.js',
 ];
 
 console.log('Validating HTTP server asset delivery...');
 
 function testUrl(urlPath) {
   return new Promise((resolve, reject) => {
-    http.get(`http://localhost:8080${urlPath}`, (res) => {
-      let data = '';
-      res.on('data', chunk => { data += chunk; });
-      res.on('end', () => {
-        if (res.statusCode === 200) {
-          console.log(`  ✅ [200] ${urlPath} (${res.headers['content-type']}, ${data.length} bytes)`);
-          resolve(true);
-        } else {
-          console.error(`  ❌ [${res.statusCode}] ${urlPath}`);
-          resolve(false);
-        }
+    http
+      .get(`http://localhost:8080${urlPath}`, (res) => {
+        let data = '';
+        res.on('data', (chunk) => {
+          data += chunk;
+        });
+        res.on('end', () => {
+          if (res.statusCode === 200) {
+            console.log(
+              `  ✅ [200] ${urlPath} (${res.headers['content-type']}, ${data.length} bytes)`
+            );
+            resolve(true);
+          } else {
+            console.error(`  ❌ [${res.statusCode}] ${urlPath}`);
+            resolve(false);
+          }
+        });
+      })
+      .on('error', (err) => {
+        console.error(`  ❌ Error fetching ${urlPath}:`, err.message);
+        resolve(false);
       });
-    }).on('error', (err) => {
-      console.error(`  ❌ Error fetching ${urlPath}:`, err.message);
-      resolve(false);
-    });
   });
 }
 
@@ -51,7 +57,9 @@ async function runAll() {
   }
 
   if (allOk) {
-    console.log(`\n🎉 Todos os ${filesToTest.length} arquivos e módulos do Projeto Back Under estão sendo servidos perfeitamente com código 200!\n`);
+    console.log(
+      `\n🎉 Todos os ${filesToTest.length} arquivos e módulos do Projeto Back Under estão sendo servidos perfeitamente com código 200!\n`
+    );
   } else {
     console.error('\n⚠️ Alguns arquivos falharam na entrega HTTP.\n');
     process.exit(1);

@@ -2,12 +2,15 @@ import { test, expect } from '@playwright/test';
 
 async function openCockpit(page) {
   await page.addInitScript(() => {
-    localStorage.setItem('projeto_back_under_session_v2', JSON.stringify({
-      userId: 'usr_admin_1',
-      role: 'admin',
-      name: 'Teste',
-      email: 'teste@example.com'
-    }));
+    localStorage.setItem(
+      'projeto_back_under_session_v2',
+      JSON.stringify({
+        userId: 'usr_admin_1',
+        role: 'admin',
+        name: 'Teste',
+        email: 'teste@example.com',
+      })
+    );
   });
   await page.goto('/');
   await expect(page.locator('#slotCard1')).toBeVisible();
@@ -15,7 +18,7 @@ async function openCockpit(page) {
 
 test.beforeEach(async ({ page }) => {
   await openCockpit(page);
-  page.once('dialog', dialog => dialog.accept());
+  page.once('dialog', (dialog) => dialog.accept());
   await page.locator('#slotCard1 .new-game-btn').click();
 });
 
@@ -66,13 +69,17 @@ test('registra evento e mostra abertura estimada', async ({ page }) => {
 
 test('limita a projeção em 46 no HT e 93 no FT', async ({ page }) => {
   const slot = page.locator('#slotCard1');
-  await expect.poll(() => page.evaluate(() => window.app.slots[0].state.minuteCurve.at(-1).minute)).toBe(46);
+  await expect
+    .poll(() => page.evaluate(() => window.app.slots[0].state.minuteCurve.at(-1).minute))
+    .toBe(46);
   for (let click = 0; click < 60; click++) await slot.locator('.hud-min-plus').click();
   await expect.poll(() => page.evaluate(() => window.app.slots[0].state.projectedMinute)).toBe(46);
   await expect(slot.locator('.hud-odd-justa-hero')).not.toHaveText('0.00');
 
   await slot.locator('.period-tab-btn[data-period="FT"]').click();
-  await expect.poll(() => page.evaluate(() => window.app.slots[0].state.minuteCurve.at(-1).minute)).toBe(93);
+  await expect
+    .poll(() => page.evaluate(() => window.app.slots[0].state.minuteCurve.at(-1).minute))
+    .toBe(93);
   for (let click = 0; click < 60; click++) await slot.locator('.hud-min-plus').click();
   await expect.poll(() => page.evaluate(() => window.app.slots[0].state.projectedMinute)).toBe(93);
   await expect(slot.locator('.hud-odd-justa-hero')).not.toHaveText('0.00');
@@ -82,6 +89,8 @@ test('sincronizar acréscimos refaz a curva no novo limite', async ({ page }) =>
   const slot = page.locator('#slotCard1');
   await slot.locator('.hud-added-min-input').fill('4');
   await slot.locator('.hud-added-sync-btn').click();
-  await expect.poll(() => page.evaluate(() => window.app.slots[0].state.minuteCurve.at(-1).minute)).toBe(49);
+  await expect
+    .poll(() => page.evaluate(() => window.app.slots[0].state.minuteCurve.at(-1).minute))
+    .toBe(49);
   await expect(slot.locator('.hud-odd-justa-hero')).not.toHaveText('0.00');
 });

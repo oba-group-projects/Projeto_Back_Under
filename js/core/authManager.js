@@ -1,7 +1,10 @@
 /**
- * Gerenciador de Autenticação, Sessões e Controle de Usuários
- * Suporte a Atualização de Perfil pelo Próprio Usuário, Troca de Senha com Validação Forte,
- * Solicitações de Cadastro e Auditoria de Acessos.
+ * Gerenciador de Sessão e Perfis de Usuário — Modo sem Autenticação
+ *
+ * NOTA: Este módulo opera sem senha nem aprovação. Todos os cadastros são
+ * aceitos automaticamente e salvos no localStorage. Autenticação segura
+ * (bcrypt, JWT, backend) será adicionada em versão futura quando houver
+ * infraestrutura de servidor.
  */
 
 const USERS_STORAGE_KEY = 'projeto_back_under_users_v2';
@@ -13,87 +16,58 @@ export class AuthManager {
     this.initDefaultUsers();
   }
 
+  // ── Inicialização ──────────────────────────────────────────────────────────
+
   initDefaultUsers() {
     let users = [];
     const saved = localStorage.getItem(USERS_STORAGE_KEY);
     if (saved) {
       try {
         users = JSON.parse(saved);
-      } catch (e) {
+      } catch (_e) {
         users = [];
       }
     }
 
-    // Remove qualquer cadastro secundário duplicado com o mesmo e-mail do admin principal
-    users = users.filter(u => u.id === 'usr_admin_1' || (u.email && u.email.toLowerCase() !== 'pc_far@hotmail.com' && u.email.toLowerCase() !== 'admin@backunder.pro'));
-
-    // Busca se já existe o admin principal
-    let admin = users.find(u => u.id === 'usr_admin_1' || u.role === 'admin');
+    // Garante usuário admin padrão sem senha
+    let admin = users.find((u) => u.id === 'usr_admin_1' || u.role === 'admin');
     if (!admin) {
       admin = {
         id: 'usr_admin_1',
-        name: 'Bora Group Projects',
-        email: 'pc_far@hotmail.com',
-        whatsapp: '51996069505',
-        city: 'Porto Alegre / RS',
-        password: 'admin123',
+        name: 'Administrador',
+        email: 'admin@backunder.pro',
+        whatsapp: '',
+        city: '',
         role: 'admin',
         status: 'active',
         createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-        lastDevice: 'Windows 11 (Chrome)'
+        lastLogin: null,
       };
       users.unshift(admin);
     } else {
-      // Atualiza os dados do Administrador Master para os dados oficiais
-      admin.id = 'usr_admin_1';
-      admin.role = 'admin';
-      admin.name = 'Bora Group Projects';
-      admin.email = 'pc_far@hotmail.com';
-      admin.whatsapp = '51996069505';
-      admin.city = 'Porto Alegre / RS';
-      if (admin.password === 'admin') {
-        admin.password = 'admin123';
-      }
+      // Migra registros antigos: garante que não há campo password
+      delete admin.password;
+      admin.status = 'active';
     }
 
-    // Garante usuário teste secundário
-    if (!users.some(u => u.id === 'usr_teste_1')) {
-      users.push({
-        id: 'usr_teste_1',
-        name: 'Trader Teste',
-        email: 'trader@teste.com',
-        whatsapp: '51988887777',
-        city: 'Porto Alegre / RS',
-        password: 'teste',
-        role: 'user',
-        status: 'active',
-        createdAt: new Date().toISOString(),
-        lastLogin: null,
-        lastDevice: 'Android (Mobile)'
-      });
-    }
+    // Migra usuários antigos: remove campos de senha e pending
+    users = users.map((u) => {
+      const { password: _pw, ...rest } = u;
+      // Usuários que estavam pendentes agora ficam ativos automaticamente
+      if (rest.status === 'pending') rest.status = 'active';
+      return rest;
+    });
 
     localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-
-    // Atualiza a sessão ativa se o usuário atual for o admin
-    const currentSession = this.getCurrentSession();
-    if (currentSession && (currentSession.userId === 'usr_admin_1' || currentSession.role === 'admin')) {
-      currentSession.userId = 'usr_admin_1';
-      currentSession.role = 'admin';
-      currentSession.name = 'Bora Group Projects';
-      currentSession.email = 'pc_far@hotmail.com';
-      currentSession.whatsapp = '51996069505';
-      currentSession.city = 'Porto Alegre / RS';
-      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(currentSession));
-    }
   }
+
+  // ── Persistência ──────────────────────────────────────────────────────────
 
   getUsers() {
     try {
       const data = localStorage.getItem(USERS_STORAGE_KEY);
       return data ? JSON.parse(data) : [];
-    } catch (e) {
+    } catch (_e) {
       return [];
     }
   }
@@ -102,76 +76,84 @@ export class AuthManager {
     localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
   }
 
+  // ── Logs de Acesso ────────────────────────────────────────────────────────
+
   getAccessLogs() {
     try {
       const data = localStorage.getItem(LOGS_STORAGE_KEY);
       return data ? JSON.parse(data) : [];
-    } catch (e) {
+    } catch (_e) {
       return [];
     }
   }
 
   addAccessLog(user, success = true, reason = '') {
     const logs = this.getAccessLogs();
-    const device = navigator.userAgent.includes('Mobile') ? 'Mobile (Smartphone)' : 'Desktop (Computador)';
+    const device =
+      typeof navigator !== 'undefined' && navigator.userAgent.includes('Mobile')
+        ? 'Mobile (Smartphone)'
+        : 'Desktop (Computador)';
     const newLog = {
       id: 'log_' + Date.now(),
       timestamp: new Date().toISOString(),
       dateFormatted: new Date().toLocaleString('pt-BR'),
       email: user ? user.email : 'desconhecido',
-      name: user ? user.name : 'Tentativa Anônima',
+      name: user ? user.name : 'Anônimo',
       role: user ? user.role : '-',
-      device: device,
-      ip: '189.102.' + Math.floor(Math.random() * 200 + 10) + '.' + Math.floor(Math.random() * 200 + 10),
-      success: success,
-      reason: reason
+      device,
+      success,
+      reason,
     };
 
     logs.unshift(newLog);
     localStorage.setItem(LOGS_STORAGE_KEY, JSON.stringify(logs.slice(0, 50)));
   }
 
-  login(email, password) {
+  // ── Identificação (substitui login com senha) ─────────────────────────────
+
+  /**
+   * Identifica o usuário pelo e-mail sem exigir senha.
+   * Se o usuário não existir, cria um novo perfil automaticamente.
+   */
+  identify(email, name = '') {
     const users = this.getUsers();
     const normalizedEmail = (email || '').trim().toLowerCase();
-    
-    // Busca usuário pelo e-mail ou apelido do admin
-    let user = users.find(u => u.email && u.email.toLowerCase() === normalizedEmail);
-    if (!user && (normalizedEmail === 'admin@backunder.pro' || normalizedEmail === 'admin')) {
-      user = users.find(u => u.id === 'usr_admin_1' || u.role === 'admin');
+
+    if (!normalizedEmail) {
+      return { success: false, message: 'Informe um e-mail para continuar.' };
     }
+
+    let user = users.find((u) => u.email && u.email.toLowerCase() === normalizedEmail);
 
     if (!user) {
-      this.addAccessLog({ email: normalizedEmail, name: 'Desconhecido' }, false, 'Usuário não encontrado');
-      return { success: false, message: 'Usuário ou e-mail não encontrado.' };
-    }
-
-    const isPasswordCorrect = user.password === password || (user.id === 'usr_admin_1' && (password === 'admin' || password === 'admin123'));
-
-    if (!isPasswordCorrect) {
-      this.addAccessLog(user, false, 'Senha incorreta');
-      return { success: false, message: 'Senha incorreta. Tente novamente.' };
-    }
-
-    if (user.status === 'pending') {
-      this.addAccessLog(user, false, 'Cadastro pendente de aprovação');
-      return { 
-        success: false, 
-        message: '⏳ Seu cadastro está em análise pelo Administrador. Assim que for liberado, você conseguirá acessar o cockpit.' 
+      // Cria perfil novo automaticamente — sem senha, sem aprovação
+      user = {
+        id: 'usr_' + Date.now(),
+        name: (name || '').trim() || normalizedEmail.split('@')[0],
+        email: normalizedEmail,
+        whatsapp: '',
+        city: '',
+        role: 'user',
+        status: 'active',
+        createdAt: new Date().toISOString(),
+        lastLogin: null,
       };
+      users.push(user);
+      this.saveUsers(users);
+      this.addAccessLog(user, true, 'Perfil criado automaticamente');
     }
 
     if (user.status === 'blocked') {
-      this.addAccessLog(user, false, 'Acesso bloqueado pelo Administrador');
-      return { success: false, message: 'Seu acesso está bloqueado. Entre em contato com o Administrador.' };
+      return {
+        success: false,
+        message: 'Este acesso está bloqueado. Entre em contato com o administrador.',
+      };
     }
 
-    // Atualiza último login
+    // Atualiza último acesso
     user.lastLogin = new Date().toISOString();
-    user.lastDevice = navigator.userAgent.includes('Mobile') ? 'Mobile (Smartphone)' : 'Desktop (Computador)';
-    this.saveUsers(users);
+    this.saveUsers(this.getUsers().map((u) => (u.id === user.id ? user : u)));
 
-    // Gera Sessão Ativa
     const session = {
       userId: user.id,
       name: user.name,
@@ -179,12 +161,11 @@ export class AuthManager {
       role: user.role,
       whatsapp: user.whatsapp || '',
       city: user.city || '',
-      token: 'tok_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-      loginAt: new Date().toISOString()
+      loginAt: new Date().toISOString(),
     };
 
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
-    this.addAccessLog(user, true, 'Login autorizado');
+    this.addAccessLog(user, true, 'Acesso identificado');
 
     return { success: true, user: session };
   }
@@ -193,11 +174,13 @@ export class AuthManager {
     localStorage.removeItem(SESSION_STORAGE_KEY);
   }
 
+  // ── Sessão ────────────────────────────────────────────────────────────────
+
   getCurrentSession() {
     try {
       const data = localStorage.getItem(SESSION_STORAGE_KEY);
       return data ? JSON.parse(data) : null;
-    } catch (e) {
+    } catch (_e) {
       return null;
     }
   }
@@ -206,153 +189,145 @@ export class AuthManager {
     const session = this.getCurrentSession();
     if (!session) return null;
     const users = this.getUsers();
-    let user = users.find(u => u.id === session.userId);
-    if (!user && session.role === 'admin') {
-      user = users.find(u => u.id === 'usr_admin_1' || u.role === 'admin');
-    }
-    return user || null;
+    return users.find((u) => u.id === session.userId) || null;
   }
 
+  /**
+   * Sempre retorna true no modo sem autenticação.
+   * A ferramenta é acessível sem credenciais.
+   */
   isAuthenticated() {
-    return this.getCurrentSession() !== null;
+    return true;
   }
 
   isAdmin() {
     const session = this.getCurrentSession();
-    return session && session.role === 'admin';
+    return session ? session.role === 'admin' : false;
   }
 
   getAdminContact() {
     const users = this.getUsers();
-    const admin = users.find(u => u.id === 'usr_admin_1' || u.role === 'admin') || {
-      name: 'Bora Group Projects',
-      email: 'pc_far@hotmail.com',
-      whatsapp: '51996069505',
-      city: 'Porto Alegre / RS'
+    const admin = users.find((u) => u.id === 'usr_admin_1' || u.role === 'admin') || {
+      name: 'Administrador',
+      email: 'admin@backunder.pro',
+      whatsapp: '',
     };
-
-    const cleanWhats = (admin.whatsapp || '51996069505').replace(/\D/g, '');
+    const cleanWhats = (admin.whatsapp || '').replace(/\D/g, '');
     return {
-      name: admin.name || 'Bora Group Projects',
-      email: admin.email || 'pc_far@hotmail.com',
-      whatsapp: admin.whatsapp || '51996069505',
-      whatsappClean: cleanWhats || '51996069505',
-      city: admin.city || 'Porto Alegre / RS'
+      name: admin.name || 'Administrador',
+      email: admin.email || 'admin@backunder.pro',
+      whatsapp: admin.whatsapp || '',
+      whatsappClean: cleanWhats,
+      city: admin.city || '',
     };
   }
 
+  // ── Perfil ────────────────────────────────────────────────────────────────
+
   /**
-   * Atualização de Perfil pelo Próprio Usuário Logado
+   * Atualiza o perfil do usuário logado (sem validação de senha).
    */
-  updateProfile(userId, { name, whatsapp, city, email, currentPassword, newPassword }) {
-    let users = this.getUsers();
-    let user = users.find(u => u.id === userId);
-    
-    // Se for o admin e não achou por ID exato, busca o admin principal
-    if (!user && (userId === 'usr_admin_1' || this.isAdmin())) {
-      user = users.find(u => u.id === 'usr_admin_1' || u.role === 'admin');
+  updateProfile(userId, { name, whatsapp, city, email }) {
+    const users = this.getUsers();
+    let user = users.find((u) => u.id === userId);
+
+    if (!user && this.isAdmin()) {
+      user = users.find((u) => u.id === 'usr_admin_1' || u.role === 'admin');
     }
     if (!user) return { success: false, message: 'Usuário não encontrado.' };
 
     const normalizedEmail = (email || '').trim().toLowerCase();
 
-    // Se for o admin, remove automaticamente qualquer outro cadastro duplicado com o mesmo email
-    if (user.id === 'usr_admin_1' || user.role === 'admin') {
-      users = users.filter(u => u.id === user.id || (u.email && u.email.toLowerCase() !== normalizedEmail));
-    } else {
-      const emailInUse = users.some(u => u.id !== user.id && u.email && u.email.toLowerCase() === normalizedEmail);
-      if (emailInUse) {
-        return { success: false, message: 'Este e-mail já está em uso por outro usuário.' };
-      }
+    const emailInUse = users.some(
+      (u) => u.id !== user.id && u.email && u.email.toLowerCase() === normalizedEmail
+    );
+    if (emailInUse) {
+      return { success: false, message: 'Este e-mail já está em uso por outro usuário.' };
     }
 
-    // Se informou nova senha, valida a senha atual (ou master admin autenticado)
-    if (newPassword && newPassword.trim() !== '') {
-      const isMasterAdmin = (user.id === 'usr_admin_1' || user.role === 'admin');
-      const isCurrentValid = isMasterAdmin || (user.password === currentPassword);
-      if (!isCurrentValid) {
-        return { success: false, message: 'A senha atual informada está incorreta.' };
-      }
-      user.password = newPassword.trim();
-    }
-
-    user.name = name.trim();
-    user.whatsapp = whatsapp.trim();
-    user.city = city.trim();
+    user.name = (name || '').trim();
+    user.whatsapp = (whatsapp || '').trim();
+    user.city = (city || '').trim();
     user.email = normalizedEmail;
 
     this.saveUsers(users);
 
-    // Atualiza a sessão ativa
-    const currentSession = this.getCurrentSession();
-    if (currentSession) {
-      currentSession.userId = user.id;
-      currentSession.role = user.role;
-      currentSession.name = user.name;
-      currentSession.email = user.email;
-      currentSession.whatsapp = user.whatsapp;
-      currentSession.city = user.city;
-      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(currentSession));
+    // Atualiza sessão ativa
+    const session = this.getCurrentSession();
+    if (session) {
+      Object.assign(session, {
+        name: user.name,
+        email: user.email,
+        whatsapp: user.whatsapp,
+        city: user.city,
+      });
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
     }
 
-    this.addAccessLog(user, true, 'Perfil atualizado com sucesso');
+    this.addAccessLog(user, true, 'Perfil atualizado');
     return { success: true, user };
   }
 
-  /**
-   * Solicitação de Cadastro pelo Usuário Público (Fica com status 'pending')
-   */
-  requestRegistration({ name, whatsapp, city, email, password }) {
-    const users = this.getUsers();
-    const normalizedEmail = email.trim().toLowerCase();
+  // ── Cadastro / Gestão ─────────────────────────────────────────────────────
 
-    if (users.some(u => u.email.toLowerCase() === normalizedEmail)) {
+  /**
+   * Cadastro público sem senha — usuário fica ativo imediatamente.
+   */
+  requestRegistration({ name, whatsapp, city, email }) {
+    const users = this.getUsers();
+    const normalizedEmail = (email || '').trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      return { success: false, message: 'Informe um e-mail válido.' };
+    }
+
+    if (users.some((u) => u.email && u.email.toLowerCase() === normalizedEmail)) {
       return { success: false, message: 'Já existe um cadastro com este e-mail.' };
     }
 
     const newUser = {
       id: 'usr_' + Date.now(),
-      name: name.trim(),
-      whatsapp: whatsapp.trim(),
-      city: city.trim(),
+      name: (name || '').trim(),
+      whatsapp: (whatsapp || '').trim(),
+      city: (city || '').trim(),
       email: normalizedEmail,
-      password: password.trim(),
       role: 'user',
-      status: 'pending',
+      status: 'active', // ativo direto — sem aprovação pendente
       createdAt: new Date().toISOString(),
       lastLogin: null,
-      lastDevice: 'Aguardando aprovação'
     };
 
     users.push(newUser);
     this.saveUsers(users);
-    this.addAccessLog(newUser, true, 'Nova solicitação de cadastro recebida');
+    this.addAccessLog(newUser, true, 'Cadastro realizado');
     return { success: true, user: newUser };
   }
 
   /**
-   * Criação direta pelo Administrador
+   * Criação direta pelo Administrador.
    */
-  createUser({ name, email, whatsapp = '', city = '', password, role = 'user' }) {
+  createUser({ name, email, whatsapp = '', city = '', role = 'user' }) {
     const users = this.getUsers();
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = (email || '').trim().toLowerCase();
 
-    if (users.some(u => u.email.toLowerCase() === normalizedEmail)) {
-      return { success: false, message: 'Já existe um usuário cadastrado com este e-mail.' };
+    if (!normalizedEmail) {
+      return { success: false, message: 'Informe um e-mail válido.' };
+    }
+
+    if (users.some((u) => u.email && u.email.toLowerCase() === normalizedEmail)) {
+      return { success: false, message: 'Já existe um usuário com este e-mail.' };
     }
 
     const newUser = {
       id: 'usr_' + Date.now(),
-      name: name.trim(),
-      whatsapp: whatsapp.trim(),
-      city: city.trim(),
+      name: (name || '').trim(),
+      whatsapp: (whatsapp || '').trim(),
+      city: (city || '').trim(),
       email: normalizedEmail,
-      password: password.trim(),
-      role: role,
+      role,
       status: 'active',
       createdAt: new Date().toISOString(),
       lastLogin: null,
-      lastDevice: 'Cadastrado pelo Admin'
     };
 
     users.push(newUser);
@@ -360,36 +335,10 @@ export class AuthManager {
     return { success: true, user: newUser };
   }
 
-  approveUser(userId) {
-    const users = this.getUsers();
-    const user = users.find(u => u.id === userId);
-    if (!user) return false;
-
-    user.status = 'active';
-    this.saveUsers(users);
-    this.addAccessLog(user, true, 'Cadastro aprovado pelo Administrador');
-    return true;
-  }
-
-  rejectUser(userId) {
-    let users = this.getUsers();
-    const user = users.find(u => u.id === userId);
-    if (!user) return false;
-
-    users = users.filter(u => u.id !== userId);
-    this.saveUsers(users);
-    this.addAccessLog(user, false, 'Cadastro recusado pelo Administrador');
-    return true;
-  }
-
   toggleUserStatus(userId) {
     const users = this.getUsers();
-    const user = users.find(u => u.id === userId);
-    if (!user) return false;
-
-    if (user.role === 'admin' && user.id === 'usr_admin_1') {
-      return false;
-    }
+    const user = users.find((u) => u.id === userId);
+    if (!user || (user.role === 'admin' && user.id === 'usr_admin_1')) return false;
 
     user.status = user.status === 'active' ? 'blocked' : 'active';
     this.saveUsers(users);
@@ -398,19 +347,17 @@ export class AuthManager {
 
   deleteUser(userId) {
     let users = this.getUsers();
-    const target = users.find(u => u.id === userId);
-    if (!target || (target.role === 'admin' && target.id === 'usr_admin_1')) {
-      return false;
-    }
+    const target = users.find((u) => u.id === userId);
+    if (!target || (target.role === 'admin' && target.id === 'usr_admin_1')) return false;
 
-    users = users.filter(u => u.id !== userId);
+    users = users.filter((u) => u.id !== userId);
     this.saveUsers(users);
     return true;
   }
 
   getPendingUsersCount() {
-    const users = this.getUsers();
-    return users.filter(u => u.status === 'pending').length;
+    // Sem aprovação pendente no modo sem autenticação — sempre zero
+    return 0;
   }
 }
 

@@ -11,13 +11,13 @@ const THEME_STORAGE_KEY = 'projeto_back_under_theme_config_v2';
 
 export const DEFAULT_THEME = {
   // 1. Ambiente Global de Contraste
-  colorTheme: 'dark',   // 'dark' (OLED) | 'slate' (Neutro / Bloomberg) | 'light' (Claro / Planilha Pro)
-  glowFx: true,         // true (Neon Glow Ativo) | false (Minimalista Sem Brilho)
+  colorTheme: 'dark', // 'dark' (OLED) | 'slate' (Neutro / Bloomberg) | 'light' (Claro / Planilha Pro)
+  glowFx: true, // true (Neon Glow Ativo) | false (Minimalista Sem Brilho)
 
   // 2. Tipografia & Escala
   fontTheme: 'calibri', // 'calibri' | 'outfit' | 'jakarta' | 'rajdhani' | 'inter'
-  hudScale: 'normal',   // 'compact' (93%) | 'normal' (100%) | 'large' (107%)
-  
+  hudScale: 'normal', // 'compact' (93%) | 'normal' (100%) | 'large' (107%)
+
   // 3. Cores dos Headers dos 4 Slots
   slot1Color: '#1e3a8a', // Azul Índigo
   slot2Color: '#064e3b', // Verde Esmeralda
@@ -32,7 +32,8 @@ export const DEFAULT_THEME = {
 
   // 5. Configurações de Suporte e Contato
   supportWhatsApp: '51996069505',
-  supportMsg: 'Olá! Gostaria de suporte/liberação de acesso no Cockpit Precificação Justa Back ao Under.'
+  supportMsg:
+    'Olá! Gostaria de suporte/liberação de acesso no Cockpit Precificação Justa Back ao Under.',
 };
 
 export class ThemeManager {
@@ -102,7 +103,13 @@ export class ThemeManager {
     }
 
     // 3. Tipografia
-    body.classList.remove('font-theme-calibri', 'font-theme-outfit', 'font-theme-jakarta', 'font-theme-rajdhani', 'font-theme-inter');
+    body.classList.remove(
+      'font-theme-calibri',
+      'font-theme-outfit',
+      'font-theme-jakarta',
+      'font-theme-rajdhani',
+      'font-theme-inter'
+    );
     body.classList.add(`font-theme-${theme.fontTheme || 'calibri'}`);
 
     // 4. Escala / Zoom do HUD
@@ -112,11 +119,24 @@ export class ThemeManager {
     root.style.setProperty('--hud-scale-zoom', scaleZoom);
 
     // 5. Cores dos Headers dos Slots
-    const makeGradient = (hex) => `linear-gradient(135deg, ${hex}e6 0%, rgba(15, 23, 42, 0.95) 100%)`;
-    root.style.setProperty('--slot1-header-bg', makeGradient(theme.slot1Color || DEFAULT_THEME.slot1Color));
-    root.style.setProperty('--slot2-header-bg', makeGradient(theme.slot2Color || DEFAULT_THEME.slot2Color));
-    root.style.setProperty('--slot3-header-bg', makeGradient(theme.slot3Color || DEFAULT_THEME.slot3Color));
-    root.style.setProperty('--slot4-header-bg', makeGradient(theme.slot4Color || DEFAULT_THEME.slot4Color));
+    const makeGradient = (hex) =>
+      `linear-gradient(135deg, ${hex}e6 0%, rgba(15, 23, 42, 0.95) 100%)`;
+    root.style.setProperty(
+      '--slot1-header-bg',
+      makeGradient(theme.slot1Color || DEFAULT_THEME.slot1Color)
+    );
+    root.style.setProperty(
+      '--slot2-header-bg',
+      makeGradient(theme.slot2Color || DEFAULT_THEME.slot2Color)
+    );
+    root.style.setProperty(
+      '--slot3-header-bg',
+      makeGradient(theme.slot3Color || DEFAULT_THEME.slot3Color)
+    );
+    root.style.setProperty(
+      '--slot4-header-bg',
+      makeGradient(theme.slot4Color || DEFAULT_THEME.slot4Color)
+    );
 
     // 6. Cores dos Blocos Topo e Fundo
     root.style.setProperty('--color-topo-bg', theme.topoBg || DEFAULT_THEME.topoBg);
@@ -129,9 +149,11 @@ export class ThemeManager {
 
     // 7. Atualiza link de suporte no DOM se existir
     const cleanWhats = (theme.supportWhatsApp || '51996069505').replace(/\D/g, '');
-    const whatsLinks = document.querySelectorAll('.login-whats-btn, .login-support-btn, a[href*="wa.me"]');
+    const whatsLinks = document.querySelectorAll(
+      '.login-whats-btn, .login-support-btn, a[href*="wa.me"]'
+    );
     const msgEncoded = encodeURIComponent(theme.supportMsg || DEFAULT_THEME.supportMsg);
-    whatsLinks.forEach(link => {
+    whatsLinks.forEach((link) => {
       link.href = `https://wa.me/55${cleanWhats}?text=${msgEncoded}`;
     });
   }
