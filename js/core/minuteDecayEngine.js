@@ -21,46 +21,55 @@ import { findClosestPendulo } from './pendulosData.js';
 import { normalizeOdd } from './oddsCalculator.js';
 
 // ── Helpers de ladder ────────────────────────────────────────────────────────
-
-/** Retorna o índice de ticks acumulados até 1.01 para uma odd (coluna D da planilha). */
-function getTicksToBase(odd) {
-  if (!Number.isFinite(odd) || odd <= 1.01) return 0;
-  const item = LADDER_DATA.find((e) => e.odd === Number(odd.toFixed(2)));
-  if (item) return item.tickIndex;
-  // Fallback: busca o mais próximo
-  const closest = findClosestLadder(odd);
-  return closest ? closest.tickIndex : 0;
-}
-
-/** Retorna a odd correspondente a um número de ticks na ladder. */
-function oddFromTickIndex(ticks) {
-  if (ticks <= 0) return 1.01;
-  const clampedTicks = Math.max(0, Math.min(350, Math.round(ticks)));
-  const item = LADDER_DATA.find((e) => e.tickIndex === clampedTicks);
-  return item ? item.odd : 1.01;
-}
-
 /**
  * Calcula a próxima odd justa segundo a fórmula da planilha IN LIVE.
  * @param {number} prevOdd - Odd do minuto anterior (raw float se >= 2, tick se < 2)
  * @param {number} posRelativa - Posição relativa do PRÓXIMO minuto (1 = primeiro minuto)
- * @param {number} totalNominal - HT=45, FT=47 (ajustado com acréscimos se necessário)
- * @returns {number} próxima odd (raw float se >= 2, tick exato da ladder se < 2)
+ * @param {number} totalNominal - HT=45, FT=47
+ * @param {number} stepsAfterTransition - nº de steps desde a transição >=2→<2 (0 = ainda >= 2)
+ * @returns {{ odd: number, steps: number }} próxima odd e contador atualizado
  */
-function calcNextOddByFormula(prevOdd, posRelativa, totalNominal) {
+function calcNextOddByFormula(prevOdd, posRelativa, totalNominal, stepsAfterTransition) {
   const restante = Math.max(1, totalNominal + 2 - posRelativa);
   const raw = prevOdd * Math.pow(1.01 / prevOdd, 1 / restante);
 
   if (prevOdd >= 2) {
-    if (raw >= 2) return raw; // continua como float
-    // Primeira transição para < 2: CORRESP(-1) em lista decrescente = ceil
-    return oddFromTickIndex(Math.ceil(getTicksToBase(raw)));
+    if (raw >= 2) return { odd: raw, steps: 0 }; // continua como float
+
+    // Primeira transição para < 2: CORRESP(raw, A_desc, -1) = menor A >= raw
+    for (let i = LADDER_DATA.length - 1; i >= 0; i--) {
+      if (LADDER_DATA[i].odd >= raw - 0.000001) {
+        return { odd: LADDER_DATA[i].odd, steps: 1 }; // steps=1 = acabou de cruzar
+      }
+    }
+    return { odd: 1.01, steps: 1 };
   }
 
   // Fórmula de ticks (prevOdd já é tick exato da ladder)
-  const D = getTicksToBase(prevOdd);
+  const tickItem = LADDER_DATA.find((e) => e.odd === Number(prevOdd.toFixed(2)));
+  const D = tickItem ? tickItem.tickIndex : 0;
   const D_novo = D - (D - 1) / restante;
-  return oddFromTickIndex(Math.round(D_novo));
+
+  // Dn <= 1 → último passo da curva: retorna 1.01
+  if (D_novo <= 1) return { odd: 1.01, steps: stepsAfterTransition + 1 };
+
+  const frac = D_novo - Math.floor(D_novo);
+  let tickRound;
+  if (frac === 0.5) {
+    tickRound = Math.floor(D_novo); // .5 exato → floor
+  } else if (stepsAfterTransition > 0 && stepsAfterTransition <= 4) {
+    // Nos primeiros 4 steps após a transição, a planilha usa CEIL
+    // (comportamento do CORRESP(-1) com valor float residual da fórmula mult)
+    tickRound = Math.ceil(D_novo);
+  } else {
+    tickRound = Math.round(D_novo);
+  }
+
+  const result = LADDER_DATA.find((e) => e.tickIndex === Math.max(0, Math.min(350, tickRound)));
+  return {
+    odd: result ? result.odd : 1.01,
+    steps: stepsAfterTransition + 1,
+  };
 }
 
 /**
@@ -88,9 +97,8 @@ export function calculateMinuteCurve({
   const startMinute = isHT ? 1 : 46;
 
   // totalNominal: HT=45 (46 min base), FT=47 (48 min base).
-  // Com acréscimos o totalNominal cresce proporcionalmente.
-  const baseTotalNominal = isHT ? 45 : 47;
-  const totalNominal = baseTotalNominal + (Number(addedMinutes) || 0);
+  // NÃO muda com acréscimos — acréscimos apenas estendem o endMinute.
+  const totalNominal = isHT ? 45 : 47;
 
   // Número total de minutos na curva
   const nominalMinutes = isHT ? 46 : 48; // minutos-base sem acréscimos
@@ -112,6 +120,7 @@ export function calculateMinuteCurve({
   // Para cada minuto, o valor é calculado iterativamente a partir do anterior
   // (ou do evento de correção, se houver)
   let prevRaw = Math.max(1.01, Number(initialOdd) || 2.0); // valor float (>= 2) ou tick (< 2)
+  let stepsAfterTransition = 0; // contador de steps após a transição >=2→<2
 
   for (let minute = startMinute; minute <= endMinute; minute++) {
     const elapsed = isHT ? minute : minute - 45;
@@ -128,11 +137,13 @@ export function calculateMinuteCurve({
     ) {
       oddJusta = Number(liveCorrections[minute]);
       prevRaw = oddJusta;
+      stepsAfterTransition = oddJusta < 2 ? stepsAfterTransition : 0;
     }
     // Prioridade 2: minuto do evento registrado (gol/retorno)
     else if (eventMinute !== null && minute === eventMinute && eventOdd !== null) {
       oddJusta = eventOdd;
       prevRaw = oddJusta;
+      stepsAfterTransition = 0;
     }
     // Prioridade 3: primeiro minuto = odd inicial
     else if (minute === startMinute) {
@@ -140,7 +151,9 @@ export function calculateMinuteCurve({
     }
     // Prioridade 4: fórmula iterativa da planilha
     else {
-      prevRaw = calcNextOddByFormula(prevRaw, posRelativa, totalNominal);
+      const result = calcNextOddByFormula(prevRaw, posRelativa, totalNominal, stepsAfterTransition);
+      prevRaw = result.odd;
+      stepsAfterTransition = result.steps;
       oddJusta = prevRaw >= 2 ? Math.round(prevRaw * 100) / 100 : prevRaw;
     }
 
